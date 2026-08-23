@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/hero-engine/hero/internal/attention/focus"
+	"github.com/hero-engine/hero/internal/attention/mailquery"
 	"github.com/hero-engine/hero/internal/attention/projection"
 	"github.com/hero-engine/hero/internal/graph"
 	"github.com/hero-engine/hero/internal/refs"
@@ -66,6 +67,7 @@ type MCPServer struct {
 	attentionStateRoot string
 	attentionResolver  focus.ProjectResolver
 	attentionService   func() (*projection.Service, error)
+	mailQueryService   func() (*mailquery.Service, error)
 }
 
 // NewMCPServer creates an MCP server for the given hero workspace.

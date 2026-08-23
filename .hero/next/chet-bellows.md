@@ -1,6 +1,7 @@
 ---
 user: chet-bellows
 updated: 2026-08-24T16:51:32Z
+updated: 2026-08-23T16:22:52Z
 repo: hero-engine/hero
 ---
 
@@ -8,7 +9,7 @@ repo: hero-engine/hero
 
 ## Last user ask
 
-_(none recorded — `hero next ask "..."` to set)_
+> Diagnose the missing Project Mail thread lifecycle MCP parity: add linked bug spec for thread list, detail, action, and contract tools that delegate to authoritative services without localhost HTTP or policy duplication.
 
 ## Suggested next prompt
 

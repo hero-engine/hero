@@ -31,6 +31,7 @@ Add the service-level foreground-read regression first, then expose the exact
 descriptor through the existing thread projection and HTTP action route.
 
 ---
+_Generated: 2026-08-23T16:22:53Z · 79 ready specs_
 
 ## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
 _feature · delivering · horizon: now_

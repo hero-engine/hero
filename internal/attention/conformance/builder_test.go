@@ -38,6 +38,34 @@ func TestBuildIsDeterministicAndCheckedInBundleIsCurrent(t *testing.T) {
 	}
 }
 
+func TestEmbeddedMailThreadMCPGuidanceIsPinned(t *testing.T) {
+	root := filepath.Clean(filepath.Join("..", "..", ".."))
+	paths := []string{
+		filepath.Join(root, "contracts", "attention", "testdata", "v1", "HERO-CODE-HANDOFF.md"),
+		filepath.Join(root, "contracts", "attention", "conformance", "v1", "HERO-CODE-HANDOFF.md"),
+		filepath.Join(root, "docs", "serve.md"),
+	}
+	want := []string{
+		"`hero_mail_thread_list` → `ThreadListResponse`",
+		"`hero_mail_thread_show` → `ThreadDetailResponse`",
+		"`hero_mail_thread_action` → `ActionResponse`",
+		"`hero_mail_thread_contract` → `ContractResponse`",
+		"do not need `hero serve` or an HTTP daemon",
+	}
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		normalized := strings.Join(strings.Fields(string(data)), " ")
+		for _, snippet := range want {
+			if !strings.Contains(normalized, snippet) {
+				t.Errorf("%s is missing %q", path, snippet)
+			}
+		}
+	}
+}
+
 func TestConsumerValidationRejectsMissingExtraStaleAndMalformedArtifacts(t *testing.T) {
 	root := filepath.Clean(filepath.Join("..", "..", ".."))
 	toolJSON, err := json.Marshal(serve.AttentionToolDefinitions())

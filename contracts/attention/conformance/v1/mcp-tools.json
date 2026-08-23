@@ -544,6 +544,179 @@
         "type": "object"
       },
       "name": "hero_mail_show"
+    },
+    {
+      "_meta": {
+        "hero.dev/category": "attention-and-mail",
+        "hero.dev/consent": "advertised_action",
+        "hero.dev/effect": "advertised_action",
+        "hero.dev/tier": "deferrable"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false,
+        "title": "attention.advertised_action"
+      },
+      "description": "Dispatch an advertised Project Mail thread lifecycle action through the authoritative revisioned service.",
+      "inputSchema": {
+        "properties": {
+          "action_id": {
+            "description": "Advertised lifecycle action ID",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "description": "Stable retry key",
+            "type": "string"
+          },
+          "identity": {
+            "description": "Exact project and thread identity",
+            "properties": {
+              "project_peer_id": {
+                "description": "Stable project peer ID",
+                "type": "string"
+              },
+              "thread_id": {
+                "description": "Stable thread ID within the project",
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_peer_id",
+              "thread_id"
+            ],
+            "type": "object"
+          },
+          "input": {
+            "description": "Action-specific input matching the advertised JSON schema",
+            "type": "object"
+          },
+          "schema_version": {
+            "description": "Mail thread contract version; must be 1",
+            "type": "integer"
+          },
+          "thread_revision": {
+            "description": "Required authoritative thread revision as a decimal int64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "identity",
+          "action_id",
+          "thread_revision",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "hero_mail_thread_action"
+    },
+    {
+      "_meta": {
+        "hero.dev/category": "attention-and-mail",
+        "hero.dev/consent": "none",
+        "hero.dev/effect": "read",
+        "hero.dev/tier": "deferrable"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "mail.thread_contract"
+      },
+      "description": "Return the immutable Project Mail thread lifecycle conformance bundle identity exposed by HTTP and MCP.",
+      "inputSchema": {
+        "type": "object"
+      },
+      "name": "hero_mail_thread_contract"
+    },
+    {
+      "_meta": {
+        "hero.dev/category": "attention-and-mail",
+        "hero.dev/consent": "none",
+        "hero.dev/effect": "read",
+        "hero.dev/tier": "deferrable"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "mail.thread_list"
+      },
+      "description": "List authoritative Project Mail threads with lifecycle buckets, counts, and cursor paging.",
+      "inputSchema": {
+        "properties": {
+          "bucket": {
+            "description": "Optional needs_attention, updates, or history bucket",
+            "enum": [
+              "needs_attention",
+              "updates",
+              "history"
+            ],
+            "type": "string"
+          },
+          "cursor": {
+            "description": "Opaque next_cursor from an identical prior request",
+            "type": "string"
+          },
+          "lifecycle": {
+            "description": "Optional open, resolved, or archived lifecycle",
+            "enum": [
+              "open",
+              "resolved",
+              "archived"
+            ],
+            "type": "string"
+          },
+          "limit": {
+            "description": "Optional page size from 1 through 100; zero or omitted uses the contract default",
+            "type": "integer"
+          },
+          "project_peer_id": {
+            "description": "Optional stable project peer ID",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "hero_mail_thread_list"
+    },
+    {
+      "_meta": {
+        "hero.dev/category": "attention-and-mail",
+        "hero.dev/consent": "none",
+        "hero.dev/effect": "read",
+        "hero.dev/tier": "deferrable"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true,
+        "title": "mail.thread_show"
+      },
+      "description": "Return the authoritative detail envelope for one Project Mail thread.",
+      "inputSchema": {
+        "properties": {
+          "project_peer_id": {
+            "description": "Stable project peer ID",
+            "type": "string"
+          },
+          "thread_id": {
+            "description": "Stable thread ID within the project",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_peer_id",
+          "thread_id"
+        ],
+        "type": "object"
+      },
+      "name": "hero_mail_thread_show"
     }
   ]
 }

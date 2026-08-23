@@ -1,6 +1,6 @@
 # Hero Code Attention v1 handoff
 
-Hero Code's canonical desktop transport is Hero Serve HTTP:
+Hero Code's daemon-backed Attention transport is Hero Serve HTTP:
 
 - `GET /api/attention/v1/snapshot`
 - `POST /api/attention/v1/actions`
@@ -43,6 +43,26 @@ object distinguishes `current` from a successful `empty` read; structured
 `unavailable` is never an empty snapshot. Full Mail content remains an explicit
 `hero_mail_show` read.
 
+## Embedded Mail thread lifecycle transport
+
+Bundled desktop clients can use the authoritative Project Mail thread
+lifecycle directly through MCP:
+
+- `hero_mail_thread_list` → `ThreadListResponse`
+- `hero_mail_thread_show` → `ThreadDetailResponse`
+- `hero_mail_thread_action` → `ActionResponse`
+- `hero_mail_thread_contract` → `ContractResponse`
+
+These tools are transport adapters to the same Mail query authority used by
+the HTTP thread endpoints. They return the existing versioned `mailthread`
+envelopes and do not reclassify threads, generate cursors, or own lifecycle
+policy. `thread_revision` is a decimal int64 string at the MCP boundary so the
+adapter can preserve the exact revision in `ActionRequest` without JSON number
+rounding. Bundled MCP clients do not need `hero serve` or an HTTP daemon.
+
+The legacy `hero_mail_list`, `hero_mail_show`, and `hero_mail_action` tools
+remain additive compatibility surfaces with unchanged message-level shapes.
+
 The exact SHA-256 of the canonical fixture inventory `manifest.json` is
 `059b5418cc2005d506b0ca718df1ed25109ed022e385c7b16bca3e3c4a0d8e07`.
 Within the vendorable conformance bundle this file is
@@ -72,7 +92,7 @@ absolute checkout path or an uncommitted working tree.
 
 - Bundle version: 1
 - Attention schema version: 1
-- Bundle manifest SHA-256: `61dd0d42af00df76919b1b35a303f24da51afe25d72740799ae6ca5da81a42a8`
+- Bundle manifest SHA-256: `2c29a1c6e04c3504969736494d0759f566a982d01c59ab7d8552c751a64b31fa`
 - Runtime parity: HTTP and MCP contract discovery must advertise this exact
   bundle version and manifest hash.
 - Forward compatibility: Unknown additive fields and identifiers must remain inert but decodable; never grant executable behavior from an unknown value.

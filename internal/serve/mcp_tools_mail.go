@@ -5,9 +5,12 @@ import (
 	"errors"
 
 	"github.com/hero-engine/hero/contracts/attention"
+	"github.com/hero-engine/hero/contracts/attention/mailthread"
 	"github.com/hero-engine/hero/internal/attention/mail"
+	"github.com/hero-engine/hero/internal/attention/mailquery"
 	attentionstate "github.com/hero-engine/hero/internal/attention/state"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/projectregistry"
 )
 
 func (s *MCPServer) toolMailSend(args map[string]interface{}) (string, error) {
@@ -165,6 +168,101 @@ func (s *MCPServer) toolMailShow(args map[string]interface{}) (string, error) {
 		return mailToolErrorJSON(err)
 	}
 	return mailJSON(mailMCPMessage{ListedMessage: item, Actions: mailActionDescriptors()})
+}
+
+func (s *MCPServer) toolMailThreadList(args map[string]interface{}) (string, error) {
+	request := mailthread.ThreadListRequest{
+		SchemaVersion: mailthread.SchemaVersion,
+		ProjectPeerID: stringArg(args, "project_peer_id"),
+		Bucket:        mailthread.Bucket(stringArg(args, "bucket")),
+		Lifecycle:     mailthread.Lifecycle(stringArg(args, "lifecycle")),
+		Cursor:        stringArg(args, "cursor"),
+	}
+	if _, ok := args["limit"]; ok {
+		limit, err := int64Arg(args, "limit")
+		if err != nil || int64(int(limit)) != limit {
+			message := "limit must be an integer"
+			if err == nil {
+				message = "limit is outside the supported integer range"
+			}
+			return mailJSON(mailthread.ThreadListResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailValidation(message, "limit")})
+		}
+		request.Limit = int(limit)
+	}
+	service, err := s.mailThreadQueryService()
+	if err != nil {
+		return mailJSON(mailthread.ThreadListResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailUnavailable(err.Error())})
+	}
+	return mailJSON(service.Threads(request))
+}
+
+func (s *MCPServer) toolMailThreadShow(args map[string]interface{}) (string, error) {
+	service, err := s.mailThreadQueryService()
+	if err != nil {
+		return mailJSON(mailthread.ThreadDetailResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailUnavailable(err.Error())})
+	}
+	return mailJSON(service.ThreadDetail(stringArg(args, "project_peer_id"), stringArg(args, "thread_id")))
+}
+
+func (s *MCPServer) toolMailThreadAction(args map[string]interface{}) (string, error) {
+	version, err := int64Arg(args, "schema_version")
+	if err != nil || int64(int(version)) != version {
+		return mailJSON(mailthread.ActionResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailValidation("schema_version must be an integer", "schema_version")})
+	}
+	revision, err := int64Arg(args, "thread_revision")
+	if err != nil {
+		return mailJSON(mailthread.ActionResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailValidation(err.Error(), "thread_revision")})
+	}
+	identityArgs, _ := args["identity"].(map[string]interface{})
+	request := mailthread.ActionRequest{
+		SchemaVersion: int(version),
+		Identity: mailthread.Identity{
+			ProjectPeerID: stringArg(identityArgs, "project_peer_id"),
+			ThreadID:      stringArg(identityArgs, "thread_id"),
+		},
+		ActionID:       stringArg(args, "action_id"),
+		ThreadRevision: revision,
+		IdempotencyKey: stringArg(args, "idempotency_key"),
+	}
+	if input, ok := args["input"]; ok {
+		request.Input, err = json.Marshal(input)
+		if err != nil {
+			return mailJSON(mailthread.ActionResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailValidation("input must be valid JSON", "input")})
+		}
+	}
+	service, err := s.mailThreadQueryService()
+	if err != nil {
+		return mailJSON(mailthread.ActionResponse{SchemaVersion: mailthread.SchemaVersion, Error: mailUnavailable(err.Error())})
+	}
+	return mailJSON(service.ThreadAction(request))
+}
+
+func (s *MCPServer) toolMailThreadContract(map[string]interface{}) (string, error) {
+	return mailJSON(mailthread.ContractResponse{
+		SchemaVersion: mailthread.SchemaVersion, BundleVersion: mailthread.BundleVersion,
+		BundleManifestSHA256: mailthread.ConformanceManifestSHA256, Compatibility: mailthread.Compatibility,
+	})
+}
+
+func (s *MCPServer) mailThreadQueryService() (*mailquery.Service, error) {
+	if s.mailQueryService != nil {
+		return s.mailQueryService()
+	}
+	root := s.attentionStateRoot
+	var err error
+	if root == "" {
+		root, err = attentionstate.Ensure(attentionstate.Options{ProjectRoot: s.projectRoot})
+	} else {
+		root, err = attentionstate.Ensure(attentionstate.Options{Root: root})
+	}
+	if err != nil {
+		return nil, err
+	}
+	registry, err := projectregistry.Load()
+	if err != nil {
+		return nil, err
+	}
+	return mailquery.NewService(root, registry)
 }
 
 func (s *MCPServer) toolMailAction(args map[string]interface{}) (string, error) {

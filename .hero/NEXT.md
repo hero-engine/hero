@@ -7,6 +7,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 ---
 updated: 2026-08-24T16:52:06Z
 updated: 2026-08-23T02:34:51Z
+updated: 2026-08-23T16:22:52Z
 repo: hero-engine/hero
 ---
 

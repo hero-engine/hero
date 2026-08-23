@@ -1,6 +1,6 @@
 # Hero Code Attention v1 handoff
 
-Hero Code's canonical desktop transport is Hero Serve HTTP:
+Hero Code's daemon-backed Attention transport is Hero Serve HTTP:
 
 - `GET /api/attention/v1/snapshot`
 - `POST /api/attention/v1/actions`
@@ -42,6 +42,26 @@ counts/revision, no row bodies, and no Mail summaries. Its additive `window`
 object distinguishes `current` from a successful `empty` read; structured
 `unavailable` is never an empty snapshot. Full Mail content remains an explicit
 `hero_mail_show` read.
+
+## Embedded Mail thread lifecycle transport
+
+Bundled desktop clients can use the authoritative Project Mail thread
+lifecycle directly through MCP:
+
+- `hero_mail_thread_list` → `ThreadListResponse`
+- `hero_mail_thread_show` → `ThreadDetailResponse`
+- `hero_mail_thread_action` → `ActionResponse`
+- `hero_mail_thread_contract` → `ContractResponse`
+
+These tools are transport adapters to the same Mail query authority used by
+the HTTP thread endpoints. They return the existing versioned `mailthread`
+envelopes and do not reclassify threads, generate cursors, or own lifecycle
+policy. `thread_revision` is a decimal int64 string at the MCP boundary so the
+adapter can preserve the exact revision in `ActionRequest` without JSON number
+rounding. Bundled MCP clients do not need `hero serve` or an HTTP daemon.
+
+The legacy `hero_mail_list`, `hero_mail_show`, and `hero_mail_action` tools
+remain additive compatibility surfaces with unchanged message-level shapes.
 
 The exact SHA-256 of the canonical fixture inventory `manifest.json` is
 `059b5418cc2005d506b0ca718df1ed25109ed022e385c7b16bca3e3c4a0d8e07`.

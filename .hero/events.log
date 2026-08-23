@@ -578,3 +578,13 @@
 {"ts":"2026-08-24T01:49:29.189699Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"remove-invented-preview-marketing-copy","message":"\"Remove Invented Preview and Internal Launch Copy from Public Marketing\""}
 {"ts":"2026-08-24T01:49:29.18981Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"remove-invented-preview-marketing-copy","message":"status -\u003e completed"}
 {"ts":"2026-08-23T00:45:42.353185Z","type":"mail.promote","agent":"hero-mail","slug":"mail-b7ca19966ac5041e6ff604dd","message":"promote mail_b7ca19966ac5041e6ff604dd (thread mail_b7ca19966ac5041e6ff604dd)"}
+{"ts":"2026-08-23T01:16:31.392859Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mail-b7ca19966ac5041e6ff604dd","message":"\"Mail thread lifecycle contract and state\""}
+{"ts":"2026-08-23T01:16:31.393021Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mail-b7ca19966ac5041e6ff604dd","message":"status -\u003e completed"}
+{"ts":"2026-08-23T01:55:15.497733Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mail-d20bcb1654f2bb82d4d973b1","message":"\"Mail typed resolution and reconciliation\""}
+{"ts":"2026-08-23T01:55:15.497817Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mail-d20bcb1654f2bb82d4d973b1","message":"status -\u003e completed"}
+{"ts":"2026-08-23T02:27:58.355439Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mail-da2727fd11615a9cafa5125c","message":"\"Mail thread attention projection and history\""}
+{"ts":"2026-08-23T02:27:58.355529Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mail-da2727fd11615a9cafa5125c","message":"status -\u003e completed"}
+{"ts":"2026-08-23T02:38:45.914707Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mail-thread-foreground-read-action","message":"Mail Thread Foreground Read Action"}
+{"ts":"2026-08-23T02:38:45.916474Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mail-thread-foreground-read-action","message":"status -\u003e completed"}
+{"ts":"2026-08-23T16:22:37.501278Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"project-mail-thread-lifecycle-mcp-parity","message":"\"Project Mail thread lifecycle contract is HTTP-only and unavailable to bundled clients\""}
+{"ts":"2026-08-23T16:22:37.501379Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"project-mail-thread-lifecycle-mcp-parity","message":"status -\u003e completed"}
