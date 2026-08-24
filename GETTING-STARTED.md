@@ -44,7 +44,7 @@ hero --version
 hero --help
 ```
 
-Building from source requires the version in `go.mod`, currently Go 1.26.4.
+Building from source requires the version in `go.mod`, currently Go 1.26.6.
 See the [installation guide](web/docs/src/getting-started/installation.md) for
 direct downloads and source-build instructions.
 

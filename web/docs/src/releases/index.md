@@ -4,6 +4,25 @@ Every release published to `hero-engine/hero-releases`, generated
 automatically at docs build time. Pick a version in the left nav to jump
 to its notes.
 
+## v0.34.0 — 2026-08-24
+
+### Major Features
+
+- f0fb1d39eeff33e1c1d08ef681bc9c31a6a0a205 feat(docs): add public documentation drift gate
+- b224c44ec9c4489b8d8d42ea27049911dd9cb9a2 feat(domains): add dual-mode PM and QA composition
+- bbf646b4ee11cc877c4ede776a0b09da25db810d feat(pm): deliver public capability pack
+- 2ca8f64e315eb9de221e32bd535bf7ac64a25653 feat(qa): deliver public capability pack
+- db0becd7aa4184bb776a7a5b3cc91cab493a038d feat(release): add reproducible v0.34 candidate path
+
+### Fixes
+
+- 4125d80108a81b16aa1815432d2904b573a5af9c fix(marketing): remove invented preview qualifiers
+- 0cbccb02159f74d112cdfb277244dbca19faecac fix(release): close candidate audit gaps
+- b270ecabe48866f2d7cb49e66a77c77b07c3bb63 fix(release): keep candidate builds unpublished
+- 3d21db89e624e3b9b723630c4df7a0c0d33bc269 fix(release): normalize candidate repository path
+- 05b42986ba713eb16b813e5f84d5bad200e1d68f fix(release): reuse candidate build directories
+- 6e639fea244ed3a58c1f5a7e9c3abb8848f4a178 fix: close Apache grant audit gaps
+
 ## v0.33.0 — 2026-08-18
 
 ### Major Features

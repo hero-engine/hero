@@ -250,7 +250,7 @@ own licenses; see `THIRD_PARTY_NOTICES.txt` for redistributed dependencies.
 ## Build from source
 
 Building from source requires the Go version declared by `go.mod`, currently
-Go 1.26.4:
+Go 1.26.6:
 
 ```bash
 make build

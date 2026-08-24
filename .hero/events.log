@@ -588,3 +588,7 @@
 {"ts":"2026-08-23T02:38:45.916474Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mail-thread-foreground-read-action","message":"status -\u003e completed"}
 {"ts":"2026-08-23T16:22:37.501278Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"project-mail-thread-lifecycle-mcp-parity","message":"\"Project Mail thread lifecycle contract is HTTP-only and unavailable to bundled clients\""}
 {"ts":"2026-08-23T16:22:37.501379Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"project-mail-thread-lifecycle-mcp-parity","message":"status -\u003e completed"}
+{"ts":"2026-08-24T16:23:36.207502Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-public-visibility-launch-gate","message":"\"Hero Public Visibility and v0.34 Launch Gate\""}
+{"ts":"2026-08-24T16:23:36.207609Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-public-visibility-launch-gate","message":"status -\u003e completed"}
+{"ts":"2026-08-24T16:23:37.70472Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-marketing","message":"\"Hero v0.34 Public Release Readiness\""}
+{"ts":"2026-08-24T16:23:37.70482Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-marketing","message":"status -\u003e completed"}

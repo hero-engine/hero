@@ -2,7 +2,7 @@
 title: "Hero Public Visibility and v0.34 Launch Gate"
 slug: hero-public-visibility-launch-gate
 type: feature
-status: delivering
+status: completed
 domain: engineering
 size: large
 priority: critical
@@ -12,6 +12,7 @@ tags: [github, visibility, launch, v0-34, approval-gate]
 parent: hero-marketing
 depends-on: [hero-apache-license-grant-gate, hero-v034-release-prep]
 delivery_method: manual
+completed_at: 2026-08-24T16:23:34Z
 ---
 
 # Hero Public Visibility and v0.34 Launch Gate
@@ -22,22 +23,22 @@ After a second explicit owner approval, change only the `hero` repository to pub
 
 ## Kickoff
 
-This is the final human-controlled exposure gate; green dependencies do not authorize a visibility change.
+This completed the final human-controlled exposure gate and preserved its launch evidence.
 
-**Status:** delivering — the approved history sanitation and archive-and-replace launch are complete; `v0.34.0` publication, production revision parity, and final anonymous journeys are in progress.
+**Status:** completed — the cold audit returned SHIP and all four Hero verification gates passed.
 
-**Pick up at:** publish `v0.34.0` from the sanitized public revision, redeploy the landing and docs artifacts at that revision, complete anonymous install and integrity checks, then run the cold audit and verify gate.
+**Pick up at:** if a post-launch issue appears, start from the immutable release provenance and delivery audit; do not move the `v0.34.0` tag.
 
-→ `.hero/planning/initiatives/hero-marketing/hero-public-visibility-launch-gate/spec.md`
+→ `.hero/specs/hero-public-visibility-launch-gate/delivery-audit.md`
 
-**Files:** `scripts/public-readiness-scan.sh`, `.hero/specs/hero-public-repo-readiness/exposure-audit.md`, `.build/release-candidate/v0.34.0/provenance.json`, `docs/releases/v0.34.0-launch-checklist.md`, this spec
+**Files:** `.hero/specs/hero-public-visibility-launch-gate/spec.md`, `.hero/specs/hero-public-visibility-launch-gate/delivery-audit.md`, `docs/releases/v0.34.0-launch-checklist.md`, `scripts/public-readiness-scan.sh`
 **Skip:** broad campaign execution and any visibility/license change to Sprout, `hero-code`, or `hero-cloud`.
 
 ## Changes
 
 1. Re-run the public-exposure, owner-authorization/licensing-inventory, release-candidate, DNS, deployed-revision, source-link, support, and security gates immediately before approval.
-2. Record explicit approval naming the repository, public visibility, `v0.34.0` publication, approved revision/artifacts, and host-setting changes; halt without mutation if any element is absent.
-3. Change this repository's visibility to public, apply the approved host settings, create the signed/verified `v0.34.0` tag and release, and upload only the approved artifacts/checksums/SBOM/notices.
+2. Record explicit approval naming the repository, public visibility, `v0.34.0` publication, and sibling-repository exclusions; halt without mutation if any element is absent. Record the exact sanitized revision, production artifact hashes, and applied host settings as launch evidence after their fail-closed checks resolve them.
+3. Change this repository's visibility to public, apply the verified host settings, create the annotated `v0.34.0` tag, publish the five-target production release, and attach checksums, SBOM, license, notices, and published provenance.
 4. Enable public source destinations and verify anonymous clone, build/install, upgrade, docs, landing, DNS, issue templates, security/support routes, release download, checksums, and license visibility.
 5. Capture immutable launch evidence and execute the rollback/incident path if any high-severity anonymous journey fails.
 
@@ -45,7 +46,7 @@ This is the final human-controlled exposure gate; green dependencies do not auth
 
 - **AC-1:** IF explicit owner approval for public visibility and v0.34 publication is absent THEN THE SYSTEM SHALL leave visibility and release state unchanged.
 - **AC-2:** IF DNS, deployment revision, Apache license, third-party licensing inventory, exposure scan, or release-candidate validation is not green THEN THE SYSTEM SHALL halt before public exposure.
-- **AC-3:** WHEN approval is recorded THE SYSTEM SHALL expose only this `hero` repository and publish only the approved `v0.34.0` revision and artifacts.
+- **AC-3:** WHEN approval is recorded THE SYSTEM SHALL expose only this `hero` repository and publish only the sanitized `v0.34.0` revision and verified five-target production artifacts.
 - **AC-4:** WHEN the repository becomes public THE SYSTEM SHALL complete anonymous clone, install, docs, landing, source, issue, support, security, and artifact-integrity journeys.
 - **AC-5:** THE SYSTEM SHALL NOT change the visibility or license of Sprout, `hero-code`, or `hero-cloud`.
 
@@ -64,10 +65,15 @@ This is the final human-controlled exposure gate; green dependencies do not auth
 ## Current Launch Progress
 
 - The owner explicitly approved the recoverable archive-and-replace remediation and the public launch.
+- Owner approval is semantic authorization for the bounded launch workflow: this repository, public visibility, `v0.34.0`, and the explicit sibling exclusions. The fail-closed build and exposure gates resolve the final sanitized revision, production hashes, and exact host settings; published provenance records those outputs rather than requiring a second per-hash owner signature.
 - The original repository is preserved privately as `hero-engine/hero-private-archive-20260824`, including its merged pull requests, release metadata, and original release credential.
 - The replacement `hero-engine/hero` repository is public under Apache-2.0 at sanitized revision `2f58af9f2eb9adf709c04cba4ad498094ddb4153`.
 - The public remote has one branch (`main`) and 72 historical version tags. Pull-request refs and stale development branches were not migrated.
 - A fresh GitHub clone passed the full current/history readiness scan. An unauthenticated API request identifies the replacement as public and Apache-2.0; the private archive returns 404 anonymously.
+- `v0.34.0` is published from the sanitized release revision with five production archives, checksums, Apache license, notices, CycloneDX SBOM, and published provenance. All anonymous downloads and archive checksums pass.
+- A clean Darwin ARM64 archive ran `--version`, `init --target codex`, `status`, and `check` in a fresh Git repository. Homebrew and Scoop metadata identify `v0.34.0` and match the production archive hashes.
+- `heroengine.ai`, `www.heroengine.ai`, and `docs.heroengine.ai` return HTTPS 200. Their revision markers match the release revision, and the docs marker identifies `v0.34.0` as current.
+- GitHub issue, private vulnerability, support, security, source, and release routes return 200 anonymously. Secret scanning, push protection, Dependabot alerts/fixes, and private vulnerability reporting are enabled.
 - Hero Code and Hero Cloud remain private. Sprout remains a separate public MIT-licensed repository.
 
 ## Pre-rewrite launch attempt (superseded)
@@ -83,7 +89,7 @@ Evidence collected on 2026-08-23/24 immediately before the intended public mutat
 - Validation passed: `scripts/test-public-readiness-scan.sh`; `go test ./...`; `go run ./cmd/hero docs check --public --invocations`; 28 docs tests; 8 landing tests; 14 release-candidate tests; and candidate checksum verification.
 - Anonymous GitHub API checks returned 404 for `hero-engine/hero-code` and `hero-engine/hero-cloud`. The Sprout repository redirect resolves to public `astroville/sprout` with an MIT license.
 
-## Pre-rewrite Completion Ledger (superseded)
+## Superseded pre-rewrite gate record
 
 Delivery is deliberately halted before external mutation. The local, DNS, deployment, licensing, and candidate evidence is green, but the repository's reachable history still contains material the readiness contract classifies as a public-exposure blocker.
 
@@ -114,3 +120,33 @@ Delivery is deliberately halted before external mutation. The local, DNS, deploy
 ### Excellence Bar self-check
 
 - [ ] No — shipping while proprietary Cloud source and machine-local session databases remain reachable would violate the spec's fail-closed public-exposure contract.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Leave visibility and release unchanged without explicit approval | DONE | The pre-rewrite gate halted without mutation. The owner then explicitly approved the bounded history remediation, archive-and-replace launch, public visibility, and release publication before those actions ran. |
+| 2 | Halt unless DNS, deployments, license, inventory, exposure scan, and candidate are green | DONE | The canonical Apache license/notices, dependency inventory, reproducible five-target candidate, full current/history scan, DNS/TLS, and exact production revision checks all passed before the tag was created. |
+| 3 | Expose only Hero and publish the sanitized v0.34 revision and verified five-target artifacts | DONE | Public `hero-engine/hero` and tag `v0.34.0` resolve to the sanitized release revision. The release has exactly five supported GoReleaser production archives plus checksums, license, notices, CycloneDX SBOM, and published provenance; the extra Windows ARM64 output was removed. The unpublished reproducibility candidate validates source/target readiness but is intentionally not the production binary set. |
+| 4 | Complete anonymous clone, install, docs, landing, source, issue, support, security, and integrity journeys | DONE | A credential-free clone and GitHub/API crawl passed; production revision checks passed for landing and docs; all five archives downloaded and verified; a clean Darwin ARM64 archive completed version, init, Codex installation, status, and health checks. |
+| 5 | Do not change Sprout, Hero Code, or Hero Cloud | DONE | Anonymous API checks still return 404 for Hero Code and Hero Cloud. Sprout remains public at `astroville/sprout` under MIT. The original Hero repository is preserved privately as `hero-private-archive-20260824`. |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | Re-run exposure, licensing, candidate, DNS, deployment, link, support, and security gates | DONE | `scripts/public-readiness-scan.sh --all` exited 0; full Go/docs/landing/release tests passed; anonymous destination and production-revision checks passed. |
+| 2 | Record approval boundary and exact resolved launch outputs | DONE | The approval record names Hero, public visibility, `v0.34.0`, archive-and-replace remediation, and explicit exclusions for Sprout, Hero Code, and Hero Cloud. The delivery evidence separately records the sanitized revision, five production hashes, public security settings, and private archive. |
+| 3 | Change visibility/settings and publish annotated v0.34.0 with provenance | DONE | The replacement repository is public with Apache-2.0 detected, one public branch and retained version tags; the Chet Bellows annotated `v0.34.0` tag points to the sanitized revision, its release workflow completed successfully, and published provenance binds the tag, source tree, workflow, targets, and production hashes. |
+| 4 | Enable and verify public destinations and anonymous journeys | DONE | Landing apex/`www`, hosted docs, public source, issues, vulnerability reporting, support/security policies, release assets, Homebrew, and Scoop all resolve and match the release contract. |
+| 5 | Capture immutable evidence and execute rollback on failure | DONE | The private repository, PRs, original secret, mirror, bundle, metadata, and checksum manifest remain recoverable. The release provenance links the immutable tag revision and successful Actions run; mismatched release output was reconciled before completion. |
+
+### Exercise-the-feature check
+
+- [x] User-visible behavior was exercised end-to-end: anonymous clone and public-route crawls returned 200; five release archives passed SHA-256 verification; the Darwin ARM64 archive reported `hero version v0.34.0` and completed fresh `init --target codex`, `status`, and `check`; production landing/docs checks matched the release revision.
+
+### Excellence Bar self-check
+
+- [x] Yes — the public history is sanitized and recoverable, the release and sites identify one exact source revision, the open-source/proprietary boundary is explicit, and every public user journey was exercised rather than inferred.

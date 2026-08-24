@@ -393,7 +393,8 @@ def build_once(
     readme = candidate_readme(identity, hero_license)
     (output / "LICENSE").write_bytes(license_text)
     (output / "THIRD_PARTY_NOTICES.txt").write_bytes(notices)
-    (output / "hero-v0.34.0.cdx.json").write_bytes(sbom)
+    sbom_name = f"hero-{identity['version']}.cdx.json"
+    (output / sbom_name).write_bytes(sbom)
 
     artifact_hashes: dict[str, str] = {}
     for goos, goarch in TARGETS:
@@ -417,7 +418,7 @@ def build_once(
 
     artifact_hashes["LICENSE"] = sha256(output / "LICENSE")
     artifact_hashes["THIRD_PARTY_NOTICES.txt"] = sha256(output / "THIRD_PARTY_NOTICES.txt")
-    artifact_hashes["hero-v0.34.0.cdx.json"] = sha256(output / "hero-v0.34.0.cdx.json")
+    artifact_hashes[sbom_name] = sha256(output / sbom_name)
     provenance = {
         **identity,
         "go_version": go_version,
@@ -527,9 +528,9 @@ def build_candidate(root: Path, output: Path, version: str, base: str, smoke: bo
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", default="v0.34.0")
-    parser.add_argument("--base", default="v0.33.0")
-    parser.add_argument("--output", default=".build/release-candidate/v0.34.0")
+    parser.add_argument("--version", default="v0.34.1")
+    parser.add_argument("--base", default="v0.34.0")
+    parser.add_argument("--output", default=".build/release-candidate/v0.34.1")
     parser.add_argument("--no-smoke", action="store_true", help="skip the native clean-install smoke")
     args = parser.parse_args()
     try:

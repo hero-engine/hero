@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy:
-        description: "Deploy the validated artifact to Cloudflare Pages"
+        description: "Deploy the validated artifact to the Cloudflare Worker"
         type: boolean
         default: false
 
@@ -100,7 +100,7 @@ jobs:
           name: hero-docs-${{ github.sha }}
           path: web/docs/site
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Workers
         if: >
           (github.event_name == 'workflow_dispatch' && inputs.deploy) ||
           (github.event_name == 'push' && vars.DEPLOY_DOCS == 'true')
@@ -108,7 +108,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy web/docs/site --project-name hero-docs --branch main --commit-hash ${{ github.sha }}
+          workingDirectory: web/docs
+          command: deploy
 
       - name: Verify deployed documentation revision and production paths
         if: >
