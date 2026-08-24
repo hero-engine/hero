@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-24T00:41:09Z
+updated: 2026-08-24T00:45:55Z
 repo: hero-engine/hero
 ---
 
@@ -10,19 +10,17 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 31 commit(s) since, last set 9d 8h ago_
+_possibly stale — 32 commit(s) since, last set 9d 8h ago_
 
 ## Last user ask
 
 > Finish the Apache-2.0 grant prep, commit the full working tree as Chet Bellows, and stop before visibility, tagging, release, or deploy
 
+_possibly stale — 1 commit(s) since, last set 15m ago_
+
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> let's run the public visibility and v0.34 launch gate, then publish the docs and site from the approved revision
 
 ## Recent reflections
 

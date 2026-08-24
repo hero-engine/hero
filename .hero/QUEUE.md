@@ -6,23 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-24T00:41:09Z · 84 ready specs_
-
-## hero-apache-license-grant-gate — "Hero Apache-2.0 License Grant Gate"
-_feature · delivering · horizon: now_
-
-Adds Apache-2.0 to the `hero` repository while keeping visibility, publication, Hero Code, Hero Cloud, and Sprout outside the mutation.
-
-**Status:** in-review — the licensed source and reproducible candidate are complete; cold audit and verification are the remaining closing gates.
-
-**Pick up at:** cold-audit the ledger and exact candidate evidence, then close through `hero spec verify` if the verdict is SHIP.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-apache-license-grant-gate/spec.md`
-
-**Files:** `LICENSE`, `THIRD_PARTY_NOTICES.txt`, `scripts/release_candidate.py`, `internal/cli/public_docs_check.go`, this spec
-**Skip:** repository visibility, release publication, Sprout mutation, and any license change to `hero-code` or `hero-cloud`.
-
----
+_Generated: 2026-08-24T00:45:55Z · 84 ready specs_
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -51,6 +35,22 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
+
+---
+
+## hero-public-visibility-launch-gate — "Hero Public Visibility and v0.34 Launch Gate"
+_feature · planning · horizon: now_
+
+This is the final human-controlled exposure gate; green dependencies do not authorize a visibility change.
+
+**Status:** planning — the repository remains private, public source links are dead, `heroengine.ai` does not resolve, and no visibility approval has been given.
+
+**Pick up at:** present the final anonymous-exposure scan, Apache grant, DNS/deployment state, artifact identifiers, host-setting changes, and rollback plan for explicit approval.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-public-visibility-launch-gate/spec.md`
+
+**Files/components:** repository visibility/settings, `v0.34.0` tag/release, release artifacts/checksums, public source links, docs/landing/DNS, anonymous clone/install checks, launch evidence
+**Skip:** broad campaign execution and any visibility/license change to Sprout, `hero-code`, or `hero-cloud`.
 
 ---
 

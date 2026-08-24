@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-08-24T00:34:09Z · projected from 666 source nodes_
+_Last refreshed: 2026-08-24T00:45:55Z · projected from 666 source nodes_
 
 ## Surfaces
 
@@ -35,7 +35,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 16/20 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
-- **"Hero v0.34 Public Release Readiness"** (surface: serve) — 9/11 specs done; in flight: hero-apache-license-grant-gate
+- **"Hero v0.34 Public Release Readiness"** (surface: serve) — 10/11 specs done
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 3/8 specs done
 - **"Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"** (surface: core) — 0/5 specs done
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
@@ -52,20 +52,20 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Recently completed (last 14 days)
 
-- **(unassigned)** — hero-v034-release-prep, hero-public-repo-readiness, hero-landing-message-refresh, hero-root-docs-remediation, hero-hosted-docs-remediation, hero-positioning, hero-licensing-boundary-and-provenance, hero-public-truth-baseline, dual-mode-pm-qa-capability-packs, qa-public-pack, pm-public-pack
+- **(unassigned)** — hero-apache-license-grant-gate, hero-v034-release-prep, hero-public-repo-readiness, hero-landing-message-refresh, hero-root-docs-remediation, hero-hosted-docs-remediation, hero-positioning, hero-licensing-boundary-and-provenance, hero-public-truth-baseline, dual-mode-pm-qa-capability-packs, qa-public-pack
 - **serve** — hero-public-docs-drift-guard
 
 ## Next up across surfaces
 
-1. **(unassigned)** — `hero-apache-license-grant-gate` (critical, delivering)
-2. **landing** — `hero-landing-page` (P0, delivering)
-3. **serve** — `agent-outposts` (medium, delivering)
-4. **serve** — `retrieval-contradiction-detection` (—, delivering)
-5. **(unassigned)** — `team-connect` (—, delivering)
+1. **landing** — `hero-landing-page` (P0, delivering)
+2. **serve** — `agent-outposts` (medium, delivering)
+3. **serve** — `retrieval-contradiction-detection` (—, delivering)
+4. **(unassigned)** — `team-connect` (—, delivering)
+5. **(unassigned)** — `always-on-runtime` (P0, planning)
 
 ## Open risks & blockers
 
-- **Blocked specs (12):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-docs-site); `hero-landing-page` (waits on hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-landing-page, hero-distribution, hero-demo-content); `hero-public-visibility-launch-gate` (waits on hero-apache-license-grant-gate); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
+- **Blocked specs (11):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-docs-site); `hero-landing-page` (waits on hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
 - **Stale-in-flight (3):** `retrieval-contradiction-detection` (44d), `agent-outposts` (43d), `team-connect` (43d).
 - **Aged open bugs (16):** `install-target-emits-both-claude-and-agents-md` (open 101d), `next-project-file-conflict-not-regenerated` (open 82d), `desktop-sidebar-mcp-not-running` (open 81d), `hihcp-agents-md-harness-agnostic` (open 76d), `hihcp-mcp-auto-reconnect` (open 76d), `hihcp-mcp-first-turn-readiness` (open 76d), `hihcp-permission-bridge-validation` (open 76d), `hihcp-agent-loop-error-recovery` (open 76d), `hihcp-rgignore` (open 76d), `jira-connection-onboarding-misleads-agents` (open 41d), `resume-emits-dead-recall-command` (open 41d), `tracker-backed-diagnosis-publication-contract-broken` (open 36d), `tracker-semantic-priority-field-mapping` (open 35d), `jira-import-classification-obscures-work-items` (open 35d), `ledger-signoff-substring-match-fails-open` (open 30d), `graph-unpartitioned-writers-duplicate-nodes` (open 30d).
 - **Unassigned specs (256) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.

@@ -2,7 +2,7 @@
 title: "Hero Apache-2.0 License Grant Gate"
 slug: hero-apache-license-grant-gate
 type: feature
-status: delivering
+status: completed
 domain: engineering
 size: small
 priority: critical
@@ -12,6 +12,7 @@ tags: [apache-2, licensing, approval-gate, legal]
 parent: hero-marketing
 depends-on: [hero-v034-release-prep, hero-licensing-boundary-and-provenance, hero-public-repo-readiness]
 delivery_method: manual
+completed_at: 2026-08-24T00:45:24Z
 ---
 
 # Hero Apache-2.0 License Grant Gate
@@ -24,11 +25,11 @@ After owner authorization and all third-party inventory blockers are clear, obta
 
 Adds Apache-2.0 to the `hero` repository while keeping visibility, publication, Hero Code, Hero Cloud, and Sprout outside the mutation.
 
-**Status:** in-review — the licensed source and reproducible candidate are complete; cold audit and verification are the remaining closing gates.
+**Status:** completed — the licensed source and reproducible candidate passed a fresh cold audit and `hero spec verify`.
 
-**Pick up at:** cold-audit the ledger and exact candidate evidence, then close through `hero spec verify` if the verdict is SHIP.
+**Pick up at:** use the separate public-visibility and v0.34 launch gate before changing repository visibility, tagging, publishing, or deploying.
 
-→ `.hero/planning/initiatives/hero-marketing/hero-apache-license-grant-gate/spec.md`
+→ `.hero/specs/hero-apache-license-grant-gate/spec.md`
 
 **Files:** `LICENSE`, `THIRD_PARTY_NOTICES.txt`, `scripts/release_candidate.py`, `internal/cli/public_docs_check.go`, this spec
 **Skip:** repository visibility, release publication, Sprout mutation, and any license change to `hero-code` or `hero-cloud`.
