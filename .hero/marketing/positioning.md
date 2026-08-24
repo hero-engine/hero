@@ -229,5 +229,5 @@ Hero is a project memory and delivery system for AI-assisted engineering. It pre
 | Landing page | Lead with “Your project remembers. Your agents deliver.” and show one concrete, revision-tied proof for each system. |
 | Continuity proof | Test the cross-harness memory outcome without pre-declaring it proven; publish the result and prerequisites even if it fails. |
 | Drift guard | Enforce prohibited claims, valid commands/configuration, derived inventories, release versions, deployment revision, and production links. |
-| Repository readiness | Describe only this repository's future grant; keep Hero Code, Hero Cloud, and Sprout outside the boundary. |
+| Repository readiness | Describe only this repository's current Apache-2.0 grant; keep Hero Code, Hero Cloud, and Sprout outside the boundary. |
 | Release and launch gates | Keep open-source, public visibility, release publication, and live-site claims behind their named approvals and evidence. |

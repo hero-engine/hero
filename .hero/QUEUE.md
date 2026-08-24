@@ -6,20 +6,20 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-24T00:34:09Z · 84 ready specs_
+_Generated: 2026-08-24T00:41:09Z · 84 ready specs_
 
 ## hero-apache-license-grant-gate — "Hero Apache-2.0 License Grant Gate"
 _feature · delivering · horizon: now_
 
-This gate has the owner's explicit authorization and is being delivered only for the approved repository boundary.
+Adds Apache-2.0 to the `hero` repository while keeping visibility, publication, Hero Code, Hero Cloud, and Sprout outside the mutation.
 
-**Status:** delivering — apply and verify the approved Apache-2.0 grant, then stop before visibility or publication.
+**Status:** in-review — the licensed source and reproducible candidate are complete; cold audit and verification are the remaining closing gates.
 
-**Pick up at:** finish the licensed candidate validation, cold-audit the evidence, and close through `hero spec verify`.
+**Pick up at:** cold-audit the ledger and exact candidate evidence, then close through `hero spec verify` if the verdict is SHIP.
 
 → `.hero/planning/initiatives/hero-marketing/hero-apache-license-grant-gate/spec.md`
 
-**Files/components:** root `LICENSE`, `NOTICE` only when required, package/repository license metadata, public license references, approval evidence
+**Files:** `LICENSE`, `THIRD_PARTY_NOTICES.txt`, `scripts/release_candidate.py`, `internal/cli/public_docs_check.go`, this spec
 **Skip:** repository visibility, release publication, Sprout mutation, and any license change to `hero-code` or `hero-cloud`.
 
 ---

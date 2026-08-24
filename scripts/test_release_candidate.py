@@ -173,7 +173,7 @@ class ReleaseCandidateTests(unittest.TestCase):
             "checksums.txt",
         ):
             self.assertIn(expected, checklist)
-        self.assertEqual(10, checklist.count("| GATED |"))
+        self.assertEqual(6, checklist.count("| GATED |"))
 
 
 if __name__ == "__main__":
