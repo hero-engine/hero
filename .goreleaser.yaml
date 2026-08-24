@@ -69,7 +69,7 @@ brews:
     description: "Persistent project memory and delivery workflows for AI engineering agents"
     license: "Apache-2.0"
     commit_author:
-      name: hero-engine-bot
+      name: Chet Bellows
       email: 277887514+chet-bellows@users.noreply.github.com
     install: |
       bin.install "hero"
@@ -87,7 +87,7 @@ scoops:
     description: "Persistent project memory and delivery workflows for AI engineering agents"
     license: "Apache-2.0"
     commit_author:
-      name: hero-engine-bot
+      name: Chet Bellows
       email: 277887514+chet-bellows@users.noreply.github.com
 
 release:
