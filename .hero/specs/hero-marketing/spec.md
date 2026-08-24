@@ -2,7 +2,7 @@
 title: "Hero v0.34 Public Release Readiness"
 slug: hero-marketing
 type: initiative
-status: planning
+status: completed
 domain: engineering
 size: giant
 priority: critical
@@ -27,29 +27,41 @@ relations:
     kind: related
   - target: generated-command-refs-validated
     kind: related
+completed_at: 2026-08-24T16:23:36Z
 ---
 
 # Hero v0.34 Public Release Readiness
 
 ## Vision
 
-Hero v0.34 presents one accurate, supportable public product: the `hero` CLI and this repository explain what is shipped, install and operate as documented, expose current hosted docs and landing pages, carry the minimum collaboration and security surfaces expected of a public repository, and are ready for an explicitly approved Apache-2.0 grant and public visibility change.
+Hero v0.34 presents one accurate, supportable public product: the `hero` CLI and this Apache-2.0 repository explain what is shipped, install and operate as documented, expose current hosted docs and landing pages, and carry the collaboration and security surfaces expected of a public repository.
 
-The public boundary is narrow. The `hero` repository is the candidate Apache-2.0 work. Sprout is a separately owned, public MIT-licensed dependency. `hero-code` and `hero-cloud` remain proprietary and must not be relicensed, copied into this repository, or represented as part of Hero's open-source grant.
+The public boundary is narrow. The `hero` repository is Apache-2.0. Sprout is a separately owned, public MIT-licensed dependency. `hero-code` and `hero-cloud` remain proprietary and must not be relicensed, copied into this repository, or represented as part of Hero's open-source grant.
 
 ## Goal
 
-Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
+Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, an Apache-2.0 public repository, and a verified release.
+
+## Kickoff
+
+Closes the Hero v0.34 public-release initiative after the approved repository, release, docs, landing, and anonymous install launch.
+
+**Status:** completed — every declared child is delivered and the initiative auto-completed after the final SHIP audit and verify gate.
+
+**Pick up at:** use the archived launch audit and checklist for post-launch operations; create a new spec for any v0.34 follow-up.
+
+→ `.hero/specs/hero-public-visibility-launch-gate/delivery-audit.md`
+
+**Files:** `.hero/specs/hero-marketing/spec.md`, `.hero/specs/hero-public-visibility-launch-gate/spec.md`, `.hero/specs/hero-public-visibility-launch-gate/delivery-audit.md`, `docs/releases/v0.34.0-launch-checklist.md`
 
 ## Current reality
 
-- The latest release tag is `v0.33.0`; this initiative targets `v0.34.0`.
-- The repository has no `LICENSE`. Hero's sole owner has stated that he owns the repository content and authorizes preparing it for an Apache-2.0 grant; the remaining license review concerns third-party dependencies and bundled assets, not contributor consent.
-- Only the `hero` CLI/repository is in this Apache-2.0 licensing scope. Sprout is a separately owned public MIT project. `hero-code` and `hero-cloud` remain proprietary by product choice.
-- The deployed docs are stale as of June 11 even though newer pages exist in source. A green local build does not prove the public site is current.
-- `heroengine.ai` does not currently resolve. Domain and deployment restoration are release blockers.
-- Documentation dependencies are loosely bounded and the build warns about future incompatibility with MkDocs 2.0.
-- Public source links are dead while the repository is private. They must remain hidden or clearly unavailable until the visibility gate succeeds.
+- `hero-engine/hero` is public under Apache-2.0 and `v0.34.0` is the current release.
+- The public history was sanitized through a bounded, recoverable rewrite. The original repository remains private with its pull requests, settings, and release credential intact.
+- Only the `hero` CLI/repository is in this Apache-2.0 scope. Sprout remains a separate public MIT project; Hero Code and Hero Cloud remain proprietary and private.
+- `heroengine.ai`, `www.heroengine.ai`, and `docs.heroengine.ai` are live at the release source revision.
+- Public source, issue, private vulnerability, support, security, release, Homebrew, and Scoop routes are anonymously available and verified.
+- Documentation dependencies remain compatibility-bounded, and public-doc validation checks source truth plus deployed revision parity.
 
 The durable claim audit and evidence taxonomy live in [`content-truth-audit.md`](content-truth-audit.md).
 
@@ -160,7 +172,7 @@ The four deferred growth specs no longer declare `hero-marketing` as parent. The
 - No launch campaign, Product Hunt/HN calendar, newsletter, social cadence, analytics backend, pricing, enterprise collateral, or broad community-growth program.
 - No broad visual brand overhaul; only changes needed for a coherent, truthful, accessible public surface.
 - No changing product behavior merely to preserve stale docs. Documentation follows the supported contract.
-- No history rewrite or contributor-rights investigation. The owner's authorization is authoritative for Hero-owned content; unresolved third-party licensing remains a blocker to surface.
+- No contributor-rights investigation. The owner's authorization is authoritative for Hero-owned content. The owner separately approved the bounded, recoverable history sanitation required for public exposure.
 
 ## Verification
 
@@ -186,3 +198,4 @@ The four deferred growth specs no longer declare `hero-marketing` as parent. The
 - 2026-08-21 — Expanded in place into the v0.34 public-readiness plan with bounded licensing, repository, release, Apache grant, and visibility gates; no repository license, visibility, public site, docs, code, or release state was changed.
 - 2026-08-23 — Owner authorization recorded, autonomous preparation armed, and public positioning sharpened to lead with durable project memory plus its connected spec-and-agent delivery system.
 - 2026-08-23 — Removed the cross-tool continuity demonstration from the initiative and release critical path. Optional synthetic install animation work remains separate and cannot block v0.34.
+- 2026-08-24 — Archived the original private repository, published the sanitized Apache-2.0 replacement and `v0.34.0`, deployed landing/docs at the release revision, and completed the anonymous clone/install/support/artifact journeys. Hero Code/Cloud remained private and Sprout remained separate under MIT.

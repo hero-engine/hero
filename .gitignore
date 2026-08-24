@@ -27,6 +27,7 @@ index.db-shm
 # Keep the durable call/result state local; public specs may retain only their
 # deliberately authored handoff summaries and interface contracts.
 .hero/peer-calls/
+.wrangler/
 
 # MCP daemon runtime state (per-process singleton pidfile + debug log) — ephemeral
 .hero/mcp-*.pid

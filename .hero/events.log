@@ -577,3 +577,7 @@
 {"ts":"2026-08-24T00:45:25.799947Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-apache-license-grant-gate","message":"status -\u003e completed"}
 {"ts":"2026-08-24T01:49:29.189699Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"remove-invented-preview-marketing-copy","message":"\"Remove Invented Preview and Internal Launch Copy from Public Marketing\""}
 {"ts":"2026-08-24T01:49:29.18981Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"remove-invented-preview-marketing-copy","message":"status -\u003e completed"}
+{"ts":"2026-08-24T16:23:36.207502Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-public-visibility-launch-gate","message":"\"Hero Public Visibility and v0.34 Launch Gate\""}
+{"ts":"2026-08-24T16:23:36.207609Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-public-visibility-launch-gate","message":"status -\u003e completed"}
+{"ts":"2026-08-24T16:23:37.70472Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-marketing","message":"\"Hero v0.34 Public Release Readiness\""}
+{"ts":"2026-08-24T16:23:37.70482Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-marketing","message":"status -\u003e completed"}

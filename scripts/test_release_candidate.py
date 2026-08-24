@@ -167,7 +167,7 @@ class ReleaseCandidateTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, normalized.lower())
 
-    def test_launch_checklist_has_every_artifact_and_explicit_gates(self):
+    def test_launch_checklist_has_every_artifact_and_resolved_public_gates(self):
         checklist = (SCRIPT.parent.parent / "docs" / "releases" / "v0.34.0-launch-checklist.md").read_text()
         for expected in (
             "hero_0.34.0_darwin_amd64.tar.gz",
@@ -182,7 +182,9 @@ class ReleaseCandidateTests(unittest.TestCase):
             "checksums.txt",
         ):
             self.assertIn(expected, checklist)
-        self.assertEqual(6, checklist.count("| GATED |"))
+        public_gate = checklist.split("## Public visibility and release gate", 1)[1].split("## Rollback", 1)[0]
+        self.assertNotIn("| GATED |", public_gate)
+        self.assertEqual(6, public_gate.count("| PASS |"))
 
 
 if __name__ == "__main__":
