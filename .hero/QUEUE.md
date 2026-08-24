@@ -6,7 +6,23 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-23T22:00:38Z · 84 ready specs_
+_Generated: 2026-08-24T00:34:09Z · 84 ready specs_
+
+## hero-apache-license-grant-gate — "Hero Apache-2.0 License Grant Gate"
+_feature · delivering · horizon: now_
+
+This gate has the owner's explicit authorization and is being delivered only for the approved repository boundary.
+
+**Status:** delivering — apply and verify the approved Apache-2.0 grant, then stop before visibility or publication.
+
+**Pick up at:** finish the licensed candidate validation, cold-audit the evidence, and close through `hero spec verify`.
+
+→ `.hero/planning/initiatives/hero-marketing/hero-apache-license-grant-gate/spec.md`
+
+**Files/components:** root `LICENSE`, `NOTICE` only when required, package/repository license metadata, public license references, approval evidence
+**Skip:** repository visibility, release publication, Sprout mutation, and any license change to `hero-code` or `hero-cloud`.
+
+---
 
 ## team-connect — "Team Connect — CLI Registration with Team Server"
 _feature · delivering · horizon: now_
@@ -35,22 +51,6 @@ _initiative · planning · horizon: now_
 _Run opener — arm with `/drive hero-marketing`_
 
 Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
-
----
-
-## hero-apache-license-grant-gate — "Hero Apache-2.0 License Grant Gate"
-_feature · planning · horizon: now_
-
-This is a human-controlled mutation gate, not an automatic continuation of release preparation.
-
-**Status:** planning — do not deliver until the user explicitly approves adding Apache-2.0 after reviewing the final grant packet.
-
-**Pick up at:** present the exact included repository boundary, recorded owner authorization, cleared third-party obligations, proposed license files, and resulting public claim for final mutation approval.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-apache-license-grant-gate/spec.md`
-
-**Files/components:** root `LICENSE`, `NOTICE` only when required, package/repository license metadata, public license references, approval evidence
-**Skip:** repository visibility, release publication, Sprout mutation, and any license change to `hero-code` or `hero-cloud`.
 
 ---
 

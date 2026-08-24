@@ -343,3 +343,7 @@ hero impact "pricing change"             # which deals are affected?
 - Does **not** send emails or make calls — surfaces what to say and do, the rep acts
 - Does **not** require Salesforce — works standalone with manual deal spec creation
 - Does **not** modify the core Hero engine — sales is a domain pack, not a fork
+
+## Mockups
+
+- [Hero Sales webapp](.hero/mocks/hero-sales/index.html) — 2026-08-21 — Connected rep Today queue, deal workspace, pipeline, personal/team forecast, accounts, and leadership views

@@ -1,10 +1,9 @@
 # Contributing to Hero
 
-Thank you for helping improve Hero. This repository is still private and has
-no root open-source license. External contributions are not accepted until the
-Apache-2.0 license and public-visibility gates have both completed. Preparing
-these instructions does not grant permission to copy, modify, or redistribute
-the repository today.
+Thank you for helping improve Hero. This repository is licensed under the
+Apache License 2.0 but remains private. External contributions are not accepted
+until the public-visibility gate completes and the public contribution routes
+are verified.
 
 Once those gates complete, start with the repository's New Issue flow. Use a
 bug report for reproducible failures and a feature request for new behavior.
@@ -58,7 +57,6 @@ Hero Code or Hero Cloud. They are separate proprietary products. Sprout is a
 separate MIT-licensed project and is not governed by this repository.
 
 Before submitting, read [the Code of Conduct](CODE_OF_CONDUCT.md),
-[support boundaries](SUPPORT.md), and [security policy](SECURITY.md). A root
-license must exist before an external contribution can be accepted; when it
-does, contributors must have the right to submit their work under that license.
-
+[support boundaries](SUPPORT.md), and [security policy](SECURITY.md).
+Contributors must have the right to submit their work under this repository's
+Apache-2.0 license.

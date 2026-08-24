@@ -51,8 +51,8 @@ func TestPublicNarrativeMutationsAreRejected(t *testing.T) {
 		want    string
 	}{
 		{"Hero v0.9 is ready.", "stale v0.9"},
-		{"Hero is open source.", "license and visibility"},
-		{"Hero is licensed under MIT.", "Apache-2.0 candidate"},
+		{"Hero is open source.", "visibility gate"},
+		{"Hero is licensed under MIT.", "Apache-2.0 licensed"},
 		{"Hero Cloud is open source.", "proprietary"},
 		{"Pass --auth-token abc.", "secret-bearing"},
 		{"Hero installs all workflows as slash commands.", "harness-native"},
@@ -98,8 +98,31 @@ func TestPublicRepositoryBoundaryRequiresSproutAndProprietarySeparation(t *testi
 		t.Fatalf("repository boundary issues = %v", issues)
 	}
 	delete(surfaces, "README.md")
-	if issues := repositoryBoundaryIssues(surfaces); len(issues) < 3 {
-		t.Fatalf("missing README boundary should fail three checks, got %v", issues)
+	if issues := repositoryBoundaryIssues(surfaces); len(issues) < 4 {
+		t.Fatalf("missing README boundary should fail four checks, got %v", issues)
+	}
+}
+
+func TestRepositoryLicenseRequiresCanonicalApacheTextAndNotices(t *testing.T) {
+	repositoryRoot := repoRootForTest(t)
+	root := t.TempDir()
+	for _, name := range []string{"LICENSE", "THIRD_PARTY_NOTICES.txt"} {
+		content, err := os.ReadFile(filepath.Join(repositoryRoot, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, name), content, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if issues := repositoryLicenseIssues(root); len(issues) != 0 {
+		t.Fatalf("canonical repository license failed: %v", issues)
+	}
+	if err := os.WriteFile(filepath.Join(root, "LICENSE"), []byte("not canonical\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if issues := repositoryLicenseIssues(root); len(issues) == 0 || !strings.Contains(issues[0], "canonical") {
+		t.Fatalf("mutated license issues = %v", issues)
 	}
 }
 

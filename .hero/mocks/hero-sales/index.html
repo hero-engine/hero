@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<!-- Hero Mock: hero-sales | Generated: 2026-08-21 -->
+<!-- Description: Editorial Blue multi-page revenue operating system with Hero's AI deal strategy and durable knowledge layer above CRM records. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Sales — Revenue Command Center</title>
+  <style>
+    :root {
+      --ink: #16203a;
+      --muted: #667085;
+      --faint: #98a2b3;
+      --paper: #f8f6f2;
+      --surface: #fffefa;
+      --surface-2: #f5f4f1;
+      --line: #e1e5ec;
+      --line-dark: #cbd3e1;
+      --navy: #18233f;
+      --navy-2: #3f5f8f;
+      --cobalt: #6f86c7;
+      --cobalt-hover: #8194ca;
+      --sky: #e9edf4;
+      --blue-ink: #3f5f8f;
+      --spark: #9aabda;
+      --amber: #f4c568;
+      --amber-bg: #fff5dc;
+      --red: #b34b42;
+      --red-bg: #fce8e4;
+      --blue: #6f86c7;
+      --blue-bg: #eef0f7;
+      --shadow: 0 1px 2px rgba(24,35,63,.05), 0 14px 36px rgba(24,35,63,.07);
+      --radius: 12px;
+      --radius-lg: 18px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, select, input { font: inherit; }
+    button { color: inherit; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 236px minmax(0, 1fr); }
+    .sidebar { position: sticky; top: 0; height: 100vh; padding: 24px 16px; color: #f8f6f2; background: var(--navy-2); display: flex; flex-direction: column; z-index: 10; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 26px; }
+    .mark { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: var(--navy); box-shadow: 0 6px 15px rgba(18,27,50,.22), inset 0 1px 0 rgba(255,255,255,.12); }
+    .mark svg { width: 21px; height: 21px; display: block; filter: drop-shadow(0 1px 1px rgba(12,20,39,.18)); }
+    .mark .bolt-shape { fill: #fffefa; }
+    .mark .spark-shape { fill: var(--spark); }
+    .brand strong { display: block; font-size: 17px; letter-spacing: -.3px; }
+    .brand span { display: block; color: #c2cbdb; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .nav-label { margin: 10px 10px 7px; color: #abb7cc; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .nav { display: grid; gap: 4px; }
+    .nav button { width: 100%; border: 0; border-radius: 9px; padding: 10px 11px; background: transparent; color: #d1d8e5; text-align: left; display: flex; align-items: center; gap: 11px; cursor: pointer; }
+    .nav button:hover { color: white; background: rgba(255,255,255,.07); }
+    .nav button.active { color: white; background: rgba(154,171,218,.24); }
+    .nav-icon { width: 20px; font-size: 16px; text-align: center; }
+    .nav-count { margin-left: auto; min-width: 21px; padding: 1px 6px; border-radius: 10px; color: var(--navy); background: var(--spark); font-size: 10px; font-weight: 800; text-align: center; }
+    .side-bottom { margin-top: auto; }
+    .sync { margin: 12px 4px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.04); }
+    .sync-line { display: flex; gap: 8px; align-items: center; color: #d5dce7; font-size: 12px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--spark); }
+    .sync small { display: block; margin: 6px 0 0 15px; color: #abb7cb; }
+    .profile { display: flex; align-items: center; gap: 10px; padding: 12px 8px 0; border-top: 1px solid rgba(255,255,255,.1); }
+    .avatar { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--sky); color: var(--navy); font-size: 11px; font-weight: 800; }
+    .profile strong { display: block; font-size: 12px; }
+    .profile span { color: #b3bed1; font-size: 11px; }
+    .main { min-width: 0; }
+    .topbar { height: 68px; padding: 0 30px; border-bottom: 1px solid var(--line); background: rgba(248,246,242,.94); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 8; backdrop-filter: blur(14px); }
+    .crumb { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .crumb strong { color: var(--ink); }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    .search { width: 230px; height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); outline: none; }
+    .search:focus { border-color: var(--cobalt); box-shadow: 0 0 0 3px rgba(111,134,199,.16); }
+    .btn { min-height: 36px; padding: 8px 13px; border: 1px solid var(--line-dark); border-radius: 9px; background: var(--surface); display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 650; cursor: pointer; }
+    .btn:hover { border-color: #aeb8ca; background: #fbfaf7; }
+    .btn-primary { border-color: var(--cobalt); color: var(--ink); background: var(--cobalt); }
+    .btn-primary:hover { border-color: var(--cobalt-hover); background: var(--cobalt-hover); }
+    .btn-accent { border-color: var(--cobalt); color: var(--ink); background: var(--cobalt); }
+    .btn-accent:hover { border-color: var(--cobalt-hover); color: var(--ink); background: var(--cobalt-hover); }
+    .icon-btn { width: 36px; padding: 0; }
+    .content { padding: 28px 30px 56px; }
+    .page { display: none; max-width: 1480px; margin: 0 auto; }
+    .page.active { display: block; }
+    .page-head { margin-bottom: 22px; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+    .eyebrow { margin-bottom: 5px; color: var(--cobalt); font-size: 11px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 28px; line-height: 1.15; letter-spacing: -.7px; }
+    h2 { margin: 0; font-size: 17px; letter-spacing: -.2px; }
+    h3 { margin: 0; font-size: 14px; }
+    p { margin: 0; }
+    .subhead { margin-top: 7px; color: var(--muted); }
+    .head-actions { display: flex; gap: 8px; }
+    .meta-note { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: var(--surface); font-size: 11px; }
+    .card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+    .card-pad { padding: 20px; }
+    .section-head { padding: 17px 19px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .section-head span { color: var(--muted); font-size: 12px; }
+    .metrics { margin-bottom: 18px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .metric { min-height: 126px; padding: 17px 18px; overflow: hidden; position: relative; }
+    .metric-label { color: var(--muted); font-size: 12px; font-weight: 650; }
+    .metric-value { margin-top: 10px; font-size: 28px; line-height: 1; font-weight: 760; letter-spacing: -1px; }
+    .metric-foot { margin-top: 11px; color: var(--muted); font-size: 11px; }
+    .trend { color: var(--blue-ink); font-weight: 750; }
+    .trend.down { color: var(--red); }
+    .mini-bars { height: 28px; margin-top: 8px; display: flex; align-items: flex-end; gap: 3px; }
+    .mini-bars i { flex: 1; max-width: 18px; border-radius: 2px 2px 0 0; background: #ced5e2; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(290px,.8fr); gap: 14px; }
+    .left-stack, .right-stack { display: grid; gap: 14px; align-content: start; }
+    .attention-list { padding: 6px 18px 12px; }
+    .attention-row { padding: 13px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 38px minmax(0,1fr) auto; gap: 12px; align-items: center; cursor: pointer; }
+    .attention-row:last-child { border-bottom: 0; }
+    .risk-icon { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: var(--red-bg); color: var(--red); font-weight: 850; }
+    .risk-icon.warn { color: #8a5b09; background: var(--amber-bg); }
+    .attention-row strong { display: block; font-size: 13px; }
+    .attention-row p { margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .arr { font-variant-numeric: tabular-nums; font-weight: 750; white-space: nowrap; }
+    .stage-strip { padding: 20px; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
+    .stage-segment { min-width: 0; }
+    .stage-bar { height: 9px; margin-bottom: 9px; border-radius: 5px; background: #dfe3ea; overflow: hidden; }
+    .stage-bar i { display: block; height: 100%; border-radius: inherit; background: var(--navy-2); }
+    .stage-segment:nth-child(4) .stage-bar i, .stage-segment:nth-child(5) .stage-bar i { background: var(--cobalt); }
+    .stage-segment strong { display: block; font-size: 12px; }
+    .stage-segment span { color: var(--muted); font-size: 10px; }
+    .hero-insight { color: var(--ink); background: var(--sky); border-color: #d5dbe8; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+    .hero-insight .section-head { border-color: #d5dbe8; }
+    .hero-insight .section-head span { color: var(--muted); }
+    .insight-body { padding: 18px; }
+    .ai-kicker { margin-bottom: 11px; color: var(--blue-ink); font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .insight-body h3 { font-size: 17px; line-height: 1.35; }
+    .insight-body p { margin: 9px 0 15px; color: var(--muted); font-size: 12px; }
+    .source-note { padding-top: 12px; border-top: 1px solid #d5dbe8; color: var(--muted); font-size: 10px; }
+    .agenda { padding: 8px 18px 14px; }
+    .agenda-row { padding: 11px 0; display: grid; grid-template-columns: 46px 1fr; gap: 11px; border-bottom: 1px solid var(--line); }
+    .agenda-row:last-child { border-bottom: 0; }
+    .agenda-time { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .agenda-row strong { display: block; font-size: 12px; }
+    .agenda-row span { color: var(--muted); font-size: 11px; }
+    .today-layout { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(300px,.72fr); gap: 14px; }
+    .next-best { padding: 22px; color: white; background: var(--navy); border-color: var(--navy); position: relative; overflow: hidden; }
+    .next-best-grid { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 20px; align-items: end; }
+    .next-best .eyebrow { color: #c1cbea; }
+    .next-best h2 { max-width: 660px; font-size: 22px; line-height: 1.28; }
+    .next-best p { max-width: 720px; margin-top: 9px; color: #cbd3e3; font-size: 12px; }
+    .impact-row { margin-top: 16px; display: flex; gap: 7px; flex-wrap: wrap; }
+    .impact-row span { padding: 5px 8px; border-radius: 8px; color: #e4e8f1; background: rgba(255,255,255,.08); font-size: 10px; }
+    .handoff-note { margin-top: 9px; color: #b8c2d7; font-size: 10px; text-align: right; }
+    .next-best::after, .hero-insight::after { content: ""; width: 9px; height: 9px; position: absolute; top: 18px; right: 18px; background: var(--spark); clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); opacity: .72; }
+    .hero-insight::after { background: var(--cobalt); opacity: .5; }
+    .work-queue { padding: 5px 18px 12px; }
+    .work-item { padding: 15px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 54px minmax(0,1fr) auto; gap: 13px; align-items: center; }
+    .work-item:last-child { border-bottom: 0; }
+    .due-box { padding: 7px 4px; border-radius: 8px; color: var(--muted); background: var(--surface-2); font-size: 9px; font-weight: 750; text-align: center; text-transform: uppercase; }
+    .due-box strong { display: block; color: var(--ink); font-size: 11px; }
+    .work-item h3 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .work-item p { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .work-why { margin-top: 7px; color: var(--blue-ink); font-size: 10px; font-weight: 650; }
+    .work-actions { min-width: 152px; display: grid; gap: 5px; }
+    .work-actions .btn { min-height: 32px; padding-block: 6px; font-size: 11px; }
+    .responsibility { color: var(--muted); font-size: 9px; text-align: center; }
+    .hero-can { padding: 14px 18px; border-top: 1px solid var(--line); background: var(--surface-2); }
+    .hero-can strong { font-size: 11px; }
+    .hero-can p { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .role-toggle { padding: 4px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); display: inline-flex; gap: 3px; }
+    .role-toggle button { min-height: 30px; padding: 5px 11px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 11px; font-weight: 750; cursor: pointer; }
+    .role-toggle button.active { color: var(--ink); background: var(--cobalt); }
+    .activity-list { padding-left: 5px; }
+    .activity-item { padding: 0 0 20px 30px; border-left: 1px solid var(--line-dark); position: relative; }
+    .activity-item:last-child { border-left-color: transparent; }
+    .activity-icon { width: 22px; height: 22px; border: 1px solid var(--line-dark); border-radius: 7px; display: grid; place-items: center; color: var(--cobalt); background: var(--surface); font-size: 10px; position: absolute; left: -11px; top: 0; }
+    .activity-item time { color: var(--muted); font-size: 10px; }
+    .activity-item strong { display: block; margin-top: 2px; font-size: 12px; }
+    .activity-item p { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .activity-artifact { display: inline-flex; margin-top: 7px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--blue-ink); background: var(--surface-2); font-size: 9px; font-weight: 700; }
+    .filters { margin-bottom: 14px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .filters select { height: 34px; padding: 0 30px 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+    .filter-chip { min-height: 34px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); cursor: pointer; }
+    .filter-chip.active { color: var(--blue-ink); border-color: #bac4df; background: var(--sky); }
+    .filter-spacer { flex: 1; }
+    .board-wrap { overflow-x: auto; padding-bottom: 8px; }
+    .kanban { min-width: 1100px; display: grid; grid-template-columns: repeat(5, minmax(210px,1fr)); gap: 11px; }
+    .column { min-height: 560px; padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: #f0f1f4; }
+    .column-head { padding: 4px 3px 12px; }
+    .column-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .column-title strong { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    .column-title span { padding: 2px 7px; border-radius: 10px; background: #e0e4eb; font-size: 10px; font-weight: 700; }
+    .column-total { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .deal-card { margin-bottom: 9px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: 0 1px 4px rgba(24,35,63,.06); cursor: pointer; transition: transform .12s ease, border .12s ease; }
+    .deal-card:hover { border-color: #a9b4c8; transform: translateY(-1px); }
+    .deal-card.hidden { display: none; }
+    .deal-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .deal-title strong { font-size: 12px; }
+    .deal-title .arr { font-size: 12px; }
+    .deal-meta { margin-top: 7px; color: var(--muted); font-size: 10px; }
+    .deal-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 12px; color: var(--muted); background: #f0f1f3; font-size: 9px; font-weight: 750; }
+    .badge.good { color: var(--blue-ink); background: var(--sky); }
+    .badge.warn { color: #855800; background: var(--amber-bg); }
+    .badge.risk { color: var(--red); background: var(--red-bg); }
+    .next-action { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+    .next-action strong { display: block; margin-top: 2px; color: var(--ink); font-size: 10px; }
+    .deal-hero { margin-bottom: 14px; padding: 18px 20px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 18px; }
+    .back-link { margin-bottom: 10px; padding: 0; border: 0; color: var(--cobalt); background: none; font-weight: 700; cursor: pointer; }
+    .deal-name { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .deal-name h1 { font-size: 25px; }
+    .deal-context { margin-top: 8px; display: flex; gap: 15px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
+    .deal-score { display: flex; gap: 22px; align-items: center; }
+    .score-ring { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--cobalt) 0 78%, #e0e4eb 78% 100%); position: relative; }
+    .score-ring:after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: var(--surface); }
+    .score-ring span { position: relative; z-index: 1; font-size: 18px; font-weight: 800; }
+    .score-copy strong { display: block; font-size: 13px; }
+    .score-copy span { color: var(--muted); font-size: 11px; }
+    .deal-layout { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(300px,.72fr); gap: 14px; }
+    .deal-tabs { padding: 0 18px; border-bottom: 1px solid var(--line); display: flex; gap: 20px; overflow-x: auto; }
+    .deal-tabs button { padding: 15px 1px 12px; border: 0; border-bottom: 2px solid transparent; color: var(--muted); background: transparent; font-weight: 700; white-space: nowrap; cursor: pointer; }
+    .deal-tabs button.active { color: var(--cobalt); border-color: var(--cobalt); }
+    .deal-panel { display: none; padding: 20px; }
+    .deal-panel.active { display: block; }
+    .strategy-callout { margin-bottom: 18px; padding: 15px; border-left: 3px solid var(--cobalt); border-radius: 0 9px 9px 0; background: #f0f1f6; }
+    .strategy-callout span { color: var(--blue-ink); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .strategy-callout h3 { margin-top: 5px; font-size: 16px; }
+    .strategy-callout p { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .risk-grid { margin: 16px 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+    .risk-box { padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
+    .risk-box b { color: var(--red); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+    .risk-box strong { display: block; margin: 5px 0; font-size: 12px; }
+    .risk-box p { color: var(--muted); font-size: 10px; }
+    details { border-top: 1px solid var(--line); }
+    details summary { padding: 13px 2px; list-style: none; display: flex; justify-content: space-between; font-weight: 700; cursor: pointer; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary:after { content: "+"; color: var(--muted); }
+    details[open] summary:after { content: "−"; }
+    .detail-body { padding: 0 4px 15px; color: var(--muted); font-size: 12px; }
+    .health-list { padding: 8px 18px 17px; }
+    .health-row { padding: 10px 0; display: grid; grid-template-columns: 1fr auto; gap: 12px; border-bottom: 1px solid var(--line); }
+    .health-row:last-child { border-bottom: 0; }
+    .health-row span { color: var(--muted); font-size: 11px; }
+    .action-list { padding: 9px 18px 16px; container-type: inline-size; }
+    .action-item { min-height: 58px; padding: 10px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 20px minmax(0,1fr) 104px; column-gap: 10px; align-items: center; }
+    .action-item:last-child { border-bottom: 0; }
+    .check { width: 17px; height: 17px; margin: 0; padding: 0; border: 1px solid var(--line-dark); border-radius: 5px; background: var(--surface); cursor: pointer; align-self: center; }
+    .check.done { border-color: var(--cobalt); background: var(--cobalt); color: var(--ink); display: grid; place-items: center; font-size: 10px; }
+    .action-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; }
+    .action-copy strong { display: block; font-size: 11px; line-height: 1.35; }
+    .action-meta { display: block; color: var(--muted); font-size: 10px; line-height: 1.3; }
+    .action-slot { width: 104px; min-height: 32px; display: flex; align-items: center; justify-content: flex-end; }
+    .action-btn { width: 104px; min-width: 104px; min-height: 32px; height: 32px; padding: 6px 9px; font-size: 10px; white-space: nowrap; }
+    @container (max-width: 320px) {
+      .action-item { grid-template-columns: 20px minmax(0,1fr); grid-template-areas: "check copy" ". action"; row-gap: 8px; align-items: start; }
+      .action-item .check { grid-area: check; margin-top: 1px; }
+      .action-copy { grid-area: copy; }
+      .action-slot { grid-area: action; justify-content: flex-start; }
+      .action-item.is-complete { grid-template-areas: "check copy"; }
+      .action-item.is-complete .action-slot { display: none; }
+    }
+    .med-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+    .med-item { padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+    .med-top { display: flex; justify-content: space-between; gap: 10px; }
+    .med-top strong { font-size: 12px; }
+    .med-item p { margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .stakeholders { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+    .person-card { padding: 13px; border: 1px solid var(--line); border-radius: 10px; display: flex; align-items: flex-start; gap: 11px; }
+    .person-card .avatar { width: 38px; height: 38px; flex: 0 0 38px; }
+    .person-body { flex: 1; min-width: 0; }
+    .person-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .person-head strong { min-width: 0; line-height: 1.35; overflow-wrap: break-word; }
+    .person-head .badge { flex: 0 0 auto; margin-left: auto; white-space: nowrap; }
+    .person-card p { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .timeline { padding-left: 6px; }
+    .time-item { padding: 0 0 19px 24px; border-left: 1px solid var(--line-dark); position: relative; }
+    .time-item:last-child { border-left-color: transparent; }
+    .time-item:before { content: ""; width: 9px; height: 9px; border: 2px solid var(--surface); border-radius: 50%; background: var(--cobalt); box-shadow: 0 0 0 1px var(--cobalt); position: absolute; left: -5px; top: 3px; }
+    .time-item.future:before { background: var(--surface); }
+    .time-item span { color: var(--muted); font-size: 10px; }
+    .time-item strong { display: block; margin-top: 2px; font-size: 11px; }
+    .scenario-bar { margin-bottom: 14px; padding: 7px; display: flex; align-items: center; gap: 6px; }
+    .scenario-bar button { flex: 1; padding: 11px 14px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 750; cursor: pointer; }
+    .scenario-bar button.active { color: var(--ink); background: var(--cobalt); }
+    .forecast-grid { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(300px,.72fr); gap: 14px; }
+    .forecast-hero { padding: 22px; }
+    .forecast-main { display: flex; align-items: flex-end; gap: 17px; flex-wrap: wrap; }
+    .forecast-number { font-size: 46px; line-height: .95; letter-spacing: -2px; font-weight: 800; }
+    .forecast-target { color: var(--muted); padding-bottom: 4px; }
+    .progress { height: 10px; margin: 18px 0 8px; border-radius: 7px; background: #e2e5eb; overflow: hidden; }
+    .progress i { display: block; height: 100%; width: 78%; border-radius: inherit; background: var(--cobalt); transition: width .2s ease; }
+    .forecast-caption { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--muted); background: var(--surface-2); font-size: 10px; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
+    td { padding: 13px 14px; border-bottom: 1px solid var(--line); font-size: 12px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fbfaf7; }
+    .rep-cell { display: flex; align-items: center; gap: 9px; }
+    .rep-cell .avatar { width: 29px; height: 29px; }
+    .rep-cell span { display: block; color: var(--muted); font-size: 10px; }
+    .confidence { padding: 18px; }
+    .confidence-head { display: flex; justify-content: space-between; align-items: center; }
+    .confidence p { margin: 12px 0 15px; color: var(--muted); font-size: 12px; }
+    .confidence ul { margin: 0; padding: 0; list-style: none; }
+    .confidence li { padding: 8px 0 8px 19px; border-top: 1px solid var(--line); position: relative; font-size: 11px; }
+    .confidence li:before { content: "•"; color: var(--red); font-weight: 900; position: absolute; left: 3px; }
+    .coverage-card { padding: 18px; }
+    .coverage-value { margin: 8px 0; font-size: 34px; font-weight: 800; letter-spacing: -1px; }
+    .coverage-card p { color: var(--muted); font-size: 11px; }
+    .accounts-layout { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(300px,.7fr); gap: 14px; }
+    .account-row { padding: 14px 17px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(190px,1.2fr) .7fr .6fr .6fr 24px; gap: 12px; align-items: center; cursor: pointer; }
+    .account-row:last-child { border-bottom: 0; }
+    .account-row:hover { background: #fbfaf7; }
+    .company-cell { display: flex; gap: 10px; align-items: center; }
+    .company-logo { width: 37px; height: 37px; border-radius: 9px; display: grid; place-items: center; color: var(--navy); background: var(--sky); font-weight: 850; }
+    .company-cell strong { display: block; font-size: 12px; }
+    .company-cell span, .account-row > span { color: var(--muted); font-size: 10px; }
+    .account-metric { min-width: 0; display: flex; align-items: baseline; gap: 6px; }
+    .account-metric b { flex: 0 0 auto; }
+    .account-metric span { min-width: 0; color: var(--muted); font-size: 10px; line-height: 1.3; white-space: nowrap; }
+    .knowledge-card { padding: 18px; }
+    .knowledge-item { padding: 13px 0; border-bottom: 1px solid var(--line); }
+    .knowledge-item:last-child { border-bottom: 0; }
+    .knowledge-item small { color: var(--cobalt); font-weight: 750; text-transform: uppercase; letter-spacing: .07em; }
+    .knowledge-item strong { display: block; margin: 4px 0; font-size: 12px; }
+    .knowledge-item p { color: var(--muted); font-size: 10px; }
+    .source-pill { display: inline-block; margin-top: 7px; padding: 3px 7px; border-radius: 8px; color: var(--muted); background: #f0f1f3; font-size: 9px; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 30; padding: 12px 16px; border-radius: 10px; color: white; background: var(--navy); box-shadow: 0 12px 32px rgba(8,24,48,.26); opacity: 0; transform: translateY(10px); pointer-events: none; transition: .2s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .mobile-title { display: none; }
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 76px minmax(0,1fr); }
+      .sidebar { padding: 20px 10px; }
+      .brand { justify-content: center; padding-inline: 0; }
+      .brand-copy, .nav button > span:not(.nav-icon):not(.nav-count), .nav-label, .sync, .profile > div { display: none; }
+      .nav button { justify-content: center; padding-inline: 7px; position: relative; }
+      .nav-count { position: absolute; top: 3px; right: 2px; min-width: 16px; padding: 0 4px; }
+      .profile { justify-content: center; padding-inline: 0; }
+      .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .dashboard-grid, .today-layout, .deal-layout, .forecast-grid, .accounts-layout { grid-template-columns: 1fr; }
+      .right-stack { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 720px) {
+      .app { display: block; }
+      .sidebar { position: fixed; inset: auto 0 0; width: auto; height: 66px; padding: 7px 8px; flex-direction: row; background: var(--navy-2); }
+      .brand, .nav-label, .side-bottom { display: none; }
+      .nav { width: 100%; grid-template-columns: repeat(6,1fr); gap: 2px; }
+      .nav button { min-width: 0; display: grid; justify-items: center; gap: 1px; padding: 5px 2px; font-size: 9px; }
+      .nav button > span:not(.nav-icon):not(.nav-count) { display: block; }
+      .nav-icon { font-size: 15px; }
+      .nav-count { display: none; }
+      .main { padding-bottom: 70px; }
+      .topbar { height: 58px; padding: 0 15px; }
+      .crumb, .search { display: none; }
+      .mobile-title { display: block; font-weight: 800; }
+      .content { padding: 20px 14px 38px; }
+      .page-head { align-items: stretch; flex-direction: column; }
+      .head-actions { width: 100%; }
+      .head-actions .btn { flex: 1; }
+      h1 { font-size: 24px; }
+      .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .metric { min-height: 112px; padding: 14px; }
+      .metric-value { font-size: 24px; }
+      .right-stack { grid-template-columns: 1fr; }
+      .stage-strip { grid-template-columns: 1fr; }
+      .stage-segment { display: grid; grid-template-columns: 90px 1fr auto; gap: 8px; align-items: center; }
+      .stage-bar { margin: 0; }
+      .stage-segment span { text-align: right; }
+      .deal-hero { grid-template-columns: 1fr; }
+      .deal-score { justify-content: space-between; }
+      .risk-grid, .med-grid, .stakeholders { grid-template-columns: 1fr; }
+      .scenario-bar { overflow-x: auto; }
+      .scenario-bar button { min-width: 100px; }
+      .forecast-number { font-size: 38px; }
+      .account-row { grid-template-columns: minmax(160px,1fr) .6fr 20px; }
+      .account-row > *:nth-child(3), .account-row > *:nth-child(4) { display: none; }
+      .toast { right: 14px; bottom: 80px; left: 14px; text-align: center; }
+      .next-best-grid { grid-template-columns: 1fr; }
+      .next-best .head-actions { width: 100%; }
+      .handoff-note { text-align: left; }
+      .work-item { grid-template-columns: 46px minmax(0,1fr); }
+      .work-actions { grid-column: 2; grid-template-columns: 1fr; }
+    }
+    @media (max-width: 430px) {
+      .metrics { grid-template-columns: 1fr; }
+      .top-actions .btn:not(.btn-primary), .top-actions .icon-btn { display: none; }
+      .attention-row { grid-template-columns: 34px minmax(0,1fr); }
+      .attention-row .arr { display: none; }
+      .person-head { flex-direction: column; gap: 5px; }
+      .person-head .badge { margin-left: 0; }
+      .account-metric { flex-direction: column; align-items: flex-start; gap: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand"><div class="mark" role="img" aria-label="Hero spark logo"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><title>Hero spark logo</title><path class="bolt-shape" d="M12.8 2.1 5.3 12h5.2l-1 8.4 8-10.8h-5.3l.6-7.5Z"/><path class="spark-shape" d="m18.8 2.1.65 1.75 1.75.65-1.75.65-.65 1.75-.65-1.75-1.75-.65 1.75-.65.65-1.75Z"/></svg></div><div class="brand-copy"><strong>Hero Sales</strong><span>Sales workspace</span></div></div>
+      <div class="nav-label">Workspace</div>
+      <nav class="nav">
+        <button class="active" data-route="home"><span class="nav-icon">✓</span><span>Today</span><span class="nav-count">4</span></button>
+        <button data-route="pipeline"><span class="nav-icon">◫</span><span>Pipeline</span><span class="nav-count">3</span></button>
+        <button data-route="deal"><span class="nav-icon">◇</span><span>Deal room</span></button>
+        <button data-route="forecast"><span class="nav-icon">↗</span><span>Forecast</span></button>
+        <button data-route="accounts"><span class="nav-icon">◎</span><span>Accounts</span></button>
+        <button data-route="exec"><span class="nav-icon">⌂</span><span>Leadership</span></button>
+      </nav>
+      <div class="side-bottom">
+        <div class="sync"><div class="sync-line"><span class="dot"></span>Deal notes are current</div><small>Updated 18 min ago</small></div>
+        <div class="profile"><div class="avatar">MC</div><div><strong>Maya Chen</strong><span>Enterprise AE</span></div></div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb"><span>Q3 Revenue</span><span>/</span><strong id="crumbTitle">Today</strong></div>
+        <div class="mobile-title">Hero Sales</div>
+        <div class="top-actions">
+          <input class="search" id="globalSearch" type="search" placeholder="Search deals, accounts, knowledge…" aria-label="Search">
+          <button class="btn icon-btn" aria-label="Notifications" onclick="toast('No new team alerts')">●</button>
+          <button class="btn btn-primary" onclick="toast('Deal strategy session queued')">✦ Ask Hero</button>
+        </div>
+      </header>
+      <div class="content">
+      <section class="page active" id="page-home">
+          <div class="page-head">
+            <div><div class="eyebrow">Friday · August 21</div><h1>Today, Maya</h1><p class="subhead">Four outcomes move your book forward. Hero has the context ready; you choose what gets sent or changed.</p></div>
+            <div class="head-actions"><span class="meta-note">My book · 2 deals · $760K</span><button class="btn" onclick="toast('Your day plan was refreshed')">↻ Refresh priorities</button></div>
+          </div>
+          <div class="today-layout">
+            <div class="left-stack">
+              <article class="card next-best">
+                <div class="next-best-grid"><div><div class="eyebrow">Next best action · due before 10:00 AM</div><h2>Turn Northstar’s close plan into a buyer-owned plan before today’s champion call.</h2><p>Why now: this $420K commit deal closes in 22 days. Legal is active, but procurement has no named owner and security timing is still inferred.</p><div class="impact-row"><span>$420K commit protected</span><span>1 qualification gap</span><span>Meeting in 1h 42m</span></div></div><div><button class="btn btn-accent" data-route="deal">✦ Prep the call</button><div class="handoff-note">Hero prepares · you review and run the call</div></div></div>
+              </article>
+              <article class="card">
+                <div class="section-head"><div><h2>My work queue</h2><span>Ranked by urgency, deal impact, and evidence gaps</span></div><span>4 outcomes today</span></div>
+                <div class="work-queue">
+                  <div class="work-item"><div class="due-box"><strong>10:00</strong>Meeting</div><div><h3>Northstar · champion call prep <span class="badge risk">Commit risk</span></h3><p>Recent history, procurement questions, and a revised mutual close plan are ready in the deal room.</p><div class="work-why">Why it matters · Northstar is 71% of your commit.</div></div><div class="work-actions"><button class="btn btn-primary" data-route="deal">✦ Open prep</button><div class="responsibility">Hero prepares · Maya leads</div></div></div>
+                  <div class="work-item"><div class="due-box"><strong>11:30</strong>Research</div><div><h3>Northstar · validate security ownership <span class="badge good">$420K</span></h3><p>Summarize Marcus’s open questions and research his current infrastructure priorities before drafting the ask.</p><div class="work-why">Why it matters · a confirmed owner and SLA protect the September close.</div></div><div class="work-actions"><button class="btn" onclick="toast('Security history summarized for review')">✦ Summarize</button><button class="btn" onclick="toast('Marcus stakeholder brief prepared')">Research Marcus</button><div class="responsibility">Hero researches · Maya verifies</div></div></div>
+                  <div class="work-item"><div class="due-box"><strong>3:00</strong>Draft</div><div><h3>Atlas · close the Economic Buyer gap <span class="badge warn">$340K</span></h3><p>Turn workshop notes into three EB questions and a draft follow-up for Dana to forward internally.</p><div class="work-why">Why it matters · the deal is single-threaded and has no confirmed compelling event.</div></div><div class="work-actions"><button class="btn" onclick="toast('Qualification-gap questions drafted')">✦ Close gap</button><div class="responsibility">Hero drafts · Maya approves and sends</div></div></div>
+                  <div class="work-item"><div class="due-box"><strong>EOD</strong>Review</div><div><h3>Northstar · revise phased rollout quote</h3><p>Prepare a clean option that preserves value without committing to unapproved terms.</p><div class="work-why">Why it matters · gives Elena a path to sign while security completes.</div></div><div class="work-actions"><button class="btn" data-route="deal">✦ Prepare revision</button><div class="responsibility">Hero prepares · Maya + deal desk approve</div></div></div>
+                </div>
+                <div class="hero-can"><strong>Hero can prepare work; it does not impersonate the rep.</strong><p>Briefs, research, drafts, qualification analysis, quote revisions, and close-plan updates remain reviewable. You own buyer judgment, approvals, calls, and sends.</p></div>
+              </article>
+            </div>
+            <div class="right-stack">
+              <article class="card"><div class="section-head"><h2>Today’s buyer moments</h2><span>2 meetings</span></div><div class="agenda"><div class="agenda-row"><div class="agenda-time">10:00</div><div><strong>Northstar · mutual close plan</strong><span>Theo Morgan · champion</span></div></div><div class="agenda-row"><div class="agenda-time">3:00</div><div><strong>Atlas · executive workshop</strong><span>Dana Ruiz · champion candidate</span></div></div></div></article>
+              <article class="card hero-insight"><div class="section-head"><h2>Hero’s focus</h2><span>Why this order</span></div><div class="insight-body"><div class="ai-kicker">Your book, not team vanity</div><h3>Protect commit first. Then turn Atlas into a credible second path.</h3><p>Northstar has time-sensitive process risk. Atlas needs a second relationship and a confirmed compelling event before more solution work.</p><button class="btn btn-accent" data-route="forecast">See my forecast impact →</button><div class="source-note">Based on your 2 active deal specs, current evidence state, calendar moments, and prior debrief patterns.</div></div></article>
+              <article class="card"><div class="section-head"><h2>My number</h2><span>Q3</span></div><div class="card-pad"><div style="display:flex;justify-content:space-between;align-items:end"><div><div class="metric-label">Commit</div><div class="metric-value">$420K</div></div><span class="badge good">$170K above gap</span></div><div class="progress"><i style="width:100%"></i></div><p style="color:var(--muted);font-size:11px">$250K remaining to personal target · $760K open pipeline</p><button class="btn" data-route="forecast" style="width:100%;margin-top:14px">Open my forecast</button></div></article>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="page-exec">
+          <div class="page-head">
+            <div><div class="eyebrow">Leadership · Friday, August 21</div><h1>Revenue command center</h1><p class="subhead">Team forecast, risk concentration, coaching signals, and the interventions that need leadership.</p></div>
+            <div class="head-actions"><span class="meta-note">Q3 · 42 days left</span><button class="btn" onclick="toast('Brief copied to your clipboard')">Export briefing</button></div>
+          </div>
+          <div class="metrics">
+            <article class="card metric"><div class="metric-label">Open pipeline</div><div class="metric-value">$1.68M</div><div class="metric-foot"><span class="trend">↑ $206K</span> since Monday</div><div class="mini-bars"><i style="height:35%"></i><i style="height:48%"></i><i style="height:42%"></i><i style="height:68%"></i><i style="height:72%"></i><i style="height:88%"></i></div></article>
+            <article class="card metric"><div class="metric-label">Commit</div><div class="metric-value">$588K</div><div class="metric-foot"><span class="trend">107%</span> of remaining target</div><div class="mini-bars"><i style="height:30%"></i><i style="height:40%"></i><i style="height:49%"></i><i style="height:60%"></i><i style="height:80%"></i><i style="height:80%"></i></div></article>
+            <article class="card metric"><div class="metric-label">Coverage</div><div class="metric-value">3.05×</div><div class="metric-foot"><span class="trend">Healthy</span> vs. 3.0× target</div><div class="mini-bars"><i style="height:55%"></i><i style="height:60%"></i><i style="height:70%"></i><i style="height:72%"></i><i style="height:77%"></i><i style="height:78%"></i></div></article>
+            <article class="card metric"><div class="metric-label">Strategy coverage</div><div class="metric-value">86%</div><div class="metric-foot"><span class="trend down">2 deals</span> need an updated plan</div><div class="mini-bars"><i style="height:40%"></i><i style="height:52%"></i><i style="height:59%"></i><i style="height:72%"></i><i style="height:80%"></i><i style="height:86%"></i></div></article>
+          </div>
+          <div class="dashboard-grid">
+            <div class="left-stack">
+              <article class="card">
+                <div class="section-head"><div><h2>Needs attention</h2><span>Evidence-based risk across active deals</span></div><button class="btn" data-route="pipeline">Open pipeline</button></div>
+                <div class="attention-list">
+                  <div class="attention-row" data-route="deal"><div class="risk-icon">!</div><div><strong>Northstar Health · legal path is unowned</strong><p>Commit deal has 22 days to close, but procurement has no named owner. Hero found the same pattern in 3 slipped healthcare deals.</p></div><div class="arr">$420K</div></div>
+                  <div class="attention-row"><div class="risk-icon warn">↘</div><div><strong>LumaPay · qualification does not support proposal stage</strong><p>MEDDPICC is 38/100. Economic Buyer is inferred, not confirmed; decision process is unknown.</p></div><div class="arr">$155K</div></div>
+                  <div class="attention-row"><div class="risk-icon warn">1</div><div><strong>Atlas Energy · single-threaded above $50K</strong><p>Only Dana Ruiz is active. Add finance and security threads before the executive workshop.</p></div><div class="arr">$340K</div></div>
+                </div>
+              </article>
+              <article class="card">
+                <div class="section-head"><div><h2>Pipeline shape</h2><span>$1.68M open · 7 active deals</span></div><span>Weighted: $957K</span></div>
+                <div class="stage-strip">
+                  <div class="stage-segment"><div class="stage-bar"><i style="width:42%"></i></div><strong>Prospect</strong><span>0 · $0</span></div>
+                  <div class="stage-segment"><div class="stage-bar"><i style="width:58%"></i></div><strong>Qualifying</strong><span>2 · $458K</span></div>
+                  <div class="stage-segment"><div class="stage-bar"><i style="width:46%"></i></div><strong>Demo</strong><span>1 · $190K</span></div>
+                  <div class="stage-segment"><div class="stage-bar"><i style="width:76%"></i></div><strong>Proposal</strong><span>2 · $441K</span></div>
+                  <div class="stage-segment"><div class="stage-bar"><i style="width:92%"></i></div><strong>Negotiation</strong><span>2 · $588K</span></div>
+                </div>
+              </article>
+            </div>
+            <div class="right-stack">
+              <article class="card hero-insight">
+                <div class="section-head"><h2>Hero’s read</h2><span>Updated 8:12 AM</span></div>
+                <div class="insight-body"><div class="ai-kicker">Cross-deal pattern</div><h3>Your number is protected, but Northstar carries 71% of commit.</h3><p>The fastest way to de-risk Q3 is not more activity. It is buyer-owned procurement at Northstar and a qualification reset at LumaPay.</p><button class="btn btn-accent" data-route="deal">Review Northstar plan →</button><div class="source-note">Synthesized from deal specs, qualification evidence, and 9 prior debriefs. CRM fields remain source-of-record facts.</div></div>
+              </article>
+              <article class="card">
+                <div class="section-head"><h2>Leadership interventions</h2><span>3 this week</span></div>
+                <div class="agenda"><div class="agenda-row"><div class="agenda-time">Sponsor</div><div><strong>Maya · Northstar procurement</strong><span>Exec-to-exec path if today’s buyer plan lacks an owner</span></div></div><div class="agenda-row"><div class="agenda-time">Coach</div><div><strong>Priya · LumaPay stage reset</strong><span>Re-qualify before more proposal work</span></div></div><div class="agenda-row"><div class="agenda-time">Watch</div><div><strong>Jordan · Acme security review</strong><span>Healthy motion; no intervention unless review slips</span></div></div></div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="page-pipeline">
+          <div class="page-head"><div><div class="eyebrow">Pipeline</div><h1>Every deal, with the evidence attached.</h1><p class="subhead">Stage and value come from referenced source records. Risk and strategy health come from Hero.</p></div><div class="head-actions"><button class="btn" onclick="toast('Deal specs refreshed from their current source references')">↻ Refresh specs</button><button class="btn btn-primary" onclick="toast('Pipeline review started')">✦ Run review</button></div></div>
+          <div class="filters">
+            <select id="ownerFilter" aria-label="Filter owner"><option value="all">All owners</option><option value="maya">Maya Chen</option><option value="jordan">Jordan Bell</option><option value="priya">Priya Shah</option></select>
+            <button class="filter-chip" id="riskFilter">At risk · 3</button><button class="filter-chip">Closing this month · 5</button><button class="filter-chip">Missing next step · 1</button><span class="filter-spacer"></span><span style="color:var(--muted);font-size:11px">7 deals · $1.68M</span>
+          </div>
+          <div class="board-wrap">
+            <div class="kanban">
+              <div class="column"><div class="column-head"><div class="column-title"><strong>Prospect</strong><span>0</span></div><div class="column-total">$0 · 10% default</div></div></div>
+              <div class="column"><div class="column-head"><div class="column-title"><strong>Qualifying</strong><span>2</span></div><div class="column-total">$458K · $119K weighted</div></div>
+                <article class="deal-card" data-owner="maya" data-risk="true"><div class="deal-title"><strong>Atlas Energy</strong><span class="arr">$340K</span></div><div class="deal-meta">Maya Chen · 12 days in stage</div><div class="deal-tags"><span class="badge warn">MEDDPICC 43</span><span class="badge risk">Single-threaded</span></div><div class="next-action">Next action · Today<strong>Map finance + security stakeholders</strong></div></article>
+                <article class="deal-card" data-owner="jordan"><div class="deal-title"><strong>Copperworks</strong><span class="arr">$118K</span></div><div class="deal-meta">Jordan Bell · 6 days in stage</div><div class="deal-tags"><span class="badge risk">MEDDPICC 31</span><span class="badge">2 contacts</span></div><div class="next-action">Next action · Today<strong>Quantify production delay cost</strong></div></article>
+              </div>
+              <div class="column"><div class="column-head"><div class="column-title"><strong>Demo</strong><span>1</span></div><div class="column-total">$190K · $91K weighted</div></div>
+                <article class="deal-card" data-owner="priya"><div class="deal-title"><strong>Meridian Logistics</strong><span class="arr">$190K</span></div><div class="deal-meta">Priya Shah · 9 days in stage</div><div class="deal-tags"><span class="badge warn">MEDDPICC 52</span><span class="badge good">4 contacts</span></div><div class="next-action">Next action · Aug 22<strong>Confirm POC success measures</strong></div></article>
+              </div>
+              <div class="column"><div class="column-head"><div class="column-title"><strong>Proposal</strong><span>2</span></div><div class="column-total">$441K · $268K weighted</div></div>
+                <article class="deal-card" data-owner="jordan"><div class="deal-title"><strong>Acme Robotics</strong><span class="arr">$286K</span></div><div class="deal-meta">Jordan Bell · 8 days in stage</div><div class="deal-tags"><span class="badge good">MEDDPICC 61</span><span class="badge good">EB engaged</span></div><div class="next-action">Next action · Today<strong>Complete security review</strong></div></article>
+                <article class="deal-card" data-owner="priya" data-risk="true"><div class="deal-title"><strong>LumaPay</strong><span class="arr">$155K</span></div><div class="deal-meta">Priya Shah · 11 days in stage</div><div class="deal-tags"><span class="badge risk">MEDDPICC 38</span><span class="badge risk">Stage mismatch</span></div><div class="next-action">Next action · Overdue<strong>Confirm Economic Buyer</strong></div></article>
+              </div>
+              <div class="column"><div class="column-head"><div class="column-title"><strong>Negotiation</strong><span>2</span></div><div class="column-total">$588K · $479K weighted</div></div>
+                <article class="deal-card" data-owner="maya" data-risk="true" data-route="deal"><div class="deal-title"><strong>Northstar Health</strong><span class="arr">$420K</span></div><div class="deal-meta">Maya Chen · 5 days in stage</div><div class="deal-tags"><span class="badge good">MEDDPICC 78</span><span class="badge risk">Procurement gap</span></div><div class="next-action">Next action · Today<strong>Buyer-own the mutual close plan</strong></div></article>
+                <article class="deal-card" data-owner="jordan"><div class="deal-title"><strong>Bluebird Systems</strong><span class="arr">$168K</span></div><div class="deal-meta">Jordan Bell · 4 days in stage</div><div class="deal-tags"><span class="badge good">MEDDPICC 72</span><span class="badge good">Legal active</span></div><div class="next-action">Next action · Today<strong>Resolve data residency clause</strong></div></article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      <section class="page" id="page-deal">
+          <button class="back-link" data-route="pipeline">← Back to pipeline</button>
+          <article class="card deal-hero">
+            <div><div class="deal-name"><h1>Northstar Health</h1><span class="badge good">Negotiation</span><span class="badge risk">1 active risk</span></div><div class="deal-context"><span>$420K ARR</span><span>Close Sep 12</span><span>Owner Maya Chen</span><span>CRM ref · 006…8Q2</span></div></div>
+            <div class="deal-score"><div class="score-ring"><span>78</span></div><div class="score-copy"><strong>Strategy health</strong><span>Strong, with a procurement gap</span></div><button class="btn btn-primary" onclick="toast('Strategy refresh started with current deal context')">✦ Refresh strategy</button></div>
+          </article>
+          <div class="deal-layout">
+            <article class="card">
+              <div class="deal-tabs"><button class="active" data-dealtab="strategy">Strategy</button><button data-dealtab="activity">Activity</button><button data-dealtab="qualification">Qualification</button><button data-dealtab="stakeholders">Stakeholders</button><button data-dealtab="timeline">Close plan</button></div>
+              <div class="deal-panel active" data-dealpanel="strategy">
+                <div class="strategy-callout"><span>Recommended motion · Executive-led, land-and-expand</span><h3>Secure a buyer-owned procurement path, then preserve the September close with a phased rollout.</h3><p>Northstar has confirmed pain, a credible champion, and EB intent. The remaining uncertainty is operational: no procurement owner and an untested security timeline.</p></div>
+                <h2>Top risks and mitigations</h2>
+                <div class="risk-grid"><div class="risk-box"><b>High</b><strong>Procurement is unowned</strong><p>Ask Theo to name the buyer-side owner in today’s mutual plan session.</p></div><div class="risk-box"><b style="color:#8a5b09">Medium</b><strong>Security timeline inferred</strong><p>Get Northstar security to confirm the 8-day review window directly.</p></div><div class="risk-box"><b style="color:#8a5b09">Medium</b><strong>Champion concentration</strong><p>Activate Elena and Marcus as independent threads before legal redlines.</p></div></div>
+                <details open><summary>Why this motion fits</summary><div class="detail-body">Northstar wants enterprise-wide standardization, but the clinical operations team can show value first. A phased launch protects their September initiative while preserving the broader executive vision.</div></details>
+                <details><summary>Objection playbook · “We need one more quarter”</summary><div class="detail-body">Reframe around the cost of delayed onboarding: Northstar’s stated baseline is 17 days per site. Use the champion-approved ROI model and propose a first-wave cohort instead of discounting.</div></details>
+                <details><summary>Relevant durable knowledge</summary><div class="detail-body">Three healthcare debriefs show that security review without a named buyer owner slips an average of 19 days. “Healthcare procurement: buyer-owned checklist” is the highest-confidence matched playbook.</div></details>
+              </div>
+              <div class="deal-panel" data-dealpanel="activity">
+                <div class="strategy-callout"><span>What happened · chronological evidence</span><h3>Buyer intent strengthened, but the process details did not.</h3><p>Hero can summarize the history and prepare the next response. Maya still verifies the facts and decides what gets sent.</p></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px"><button class="btn" onclick="toast('Recent deal history summarized for review')">✦ Summarize recent history</button><button class="btn" onclick="toast('Buyer follow-up drafted; nothing was sent')">✦ Draft follow-up</button><button class="btn" onclick="toast('Quote revision prepared for Maya and deal desk')">✦ Prepare quote revision</button></div>
+                <div class="activity-list">
+                  <div class="activity-item"><div class="activity-icon">☎</div><time>Aug 19 · Call logged · Maya Chen</time><strong>Theo agreed to co-author the mutual close plan</strong><p>Champion confirmed Elena still supports the September date. Procurement ownership was discussed but no person was named.</p><span class="activity-artifact">Call note · 18 min</span></div>
+                  <div class="activity-item"><div class="activity-icon">↗</div><time>Aug 18 · Collateral shared</time><strong>Phased rollout economics sent to Elena and Theo</strong><p>Option A preserves the full commercial value while starting with 12 sites. Elena replied: “This is the path I can defend.”</p><span class="activity-artifact">Northstar-phased-rollout-v2.pdf</span></div>
+                  <div class="activity-item"><div class="activity-icon">✉</div><time>Aug 15 · Email thread · buyer reply</time><strong>Marcus requested the security architecture packet</strong><p>Packet was sent the same day. The buyer has not yet confirmed review ownership or turnaround time.</p><span class="activity-artifact">Security architecture packet</span></div>
+                  <div class="activity-item"><div class="activity-icon">●</div><time>Aug 12 · Executive meeting</time><strong>Elena gave verbal support for a phased rollout</strong><p>Business value of reducing site onboarding from 17 to 6 days was confirmed. No discount was requested.</p><span class="activity-artifact">Meeting summary · confirmed evidence</span></div>
+                  <div class="activity-item"><div class="activity-icon">↻</div><time>Aug 8 · Source record update</time><strong>Deal advanced from Proposal to Negotiation</strong><p>Stage is a referenced system-of-record fact. Hero’s qualification check flagged Decision Process as inferred at the time of movement.</p><span class="activity-artifact">CRM ref · 006…8Q2</span></div>
+                </div>
+              </div>
+              <div class="deal-panel" data-dealpanel="qualification">
+                <div class="strategy-callout"><span>Configured framework · MEDDPICC · 78 / 100</span><h3>Well qualified. One process gap blocks high-confidence commit.</h3><p>This deal uses MEDDPICC; other deal types can use a different configured framework. Confirmed evidence earns full credit, while inferred evidence is capped.</p></div>
+                <div class="med-grid"><div class="med-item"><div class="med-top"><strong>Metrics</strong><span class="badge good">2/2 · confirmed</span></div><p>Reduce site onboarding from 17 to 6 days; $1.2M annual capacity impact.</p></div><div class="med-item"><div class="med-top"><strong>Economic Buyer</strong><span class="badge good">2/2 · confirmed</span></div><p>Elena Park, COO. Met Aug 12; verbally supports phased rollout.</p></div><div class="med-item"><div class="med-top"><strong>Decision Criteria</strong><span class="badge good">2/2 · confirmed</span></div><p>Time-to-value, Epic compatibility, implementation ownership.</p></div><div class="med-item"><div class="med-top"><strong>Decision Process</strong><span class="badge warn">1/2 · inferred</span></div><p>Legal path known; procurement owner and security SLA not confirmed.</p></div><div class="med-item"><div class="med-top"><strong>Identify Pain</strong><span class="badge good">2/2 · confirmed</span></div><p>Manual activation delays block revenue and regional expansion.</p></div><div class="med-item"><div class="med-top"><strong>Champion</strong><span class="badge good">2/2 · confirmed</span></div><p>Theo shares internal notes and co-authored the ROI model.</p></div><div class="med-item"><div class="med-top"><strong>Competition</strong><span class="badge warn">1/2 · inferred</span></div><p>Status quo is primary competitor; Pathway is a late alternative.</p></div></div>
+              </div>
+              <div class="deal-panel" data-dealpanel="stakeholders">
+                <div class="strategy-callout"><span>Multi-threading · 4 active contacts</span><h3>Strong access, but procurement remains a blank space.</h3><p>Hero distinguishes relationship sentiment from actual buying influence.</p></div>
+                <div class="stakeholders"><div class="person-card"><div class="avatar">EP</div><div class="person-body"><div class="person-head"><strong>Elena Park · COO</strong><div class="badge good">Economic Buyer · advocate</div></div><p>High influence · reinforce phased rollout economics.</p></div></div><div class="person-card"><div class="avatar">TM</div><div class="person-body"><div class="person-head"><strong>Theo Morgan · VP Ops</strong><div class="badge good">Champion · advocate</div></div><p>High influence · get procurement owner introduction.</p></div></div><div class="person-card"><div class="avatar">MS</div><div class="person-body"><div class="person-head"><strong>Marcus Shaw · CIO</strong><div class="badge warn">Technical · neutral</div></div><p>High influence · validate security timeline.</p></div></div><div class="person-card"><div class="avatar">AR</div><div class="person-body"><div class="person-head"><strong>Ana Reyes · Director, Enablement</strong><div class="badge good">User · advocate</div></div><p>Medium influence · own first-wave success story.</p></div></div><div class="person-card"><div class="avatar">?</div><div class="person-body"><div class="person-head"><strong>Procurement owner</strong><div class="badge risk">Unknown · blocker risk</div></div><p>High influence · must be named today.</p></div></div></div>
+              </div>
+              <div class="deal-panel" data-dealpanel="timeline">
+                <div class="strategy-callout"><span>Mutual close plan · 22 days</span><h3>The date is viable only if security and procurement run in parallel.</h3><p>Milestones marked confirmed were agreed with the buyer; future steps still require ownership.</p></div>
+                <div class="timeline"><div class="time-item"><span>Aug 12 · Complete</span><strong>Economic Buyer alignment · Elena / Maya</strong></div><div class="time-item"><span>Aug 21 · Today</span><strong>Co-author mutual close plan · Theo / Maya</strong></div><div class="time-item future"><span>Aug 22–28 · Owner needed</span><strong>Security and procurement review in parallel</strong></div><div class="time-item future"><span>Sep 2 · Planned</span><strong>Legal redlines resolved · both legal teams</strong></div><div class="time-item future"><span>Sep 8 · Planned</span><strong>Final commercial approval · Elena</strong></div><div class="time-item future"><span>Sep 12 · Target</span><strong>Order form signed</strong></div></div>
+              </div>
+            </article>
+            <div class="right-stack">
+              <article class="card"><div class="section-head"><h2>Health signals</h2><span>Hero evidence</span></div><div class="health-list"><div class="health-row"><span>Stage evidence</span><b class="trend">Met</b></div><div class="health-row"><span>MEDDPICC</span><b>78 / 100</b></div><div class="health-row"><span>Relationship coverage</span><b class="trend">4 active</b></div><div class="health-row"><span>Days in stage</span><b>5 / 7</b></div><div class="health-row"><span>Close date pushes</span><b>0</b></div><div class="health-row"><span>Forecast category</span><b>Commit</b></div></div></article>
+              <article class="card"><div class="section-head"><h2>Next actions</h2><span>This week</span></div><div class="action-list"><div class="action-item"><button class="check" aria-label="Mark complete"></button><div class="action-copy"><strong>Name procurement owner in close plan</strong><span class="action-meta">Maya · Today</span></div><div class="action-slot"><button class="btn action-btn" onclick="toast('Close-plan revision prepared; Maya must review')">✦ Update plan</button></div></div><div class="action-item"><button class="check" aria-label="Mark complete"></button><div class="action-copy"><strong>Confirm security review SLA</strong><span class="action-meta">Marcus · Today</span></div><div class="action-slot"><button class="btn action-btn" onclick="toast('Follow-up drafted; Maya must approve and send')">✦ Draft ask</button></div></div><div class="action-item is-complete"><button class="check done" aria-label="Completed">✓</button><div class="action-copy"><strong>Send phased rollout economics</strong><span class="action-meta">Completed Aug 19</span></div><div class="action-slot" aria-hidden="true"></div></div></div></article>
+              <article class="card"><div class="section-head"><h2>Commercial work</h2><span>Approval required</span></div><div class="card-pad"><p style="color:var(--muted);font-size:11px">The phased rollout quote needs a buyer-ready revision. Hero can prepare version 3 from approved terms; Maya and deal desk must approve it before sharing.</p><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="toast('Quote v3 prepared for review; no buyer action taken')">✦ Prepare quote v3</button><button class="btn" style="width:100%;margin-top:7px" data-route="forecast">Preview forecast impact</button></div></article>
+              <article class="card knowledge-card"><h2>How Hero reached this</h2><p style="margin-top:8px;color:var(--muted);font-size:11px">Hero used 9 past deal reviews, 2 playbooks, and the current deal plan. No call or email was sent.</p><span class="source-pill">Deal facts</span><span class="source-pill">Current plan</span><span class="source-pill">Past deal patterns</span></article>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="page-forecast">
+          <div class="page-head"><div><div class="eyebrow">Q3 forecast</div><h1 id="forecastTitle">My forecast · Maya Chen</h1><p class="subhead" id="forecastSubhead">My open book against the $250K remaining gap to personal target, with explainable risk and opportunity.</p></div><div class="head-actions"><div class="role-toggle"><button class="active" data-forecastview="mine">My forecast</button><button data-forecastview="team">Whole team</button></div><button class="btn btn-primary" onclick="toast('Forecast recalculated from current deal evidence')">✦ Recalculate</button></div></div>
+          <div class="card scenario-bar"><button class="active" data-scenario="commit">Commit · $420K</button><button data-scenario="best">Best case · $420K</button><button data-scenario="upside">Upside · $760K</button><button data-scenario="weighted">Weighted · $440K</button></div>
+          <div class="forecast-grid">
+            <div class="left-stack">
+              <article class="card forecast-hero"><div class="eyebrow" id="scenarioEyebrow">Commit scenario</div><div class="forecast-main"><div class="forecast-number" id="forecastNumber">$420K</div><div class="forecast-target" id="forecastTarget">168% of the $250K remaining target</div></div><div class="progress"><i id="forecastProgress"></i></div><div class="forecast-caption"><span id="bookedLabel">$510K booked by Maya</span><span id="targetLabel">$760K personal Q3 target</span></div></article>
+              <article class="card"><div class="section-head"><div><h2 id="forecastTableTitle">My deal forecast</h2><span id="forecastTableSub">How each deal moves my number</span></div><span id="weightedLabel">My weighted · $440K</span></div><div class="table-wrap"><table><thead><tr><th>Rep / deal</th><th>Commit</th><th>Best case</th><th>Open pipeline</th><th>Weighted</th><th>Risk</th></tr></thead><tbody><tr data-forecastrep="maya"><td><div class="rep-cell"><div class="avatar">MC</div><div><b>Maya Chen</b><span>Enterprise · 2 deals</span></div></div></td><td class="arr">$420K</td><td class="arr">$420K</td><td class="arr">$760K</td><td class="arr">$440K</td><td><span class="badge warn">2 signals</span></td></tr><tr data-forecastrep="team"><td><div class="rep-cell"><div class="avatar">JB</div><div><b>Jordan Bell</b><span>Strategic</span></div></div></td><td class="arr">$168K</td><td class="arr">$454K</td><td class="arr">$572K</td><td class="arr">$341K</td><td><span class="badge good">Healthy</span></td></tr><tr data-forecastrep="team"><td><div class="rep-cell"><div class="avatar">PS</div><div><b>Priya Shah</b><span>Enterprise</span></div></div></td><td class="arr">$0</td><td class="arr">$345K</td><td class="arr">$345K</td><td class="arr">$176K</td><td><span class="badge risk">Stage mismatch</span></td></tr></tbody></table></div></article>
+              <article class="card"><div class="section-head"><div><h2>Slippage watch</h2><span>Deals with two or more risk signals</span></div><button class="btn" data-route="pipeline">View on board</button></div><div class="table-wrap"><table><thead><tr><th>Deal</th><th>ARR</th><th>Category</th><th>Risk evidence</th><th>Recommended action</th></tr></thead><tbody><tr data-route="deal" style="cursor:pointer"><td><b>Northstar Health</b></td><td class="arr">$420K</td><td><span class="badge good">Commit</span></td><td>Procurement owner missing; security SLA inferred</td><td>Buyer-own close plan today →</td></tr><tr><td><b>LumaPay</b></td><td class="arr">$155K</td><td><span class="badge warn">Best case</span></td><td>MEDDPICC 38; EB not confirmed</td><td>Re-qualify stage evidence</td></tr><tr><td><b>Atlas Energy</b></td><td class="arr">$340K</td><td><span class="badge">Upside</span></td><td>Single-threaded; no compelling event</td><td>Add finance + security threads</td></tr></tbody></table></div></article>
+            </div>
+            <div class="right-stack">
+              <article class="card confidence"><div class="confidence-head"><h2>Hero’s confidence</h2><span class="badge warn">Medium</span></div><p id="confidenceText">Maya’s commit clears her gap, but it is concentrated entirely in Northstar and two process steps are inferred.</p><ul id="confidenceList"><li>Northstar procurement path is not confirmed</li><li>Atlas can become best case if an EB is confirmed</li><li>No deal in Maya’s book has pushed its close date</li></ul></article>
+              <article class="card coverage-card"><span class="metric-label">Remaining-quarter coverage</span><div class="coverage-value" id="coverageValue">3.04×</div><p id="coverageText">Healthy against the 3.0× target. Coverage uses Maya’s $760K open book divided by her $250K remaining quota.</p><div class="progress" style="margin-bottom:0"><i style="width:76%"></i></div></article>
+              <article class="card"><div class="section-head"><h2>Movement</h2><span>Since Monday</span></div><div class="health-list"><div class="health-row"><span>Northstar → Commit</span><b class="trend">+$420K</b></div><div class="health-row"><span>Acme → Proposal</span><b class="trend">+$183K weighted</b></div><div class="health-row"><span>LumaPay risk adjustment</span><b class="trend down">−$8K weighted</b></div></div></article>
+              <article class="card knowledge-card"><div class="ai-kicker" style="color:var(--cobalt)">Why Hero adjusted this</div><h2>Rep optimism is already adjusted.</h2><p style="margin-top:8px;color:var(--muted);font-size:11px">LumaPay’s 60% stage default is capped at 55% because its qualification evidence is inconsistent with Proposal. This is a Hero assessment, not a CRM field mutation.</p></article>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="page-accounts">
+          <div class="page-head"><div><div class="eyebrow">Accounts & contacts</div><h1>The relationship map behind the pipeline.</h1><p class="subhead">Account identity and CRM references stay separate from Hero’s durable deal knowledge.</p></div><div class="head-actions"><button class="btn" onclick="toast('Account list filtered to strategic tier')">Strategic accounts</button><button class="btn btn-primary" onclick="toast('Account research brief queued')">✦ Research account</button></div></div>
+          <div class="accounts-layout">
+            <article class="card"><div class="section-head"><div><h2>Active accounts</h2><span>6 accounts · 7 deals · 18 mapped contacts</span></div><span>Sorted by ARR</span></div>
+              <div class="account-row" data-route="deal"><div class="company-cell"><div class="company-logo">N</div><div><strong>Northstar Health</strong><span>Healthcare · Strategic</span></div></div><div class="account-metric"><b>$420K</b><span>1 active deal</span></div><div class="account-metric"><b>4</b><span>contacts</span></div><div><span class="badge good">Strong</span></div><b>→</b></div>
+              <div class="account-row"><div class="company-cell"><div class="company-logo">A</div><div><strong>Atlas Energy</strong><span>Energy · Strategic</span></div></div><div class="account-metric"><b>$340K</b><span>1 active deal</span></div><div class="account-metric"><b>1</b><span>contact</span></div><div><span class="badge risk">Thin</span></div><b>→</b></div>
+              <div class="account-row"><div class="company-cell"><div class="company-logo">A</div><div><strong>Acme Robotics</strong><span>Manufacturing · Enterprise</span></div></div><div class="account-metric"><b>$286K</b><span>1 active deal</span></div><div class="account-metric"><b>4</b><span>contacts</span></div><div><span class="badge good">Strong</span></div><b>→</b></div>
+              <div class="account-row"><div class="company-cell"><div class="company-logo">M</div><div><strong>Meridian Logistics</strong><span>Logistics · Enterprise</span></div></div><div class="account-metric"><b>$190K</b><span>1 active deal</span></div><div class="account-metric"><b>3</b><span>contacts</span></div><div><span class="badge good">Healthy</span></div><b>→</b></div>
+              <div class="account-row"><div class="company-cell"><div class="company-logo">B</div><div><strong>Bluebird Systems</strong><span>SaaS · Enterprise</span></div></div><div class="account-metric"><b>$168K</b><span>1 active deal</span></div><div class="account-metric"><b>3</b><span>contacts</span></div><div><span class="badge good">Healthy</span></div><b>→</b></div>
+              <div class="account-row"><div class="company-cell"><div class="company-logo">L</div><div><strong>LumaPay</strong><span>Fintech · Enterprise</span></div></div><div class="account-metric"><b>$155K</b><span>1 active deal</span></div><div class="account-metric"><b>2</b><span>contacts</span></div><div><span class="badge warn">At risk</span></div><b>→</b></div>
+            </article>
+            <div class="right-stack">
+              <article class="card knowledge-card"><div class="section-head" style="padding:0 0 14px"><h2>Knowledge becoming leverage</h2><span>Last 30 days</span></div><div class="knowledge-item"><small>Playbook</small><strong>Healthcare procurement: buyer-owned checklist</strong><p>Graduated from 3 debriefs; matched to Northstar with high confidence.</p><span class="source-pill">Used in 2 active deals</span></div><div class="knowledge-item"><small>Pattern</small><strong>CFO-first motion shortens fintech procurement</strong><p>Observed across 4 won deals; relevant to LumaPay’s EB gap.</p><span class="source-pill">Confidence · medium</span></div><div class="knowledge-item"><small>Objection</small><strong>“We need another quarter”</strong><p>Phased rollout response converted in 5 of 7 comparable deals.</p><span class="source-pill">Updated Aug 18</span></div></article>
+              <article class="card knowledge-card"><h2>Account model</h2><p style="margin-top:8px;color:var(--muted);font-size:11px">One account can hold multiple deal specs and a shared contact map. Customer-sensitive details stay referenced by CRM ID; Hero stores the reasoning, evidence state, and learned patterns needed for the next session.</p><button class="btn" style="margin-top:14px;width:100%" onclick="toast('Account model explainer opened')">View data boundaries</button></article>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const routes = { home: 'Today', pipeline: 'Pipeline', deal: 'Northstar Health', forecast: 'Forecast', accounts: 'Accounts', exec: 'Leadership' };
+    function navigate(route, updateHash = true) {
+      if (!routes[route]) route = 'home';
+      document.querySelectorAll('.page').forEach(page => page.classList.toggle('active', page.id === `page-${route}`));
+      document.querySelectorAll('.nav [data-route]').forEach(button => button.classList.toggle('active', button.dataset.route === route));
+      document.getElementById('crumbTitle').textContent = routes[route];
+      document.title = `${routes[route]} — Hero Sales`;
+      if (updateHash) history.replaceState(null, '', `#${route}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    document.addEventListener('click', event => {
+      const routeTarget = event.target.closest('[data-route]');
+      if (routeTarget) navigate(routeTarget.dataset.route);
+    });
+    window.addEventListener('hashchange', () => navigate(location.hash.slice(1), false));
+    navigate(location.hash.slice(1) || 'home', false);
+
+    const ownerFilter = document.getElementById('ownerFilter');
+    const riskFilter = document.getElementById('riskFilter');
+    let risksOnly = false;
+    function filterDeals() {
+      const owner = ownerFilter.value;
+      document.querySelectorAll('.deal-card').forEach(card => {
+        const ownerMatch = owner === 'all' || card.dataset.owner === owner;
+        const riskMatch = !risksOnly || card.dataset.risk === 'true';
+        card.classList.toggle('hidden', !(ownerMatch && riskMatch));
+      });
+    }
+    ownerFilter.addEventListener('change', filterDeals);
+    riskFilter.addEventListener('click', () => { risksOnly = !risksOnly; riskFilter.classList.toggle('active', risksOnly); filterDeals(); });
+    document.querySelectorAll('.filter-chip:not(#riskFilter)').forEach(chip => chip.addEventListener('click', () => chip.classList.toggle('active')));
+
+    document.querySelectorAll('[data-dealtab]').forEach(tab => tab.addEventListener('click', () => {
+      document.querySelectorAll('[data-dealtab]').forEach(item => item.classList.toggle('active', item === tab));
+      document.querySelectorAll('[data-dealpanel]').forEach(panel => panel.classList.toggle('active', panel.dataset.dealpanel === tab.dataset.dealtab));
+    }));
+
+    const forecastViews = {
+      mine: {
+        title: 'My forecast · Maya Chen', subhead: 'My open book against the $250K remaining gap to personal target, with explainable risk and opportunity.',
+        booked: '$510K booked by Maya', targetLabel: '$760K personal Q3 target', weighted: 'My weighted · $440K', coverage: '3.04×', coverageText: 'Healthy against the 3.0× target. Coverage uses Maya’s $760K open book divided by her $250K remaining quota.',
+        confidence: 'Maya’s commit clears her gap, but it is concentrated entirely in Northstar and two process steps are inferred.',
+        labels: ['Commit · $420K', 'Best case · $420K', 'Upside · $760K', 'Weighted · $440K'],
+        scenarios: {
+          commit: { eyebrow: 'Commit scenario', number: '$420K', target: '168% of the $250K remaining target' },
+          best: { eyebrow: 'Best-case scenario', number: '$420K', target: '168% of the $250K remaining target' },
+          upside: { eyebrow: 'Total upside', number: '$760K', target: '3.04× coverage of the remaining target' },
+          weighted: { eyebrow: 'Probability-weighted forecast', number: '$440K', target: '176% of the $250K remaining target' }
+        }
+      },
+      team: {
+        title: 'Whole-team forecast', subhead: 'The team’s open book against the $550K remaining gap, with concentration, movement, and coaching signals.',
+        booked: '$2.08M booked', targetLabel: '$2.63M team Q3 target', weighted: 'Team weighted · $957K', coverage: '3.05×', coverageText: 'Healthy against the 3.0× target. Coverage uses $1.68M open pipeline divided by the $550K remaining quota.',
+        confidence: 'Team commit clears the remaining target, but 71% is concentrated in Northstar and Priya’s proposal-stage evidence needs coaching attention.',
+        labels: ['Commit · $588K', 'Best case · $1.22M', 'Upside · $1.68M', 'Weighted · $957K'],
+        scenarios: {
+          commit: { eyebrow: 'Commit scenario', number: '$588K', target: '107% of the $550K remaining target' },
+          best: { eyebrow: 'Best-case scenario', number: '$1.22M', target: '222% of the $550K remaining target' },
+          upside: { eyebrow: 'Total upside', number: '$1.68M', target: '3.05× coverage of the remaining target' },
+          weighted: { eyebrow: 'Probability-weighted forecast', number: '$957K', target: '174% of the $550K remaining target' }
+        }
+      }
+    };
+    let activeForecastView = 'mine';
+    function setScenario(key) {
+      const data = forecastViews[activeForecastView].scenarios[key];
+      document.getElementById('scenarioEyebrow').textContent = data.eyebrow;
+      document.getElementById('forecastNumber').textContent = data.number;
+      document.getElementById('forecastTarget').textContent = data.target;
+      document.getElementById('forecastProgress').style.width = '100%';
+    }
+    document.querySelectorAll('[data-scenario]').forEach(button => button.addEventListener('click', () => {
+      document.querySelectorAll('[data-scenario]').forEach(item => item.classList.toggle('active', item === button));
+      setScenario(button.dataset.scenario);
+    }));
+    document.querySelectorAll('[data-forecastview]').forEach(button => button.addEventListener('click', () => {
+      activeForecastView = button.dataset.forecastview;
+      const view = forecastViews[activeForecastView];
+      document.querySelectorAll('[data-forecastview]').forEach(item => item.classList.toggle('active', item === button));
+      document.getElementById('forecastTitle').textContent = view.title;
+      document.getElementById('forecastSubhead').textContent = view.subhead;
+      document.getElementById('bookedLabel').textContent = view.booked;
+      document.getElementById('targetLabel').textContent = view.targetLabel;
+      document.getElementById('weightedLabel').textContent = view.weighted;
+      document.getElementById('coverageValue').textContent = view.coverage;
+      document.getElementById('coverageText').textContent = view.coverageText;
+      document.getElementById('confidenceText').textContent = view.confidence;
+      document.getElementById('forecastTableTitle').textContent = activeForecastView === 'mine' ? 'My deal forecast' : 'Rep forecast';
+      document.getElementById('forecastTableSub').textContent = activeForecastView === 'mine' ? 'How each deal moves my number' : 'Current open book by owner';
+      document.querySelectorAll('[data-forecastrep="team"]').forEach(row => row.style.display = activeForecastView === 'team' ? '' : 'none');
+      document.querySelectorAll('[data-scenario]').forEach((item, index) => item.textContent = view.labels[index]);
+      const activeScenario = document.querySelector('[data-scenario].active').dataset.scenario;
+      setScenario(activeScenario);
+      toast(activeForecastView === 'mine' ? 'Showing Maya’s forecast' : 'Showing the whole team');
+    }));
+    document.querySelectorAll('[data-forecastrep="team"]').forEach(row => row.style.display = 'none');
+
+    document.querySelectorAll('.check').forEach(check => check.addEventListener('click', () => {
+      check.classList.toggle('done');
+      check.textContent = check.classList.contains('done') ? '✓' : '';
+      toast(check.classList.contains('done') ? 'Next action marked complete' : 'Next action reopened');
+    }));
+
+    let toastTimer;
+    function toast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+    document.getElementById('globalSearch').addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        const query = event.target.value.trim().toLowerCase();
+        if (query.includes('northstar')) navigate('deal'); else if (query.includes('account') || query.includes('contact')) navigate('accounts'); else navigate('pipeline');
+        toast(query ? `Showing results for “${event.target.value.trim()}”` : 'Showing all deals');
+      }
+    });
+  </script>
+</body>
+</html>

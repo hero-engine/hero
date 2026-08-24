@@ -242,10 +242,10 @@ Hero Cloud is a separate proprietary product; there is no `cloud/` backend tree
 in this repository. Hero Code is also a separate proprietary product. Sprout
 (`github.com/bdwheeler/sprout`) is a separate public MIT-licensed dependency.
 
-This `hero` repository is being prepared for a future Apache-2.0 grant, but the
-grant has not happened: there is no root license file yet. Do not describe this
-repository, Hero Code, or Hero Cloud as open source until the explicit license
-and visibility gates land. Third-party components retain their own licenses.
+This `hero` repository is licensed under the Apache License 2.0. Hero Code and
+Hero Cloud remain separate proprietary products and are not covered by this
+repository's grant. Sprout and all other third-party components retain their
+own licenses; see `THIRD_PARTY_NOTICES.txt` for redistributed dependencies.
 
 ## Build from source
 
@@ -278,6 +278,7 @@ Prebuilt binary installation does not require Go.
 - [Security](SECURITY.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 
-This repository remains private and does not yet carry a root open-source
-license. The policy files prepare the public contribution and reporting routes;
-they do not activate those routes or grant redistribution rights.
+This repository remains private even though its tracked Hero-authored work is
+now Apache-2.0 licensed. The policy files prepare the public contribution and
+reporting routes; those routes do not become available until the separate
+public-visibility gate completes.

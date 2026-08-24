@@ -65,6 +65,7 @@ class ReleaseCandidateTests(unittest.TestCase):
     def test_normalized_archives_are_byte_identical(self):
         files = {
             "hero": (b"binary", 0o755),
+            "LICENSE": (b"license\n", 0o644),
             "THIRD_PARTY_NOTICES.txt": (b"notices\n", 0o644),
         }
         with tempfile.TemporaryDirectory() as temp_name:
@@ -80,7 +81,7 @@ class ReleaseCandidateTests(unittest.TestCase):
             self.assertEqual(release_candidate.sha256(first_tar), release_candidate.sha256(second_tar))
             self.assertEqual(release_candidate.sha256(first_zip), release_candidate.sha256(second_zip))
 
-    def test_sbom_records_pending_license_gate_and_revision(self):
+    def test_sbom_records_apache_license_and_revision(self):
         identity = {
             "version": "v0.34.0",
             "revision": "a" * 40,
@@ -92,13 +93,39 @@ class ReleaseCandidateTests(unittest.TestCase):
             "version": "v1.6.0",
             "sum": "h1:example",
         }
-        sbom = json.loads(release_candidate.render_sbom(identity, "1.26.4", [module]))
+        sbom = json.loads(release_candidate.render_sbom(identity, "1.26.4", [module], "apache-2.0"))
         self.assertEqual("CycloneDX", sbom["bomFormat"])
         self.assertEqual("a" * 40, sbom["metadata"]["properties"][0]["value"])
         self.assertEqual(
-            "pending-apache-2.0",
+            "apache-2.0",
             sbom["metadata"]["component"]["properties"][0]["value"],
         )
+        self.assertEqual(
+            "Apache-2.0",
+            sbom["metadata"]["component"]["licenses"][0]["license"]["id"],
+        )
+
+    def test_candidate_requires_canonical_apache_license(self):
+        repository_license = SCRIPT.parent.parent / "LICENSE"
+        with tempfile.TemporaryDirectory() as temp_name:
+            root = Path(temp_name)
+            (root / "LICENSE").write_bytes(repository_license.read_bytes())
+            self.assertEqual("apache-2.0", release_candidate.hero_license_state(root))
+            (root / "LICENSE").write_text("not the Apache license\n")
+            with self.assertRaises(release_candidate.CandidateError):
+                release_candidate.hero_license_state(root)
+
+    def test_candidate_readme_records_license_without_publishing(self):
+        identity = {
+            "version": "v0.34.0",
+            "revision": "a" * 40,
+            "source_tree": "b" * 40,
+            "baseline": "v0.33.0",
+        }
+        readme = release_candidate.candidate_readme(identity, "apache-2.0").decode()
+        self.assertIn("Hero license: Apache-2.0", readme)
+        self.assertIn("Publication status: unpublished", readme)
+        self.assertNotIn("pending", readme)
 
     def test_unknown_release_dependency_fails_closed(self):
         inventory = [{"path": "example.invalid/unknown", "version": "v1.0.0"}]
@@ -140,6 +167,7 @@ class ReleaseCandidateTests(unittest.TestCase):
             "hero_0.34.0_linux_arm64.tar.gz",
             "hero_0.34.0_windows_amd64.zip",
             "hero-v0.34.0.cdx.json",
+            "LICENSE",
             "THIRD_PARTY_NOTICES.txt",
             "provenance.json",
             "checksums.txt",

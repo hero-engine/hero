@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-23T22:00:38Z
+updated: 2026-08-24T00:34:09Z
 repo: hero-engine/hero
 ---
 
@@ -10,13 +10,11 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 29 commit(s) since, last set 9d 5h ago_
+_possibly stale — 30 commit(s) since, last set 9d 8h ago_
 
 ## Last user ask
 
-> Remove the cross-tool continuity detour, keep any synthetic install demo optional, and finish the real v0.34 open-source release preparation.
-
-_possibly stale — 5 commit(s) since, last set 59m ago_
+> Finish the Apache-2.0 grant prep, commit the full working tree as Chet Bellows, and stop before visibility, tagging, release, or deploy
 
 ## Suggested next prompt
 

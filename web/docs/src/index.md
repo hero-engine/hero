@@ -70,9 +70,9 @@ latest release tag during the build; it is not maintained as narrative copy.
 
 This site documents the `hero` CLI repository. Hero Code and Hero Cloud are
 separate proprietary products. Sprout is a separate MIT-licensed project and
-is not covered by Hero's future license grant. Apache-2.0 preparation for this
-repository is authorized, but Hero must not be described as open source until
-the explicit license gate adds the root license.
+is not covered by Hero's Apache-2.0 grant. This `hero` repository is licensed
+under the Apache License 2.0; its separate public-visibility gate has not yet
+made the source repository anonymously accessible.
 
 ## Next steps
 

@@ -442,22 +442,23 @@ claims:
 
   - id: apache-license-status
     family: licensing
-    claim: The Hero repository is currently open source under Apache License 2.0.
-    availability: planned
+    claim: The Hero repository is licensed under Apache License 2.0.
+    availability: shipped
     evidence_class: A
-    prerequisites: Owner-authorized final grant mutation and root license file.
+    prerequisites: The claim applies only to this `hero` repository; public source availability remains separately gated.
     evidence:
-      - "test ! -f LICENSE"
-      - .hero/planning/initiatives/hero-marketing/hero-apache-license-grant-gate/spec.md
+      - LICENSE
+      - THIRD_PARTY_NOTICES.txt
+      - .hero/specs/hero-apache-license-grant-gate/spec.md
     surfaces: [README.md, repository metadata, web/docs/src/index.md, web/landing/site/index.html]
     owner: hero-apache-license-grant-gate
-    resolution: prohibited
-    replacement: Say Apache-2.0 preparation is authorized but do not call Hero open source until the license gate lands.
+    resolution: verified
+    replacement: Say this `hero` repository is Apache-2.0 licensed; do not imply that Hero Code, Hero Cloud, or Sprout share that grant, or that the private source is already publicly accessible.
     last_verified: 2026-08-23
 
   - id: sprout-license-boundary
     family: licensing
-    claim: Sprout is a separate public MIT-licensed project and is not covered by Hero's future Apache-2.0 grant.
+    claim: Sprout is a separate public MIT-licensed project and is not covered by Hero's Apache-2.0 grant.
     availability: shipped
     evidence_class: A
     prerequisites: Hero must continue consuming an immutable Sprout revision whose module archive includes the MIT license.

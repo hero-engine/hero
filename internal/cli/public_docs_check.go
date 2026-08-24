@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -64,10 +66,10 @@ type publicNarrativeRule struct {
 
 var publicNarrativeRules = []publicNarrativeRule{
 	{regexp.MustCompile(`(?i)\bv0\.9(?:\.\d+)?\b`), "stale v0.9 product copy"},
-	{regexp.MustCompile(`(?i)\bhero\s+is\s+(?:an?\s+)?open[ -]source\b`), "Hero has not crossed the license and visibility gates"},
-	{regexp.MustCompile(`(?i)\bhero\s+is\s+(?:licensed|available)\s+under\s+(?:the\s+)?MIT\b`), "Hero is an Apache-2.0 candidate, not MIT"},
+	{regexp.MustCompile(`(?i)\bhero\s+is\s+(?:an?\s+)?open[ -]source\b`), "Hero's private source has not crossed the public visibility gate"},
+	{regexp.MustCompile(`(?i)\bhero\s+is\s+(?:licensed|available)\s+under\s+(?:the\s+)?MIT\b`), "Hero is Apache-2.0 licensed, not MIT"},
 	{regexp.MustCompile(`(?i)\bhero(?:\s|-)(?:code|cloud)\s+(?:is|are)\s+open[ -]source\b`), "Hero Code and Hero Cloud are proprietary"},
-	{regexp.MustCompile(`(?i)\bhero(?:\s|-)(?:code|cloud).{0,80}\bApache-2\.0\b`), "Hero Code and Hero Cloud are outside Hero's proposed grant"},
+	{regexp.MustCompile(`(?i)\bhero(?:\s|-)(?:code|cloud).{0,80}\bApache-2\.0\b`), "Hero Code and Hero Cloud are outside Hero's grant"},
 	{regexp.MustCompile(`(?i)--auth-token\b|\bHERO_TEAM_TOKEN\b`), "secret-bearing or stale configuration guidance"},
 	{regexp.MustCompile(`(?i)hero\s*[·-]\s*sidekick brain`), "superseded positioning"},
 	{regexp.MustCompile(`(?i)approval-aware agent jobs`), "unsupported public capability claim"},
@@ -95,6 +97,7 @@ func publicDocsIssues(projectRoot string) []string {
 	}
 	issues = append(issues, publicExecutableInvocationIssues(surfaces)...)
 	issues = append(issues, repositoryBoundaryIssues(surfaces)...)
+	issues = append(issues, repositoryLicenseIssues(projectRoot)...)
 	issues = append(issues, docsDependencyIssues(filepath.Join(projectRoot, "requirements-docs.txt"))...)
 	issues = append(issues, revisionTemplateIssues(projectRoot)...)
 	sort.Strings(issues)
@@ -374,7 +377,9 @@ func repositoryBoundaryIssues(surfaces map[string]string) []string {
 		{"README.md", regexp.MustCompile(`(?is)Hero Code.{0,80}separate proprietary product`), "must identify Hero Code as a separate proprietary product"},
 		{"README.md", regexp.MustCompile(`(?is)Hero Cloud.{0,80}separate proprietary product`), "must identify Hero Cloud as a separate proprietary product"},
 		{"README.md", regexp.MustCompile(`(?is)Sprout.{0,120}separate public MIT-licensed dependency`), "must identify Sprout as a separate public MIT-licensed dependency"},
-		{"web/docs/src/index.md", regexp.MustCompile(`(?is)Sprout.{0,120}separate MIT-licensed project.{0,120}not covered by Hero's future license grant`), "must keep Sprout outside Hero's future license grant"},
+		{"README.md", regexp.MustCompile(`(?is)this .hero. repository.{0,100}licensed\s+under the Apache License 2\.0`), "must identify this Hero repository as Apache-2.0 licensed"},
+		{"web/docs/src/index.md", regexp.MustCompile(`(?is)Sprout.{0,120}separate MIT-licensed project.{0,120}not covered by Hero's Apache-2\.0 grant`), "must keep Sprout outside Hero's Apache-2.0 grant"},
+		{"web/docs/src/index.md", regexp.MustCompile(`(?is)this .hero. repository.{0,100}licensed\s+under the Apache License 2\.0`), "must identify this Hero repository as Apache-2.0 licensed"},
 	}
 	var issues []string
 	for _, check := range checks {
@@ -383,6 +388,35 @@ func repositoryBoundaryIssues(surfaces map[string]string) []string {
 		}
 	}
 	return issues
+}
+
+const apacheLicenseSHA256 = "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+
+func repositoryLicenseIssues(projectRoot string) []string {
+	licenseText, err := os.ReadFile(filepath.Join(projectRoot, "LICENSE"))
+	if err != nil {
+		return []string{fmt.Sprintf("LICENSE: read canonical Apache-2.0 text: %v", err)}
+	}
+	digest := sha256.Sum256(licenseText)
+	if fmt.Sprintf("%x", digest) != apacheLicenseSHA256 {
+		return []string{"LICENSE: does not match the canonical Apache License 2.0 text"}
+	}
+
+	notices, err := os.ReadFile(filepath.Join(projectRoot, "THIRD_PARTY_NOTICES.txt"))
+	if err != nil {
+		return []string{fmt.Sprintf("THIRD_PARTY_NOTICES.txt: read release notices: %v", err)}
+	}
+	for _, required := range []string{
+		"Hero — third-party notices",
+		"Go runtime and standard library",
+		"Embedded hero-embed-v1 model lineage",
+		"modernc.org/libc v1.73.4",
+	} {
+		if !bytes.Contains(notices, []byte(required)) {
+			return []string{fmt.Sprintf("THIRD_PARTY_NOTICES.txt: missing %q", required)}
+		}
+	}
+	return nil
 }
 
 func publicQuickstartIssues(binary, projectRoot string) []string {

@@ -29,6 +29,8 @@ TARGETS = (
     ("windows", "amd64"),
 )
 
+APACHE_LICENSE_SHA256 = "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+
 LICENSE_IDS = {
     "github.com/BurntSushi/toml": "MIT",
     "github.com/dustin/go-humanize": "MIT",
@@ -84,6 +86,15 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def hero_license_state(root: Path) -> str:
+    license_path = root / "LICENSE"
+    if not license_path.is_file():
+        raise CandidateError("canonical Apache-2.0 LICENSE is required")
+    if sha256(license_path) != APACHE_LICENSE_SHA256:
+        raise CandidateError("LICENSE does not match the canonical Apache License 2.0 text")
+    return "apache-2.0"
 
 
 def repository_root(cwd: Path) -> Path:
@@ -206,8 +217,8 @@ def license_files(module: dict[str, str]) -> list[Path]:
 
 def render_notices(root: Path, modules: list[dict[str, str]]) -> bytes:
     sections = [
-        "Hero release candidate — third-party notices\n",
-        "Third-party components retain their own licenses. This packet does not license Hero itself.\n",
+        "Hero — third-party notices\n",
+        "Third-party components retain their own licenses. Hero-authored work is licensed separately under Apache-2.0.\n",
     ]
     go_license = root / "release" / "third-party" / "go-BSD-3-Clause.txt"
     model_license = root / "internal" / "embeddings" / "defaultmodel" / "potion-base-8M-MIT.txt"
@@ -234,6 +245,7 @@ def render_sbom(
     identity: dict[str, Any],
     go_version: str,
     modules: list[dict[str, str]],
+    hero_license: str,
 ) -> bytes:
     timestamp = dt.datetime.fromtimestamp(identity["source_date_epoch"], dt.timezone.utc).isoformat().replace("+00:00", "Z")
     components: list[dict[str, Any]] = [
@@ -242,7 +254,8 @@ def render_sbom(
             "name": "hero",
             "version": identity["version"].removeprefix("v"),
             "bom-ref": f"pkg:golang/github.com/hero-engine/hero@{identity['version'].removeprefix('v')}",
-            "properties": [{"name": "hero:license-gate", "value": "pending-apache-2.0"}],
+            "licenses": [{"license": {"id": "Apache-2.0"}}],
+            "properties": [{"name": "hero:license-gate", "value": hero_license}],
         },
         {
             "type": "framework",
@@ -290,15 +303,16 @@ def render_sbom(
     return (json.dumps(document, indent=2, sort_keys=True) + "\n").encode("utf-8")
 
 
-def candidate_readme(identity: dict[str, Any]) -> bytes:
+def candidate_readme(identity: dict[str, Any], hero_license: str) -> bytes:
     return (
         f"Hero {identity['version']} release candidate\n"
         f"Source revision: {identity['revision']}\n"
         f"Source tree: {identity['source_tree']}\n"
         f"Baseline: {identity['baseline']}\n"
         "Publication status: unpublished\n"
-        "Hero license gate: pending Apache-2.0 approval\n"
-        "This candidate is for verification only and must be rebuilt after the license gate.\n"
+        f"Hero license gate: {hero_license}\n"
+        "Hero license: Apache-2.0\n"
+        "This candidate is for verification only and has not been published.\n"
     ).encode("utf-8")
 
 
@@ -370,11 +384,14 @@ def build_once(
     base_env: dict[str, str],
     go_version: str,
     modules: list[dict[str, str]],
+    hero_license: str,
 ) -> dict[str, str]:
     ensure_directory(output)
+    license_text = (root / "LICENSE").read_bytes()
     notices = render_notices(root, modules)
-    sbom = render_sbom(identity, go_version, modules)
-    readme = candidate_readme(identity)
+    sbom = render_sbom(identity, go_version, modules, hero_license)
+    readme = candidate_readme(identity, hero_license)
+    (output / "LICENSE").write_bytes(license_text)
     (output / "THIRD_PARTY_NOTICES.txt").write_bytes(notices)
     (output / "hero-v0.34.0.cdx.json").write_bytes(sbom)
 
@@ -385,6 +402,7 @@ def build_once(
         build_binary(root, binary_path, identity["version"], goos, goarch, base_env, identity["source_date_epoch"])
         files = {
             executable: (binary_path.read_bytes(), 0o755),
+            "LICENSE": (license_text, 0o644),
             "THIRD_PARTY_NOTICES.txt": (notices, 0o644),
             "RELEASE-CANDIDATE.txt": (readme, 0o644),
         }
@@ -397,6 +415,7 @@ def build_once(
         binary_path.unlink()
         artifact_hashes[archive_path.name] = sha256(archive_path)
 
+    artifact_hashes["LICENSE"] = sha256(output / "LICENSE")
     artifact_hashes["THIRD_PARTY_NOTICES.txt"] = sha256(output / "THIRD_PARTY_NOTICES.txt")
     artifact_hashes["hero-v0.34.0.cdx.json"] = sha256(output / "hero-v0.34.0.cdx.json")
     provenance = {
@@ -406,7 +425,7 @@ def build_once(
         "artifacts": artifact_hashes,
         "reproducible_build": True,
         "publication_status": "unpublished",
-        "hero_license_gate": "pending-apache-2.0",
+        "hero_license_gate": hero_license,
     }
     provenance_path = output / "provenance.json"
     provenance_path.write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -482,6 +501,7 @@ def smoke_candidate(output: Path, identity: dict[str, Any]) -> None:
 
 def build_candidate(root: Path, output: Path, version: str, base: str, smoke: bool) -> dict[str, Any]:
     identity = source_identity(root, version, base)
+    hero_license = hero_license_state(root)
     base_env, go_version = go_environment(root)
     modules = module_inventory(root, base_env)
     with tempfile.TemporaryDirectory(prefix="hero-candidate-a-") as first_name, tempfile.TemporaryDirectory(
@@ -489,15 +509,20 @@ def build_candidate(root: Path, output: Path, version: str, base: str, smoke: bo
     ) as second_name:
         first = Path(first_name)
         second = Path(second_name)
-        build_once(root, first, identity, base_env, go_version, modules)
-        build_once(root, second, identity, base_env, go_version, modules)
+        build_once(root, first, identity, base_env, go_version, modules, hero_license)
+        build_once(root, second, identity, base_env, go_version, modules, hero_license)
         compare_outputs(first, second)
         if output.exists():
             shutil.rmtree(output)
         shutil.copytree(first, output)
     if smoke:
         smoke_candidate(output, identity)
-    return identity | {"output": str(output), "module_count": len(modules), "smoke": smoke}
+    return identity | {
+        "output": str(output),
+        "module_count": len(modules),
+        "smoke": smoke,
+        "hero_license_gate": hero_license,
+    }
 
 
 def main() -> int:
