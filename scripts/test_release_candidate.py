@@ -105,6 +105,11 @@ class ReleaseCandidateTests(unittest.TestCase):
             sbom["metadata"]["component"]["licenses"][0]["license"]["id"],
         )
 
+    def test_candidate_sbom_name_tracks_release_version(self):
+        source = SCRIPT.read_text()
+        self.assertIn("f\"hero-{identity['version']}.cdx.json\"", source)
+        self.assertNotIn('"hero-v0.34.0.cdx.json"', source)
+
     def test_candidate_requires_canonical_apache_license(self):
         repository_license = SCRIPT.parent.parent / "LICENSE"
         with tempfile.TemporaryDirectory() as temp_name:
