@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-24T01:49:43Z
+updated: 2026-08-24T02:02:45Z
 repo: hero-engine/hero
 ---
 
@@ -10,15 +10,17 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 33 commit(s) since, last set 9d 9h ago_
+_possibly stale — 35 commit(s) since, last set 9d 9h ago_
 
 ## Last user ask
 
 > Expand the public-copy diagnosis to remove the landing trust-strip's repository-boundary/compliance prose and visible build revision/timestamp from marketing, while keeping license truth in repo/docs and build metadata machine-readable only in revision.json.
 
+_possibly stale — 1 commit(s) since, last set 40m ago_
+
 ## Suggested next prompt
 
-> let's run the public visibility and v0.34 launch gate, then publish the docs and site from the approved revision
+> sign in to Cloudflare, deploy the corrected Hero landing and docs, point heroengine.ai at www, then complete the public visibility and v0.34 launch gate
 
 ## Recent reflections
 
