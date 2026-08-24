@@ -87,7 +87,7 @@ jobs:
         env:
           # PAT with contents:write on hero-engine/hero-releases and
           # hero-engine/homebrew-tap. The default GITHUB_TOKEN is scoped to
-          # the private source repo and can't push cross-repo.
+          # this source repository and can't push cross-repo.
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           TAP_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 

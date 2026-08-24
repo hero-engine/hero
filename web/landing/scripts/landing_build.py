@@ -49,7 +49,6 @@ ALLOWED_EXTERNAL_ORIGINS = {
 }
 FORBIDDEN_CLAIMS = {
     "v0.9": "stale release copy",
-    "open source": "license and visibility gates have not landed",
     "open source · mit": "superseded license claim",
     "hero · sidekick brain": "superseded positioning",
     "installs as slash commands": "workflows are harness-native",
@@ -342,6 +341,7 @@ def validate_site(
     required_copy = (
         "Your project remembers.",
         "Your agents deliver.",
+        "Open source under Apache 2.0",
         "Project memory that survives the session",
         "Verified delivery, not ceremonial specs",
         "Illustrative",
@@ -357,8 +357,8 @@ def validate_site(
         if phrase in lowered:
             errors.append(f"forbidden landing claim {phrase!r}: {reason}")
 
-    if re.search(r"https://github\.com/hero-engine/hero(?!-releases)(?:[\"/#?])", html):
-        errors.append("public source link is not gated while the repository is private")
+    if not re.search(r"https://github\.com/hero-engine/hero(?!-releases)(?:[\"/#?])", html):
+        errors.append("missing public Hero source link")
     if '<link rel="canonical" href="https://heroengine.ai/"' not in html:
         errors.append("missing canonical heroengine.ai metadata")
     expected_social_metadata = (

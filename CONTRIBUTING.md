@@ -1,12 +1,8 @@
 # Contributing to Hero
 
-Thank you for helping improve Hero. This repository is licensed under the
-Apache License 2.0 but remains private. External contributions are not accepted
-until the public-visibility gate completes and the public contribution routes
-are verified.
-
-Once those gates complete, start with the repository's New Issue flow. Use a
-bug report for reproducible failures and a feature request for new behavior.
+Thank you for helping improve Hero. This repository is open source under the
+Apache License 2.0. Start with the repository's New Issue flow. Use a bug
+report for reproducible failures and a feature request for new behavior.
 For substantial changes, agree on the problem and intended outcome with a
 maintainer before investing in an implementation.
 

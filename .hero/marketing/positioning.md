@@ -142,7 +142,7 @@ These capabilities support the memory-and-delivery story. Do not turn a mutable 
 
 ## Prohibited claims
 
-- This `hero` repository is Apache-2.0 licensed. Do not call its source publicly available until the separate visibility gate succeeds (`apache-license-status`, Class A, shipped).
+- This `hero` repository is open source under Apache-2.0 (`apache-license-status`, Class A, shipped).
 - Do not imply Hero Code or Hero Cloud is included in this repository or its grant. Both remain proprietary (`proprietary-repository-boundary`, Class B, shipped boundary).
 - Treat Sprout as a separate MIT project, never as part of Hero's Apache grant (`sprout-license-boundary`, Class A, shipped).
 - Do not claim cloud, team, outpost, or remote-server readiness without a public access path and release evidence.
@@ -213,7 +213,7 @@ Hero is a project memory and delivery system for AI-assisted engineering. It pre
 - **Landing:** lead with the one-sentence position, show memory first and delivery second, then one concrete proof for each. Do not lead with agent/spec counts.
 - **README:** explain the two-system model before installation. Give the lead audience a short “why,” then a factual quickstart.
 - **Hosted docs:** make the memory model, delivery model, and reinforcing loop separately navigable. Keep exact commands and availability qualifiers near each claim.
-- **Repository metadata:** Apache-2.0 is accurate for this repository; add public-source language only after the visibility gate.
+- **Repository metadata:** Apache-2.0 and public-source language are accurate for this repository.
 - **Comparisons:** remain generic until the transparent-comparisons research spec is delivered.
 
 ## Downstream compatibility contract

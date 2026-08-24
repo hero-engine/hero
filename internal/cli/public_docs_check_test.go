@@ -51,7 +51,6 @@ func TestPublicNarrativeMutationsAreRejected(t *testing.T) {
 		want    string
 	}{
 		{"Hero v0.9 is ready.", "stale v0.9"},
-		{"Hero is open source.", "visibility gate"},
 		{"Hero is licensed under MIT.", "Apache-2.0 licensed"},
 		{"Hero Cloud is open source.", "proprietary"},
 		{"Pass --auth-token abc.", "secret-bearing"},
@@ -65,7 +64,6 @@ func TestPublicNarrativeMutationsAreRejected(t *testing.T) {
 		{"Sprout is included in this repository.", "separate dependency"},
 		{"Preview outcome: continuity proof is still being proven.", "continuity-proof qualifier"},
 		{"Hero does not promise that every tool or session applies it perfectly.", "perfection disclaimer"},
-		{`Source: https://github.com/hero-engine/hero/`, "source link"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.want, func(t *testing.T) {

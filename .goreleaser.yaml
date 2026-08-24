@@ -62,12 +62,12 @@ brews:
       token: "{{ .Env.TAP_TOKEN }}"
     directory: Formula
     url_template: "https://github.com/hero-engine/hero-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    homepage: "https://hero-engine.dev"
-    description: "Spec-driven AI engineering workflow"
+    homepage: "https://heroengine.ai"
+    description: "Persistent project memory and delivery workflows for AI engineering agents"
     license: "Apache-2.0"
     commit_author:
       name: hero-engine-bot
-      email: noreply@hero-engine.dev
+      email: 277887514+chet-bellows@users.noreply.github.com
     install: |
       bin.install "hero"
     test: |
@@ -80,12 +80,12 @@ scoops:
       token: "{{ .Env.TAP_TOKEN }}"
     directory: bucket
     url_template: "https://github.com/hero-engine/hero-releases/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    homepage: "https://hero-engine.dev"
-    description: "Spec-driven AI engineering workflow"
+    homepage: "https://heroengine.ai"
+    description: "Persistent project memory and delivery workflows for AI engineering agents"
     license: "Apache-2.0"
     commit_author:
       name: hero-engine-bot
-      email: noreply@hero-engine.dev
+      email: 277887514+chet-bellows@users.noreply.github.com
 
 release:
   github:

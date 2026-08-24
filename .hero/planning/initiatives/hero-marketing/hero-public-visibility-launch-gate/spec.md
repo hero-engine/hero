@@ -24,9 +24,9 @@ After a second explicit owner approval, change only the `hero` repository to pub
 
 This is the final human-controlled exposure gate; green dependencies do not authorize a visibility change.
 
-**Status:** delivering — approval, revision parity, artifacts, DNS, docs, and landing are evidenced, but the public-exposure gate still finds proprietary Cloud source and session databases in reachable Git history.
+**Status:** delivering — the approved history sanitation and archive-and-replace launch are complete; `v0.34.0` publication, production revision parity, and final anonymous journeys are in progress.
 
-**Pick up at:** obtain owner authorization to expand scope for the recoverable, bounded history rewrite described by the readiness audit; the current initiative excludes that rewrite, so visibility and `v0.34.0` publication remain halted.
+**Pick up at:** publish `v0.34.0` from the sanitized public revision, redeploy the landing and docs artifacts at that revision, complete anonymous install and integrity checks, then run the cold audit and verify gate.
 
 → `.hero/planning/initiatives/hero-marketing/hero-public-visibility-launch-gate/spec.md`
 
@@ -61,7 +61,16 @@ This is the final human-controlled exposure gate; green dependencies do not auth
 - Exercise all anonymous journeys from a credential-free environment and verify `heroengine.ai` resolves to the approved deployment revision.
 - Confirm `v0.34.0` artifacts, checksums, SBOM/notices, release notes, and license are mutually consistent.
 
-## Launch Gate Evidence
+## Current Launch Progress
+
+- The owner explicitly approved the recoverable archive-and-replace remediation and the public launch.
+- The original repository is preserved privately as `hero-engine/hero-private-archive-20260824`, including its merged pull requests, release metadata, and original release credential.
+- The replacement `hero-engine/hero` repository is public under Apache-2.0 at sanitized revision `2f58af9f2eb9adf709c04cba4ad498094ddb4153`.
+- The public remote has one branch (`main`) and 72 historical version tags. Pull-request refs and stale development branches were not migrated.
+- A fresh GitHub clone passed the full current/history readiness scan. An unauthenticated API request identifies the replacement as public and Apache-2.0; the private archive returns 404 anonymously.
+- Hero Code and Hero Cloud remain private. Sprout remains a separate public MIT-licensed repository.
+
+## Pre-rewrite launch attempt (superseded)
 
 Evidence collected on 2026-08-23/24 immediately before the intended public mutation:
 
@@ -74,7 +83,7 @@ Evidence collected on 2026-08-23/24 immediately before the intended public mutat
 - Validation passed: `scripts/test-public-readiness-scan.sh`; `go test ./...`; `go run ./cmd/hero docs check --public --invocations`; 28 docs tests; 8 landing tests; 14 release-candidate tests; and candidate checksum verification.
 - Anonymous GitHub API checks returned 404 for `hero-engine/hero-code` and `hero-engine/hero-cloud`. The Sprout repository redirect resolves to public `astroville/sprout` with an MIT license.
 
-## Completion Ledger
+## Pre-rewrite Completion Ledger (superseded)
 
 Delivery is deliberately halted before external mutation. The local, DNS, deployment, licensing, and candidate evidence is green, but the repository's reachable history still contains material the readiness contract classifies as a public-exposure blocker.
 

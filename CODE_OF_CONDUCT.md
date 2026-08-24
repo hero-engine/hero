@@ -26,8 +26,4 @@ when behavior violates this policy.
 
 Report conduct concerns privately through the route in
 [SECURITY.md](SECURITY.md), identifying the report as a conduct matter. Do not
-publish sensitive conduct reports in an issue. Before public launch, authorized
-collaborators should use their existing private GitHub channel with the
-repository owner; the anonymous private route becomes available only after the
-security setting and visibility gates complete.
-
+publish sensitive conduct reports in an issue.

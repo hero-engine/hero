@@ -15,14 +15,8 @@ Do not open a public issue for a suspected vulnerability and do not include
 credentials, tokens, private repository contents, or personal data in an issue
 or pull request.
 
-After the repository becomes public and GitHub private vulnerability reporting
-is enabled, use the repository's **Security → Report a vulnerability** flow.
-That creates a private security advisory visible to repository maintainers.
-
-Until both launch conditions are complete, there is no anonymous public intake
-route. Authorized collaborators should use their existing private GitHub
-channel with the repository owner. The public-readiness gate must verify that
-private vulnerability reporting is enabled before visibility changes.
+Use the repository's **Security → Report a vulnerability** flow. GitHub
+creates a private security advisory visible only to repository maintainers.
 
 Include the affected version, impact, reproduction conditions, and any known
 mitigation. Share the minimum sensitive evidence needed to reproduce the
@@ -31,9 +25,6 @@ and coordinate disclosure after a fix is available.
 
 ## Confidential conduct reports
 
-After private vulnerability reporting is enabled, the same private advisory
-flow may be used for a conduct concern; begin the title with `Conduct report` so
-maintainers route it correctly. Before that gate completes, there is no
-anonymous confidential conduct route. Authorized collaborators should use
-their existing private GitHub channel with the repository owner. Never publish
+The same private advisory flow may be used for a conduct concern; begin the
+title with `Conduct report` so maintainers route it correctly. Never publish
 sensitive conduct details in an issue.

@@ -11,8 +11,8 @@ resolution time.
 - Cross-repository behavior: [Cross-Repo Peering](CROSS-REPO-PEERING.md)
 - Team and headless boundaries: [Team Server](TEAM-SERVER.md)
 
-Once the repository is public, use its New Issue flow for reproducible bugs or
-feature requests. Include the Hero version, operating system, harness, exact
+Use the repository's New Issue flow for reproducible bugs or feature requests.
+Include the Hero version, operating system, harness, exact
 commands or actions, expected result, actual result, and a minimal reproduction.
 Remove credentials and private project data from logs and examples.
 
@@ -20,8 +20,3 @@ Security vulnerabilities and private conduct reports follow
 [SECURITY.md](SECURITY.md), not the issue tracker. Hero Code and Hero Cloud are
 separate proprietary products and are not supported through this repository.
 Sprout issues belong to the separate Sprout repository.
-
-While this repository remains private, anonymous issue and source routes are
-intentionally unavailable. Their activation belongs to the explicit public
-visibility gate.
-

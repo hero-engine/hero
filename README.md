@@ -278,7 +278,6 @@ Prebuilt binary installation does not require Go.
 - [Security](SECURITY.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 
-This repository remains private even though its tracked Hero-authored work is
-now Apache-2.0 licensed. The policy files prepare the public contribution and
-reporting routes; those routes do not become available until the separate
-public-visibility gate completes.
+Hero is open source under the Apache License 2.0. Issues and pull requests are
+welcome; read the contribution, support, and security policies before sharing
+project material or reporting a vulnerability.

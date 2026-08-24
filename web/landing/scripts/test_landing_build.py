@@ -138,7 +138,6 @@ class LandingBuildTests(unittest.TestCase):
 
             errors = landing_build.validate_site(site, built=False)
             self.assertTrue(any("v0.9" in error for error in errors))
-            self.assertTrue(any("open source" in error for error in errors))
             self.assertTrue(any("approval-aware agent jobs" in error for error in errors))
             self.assertTrue(any("open source · mit" in error for error in errors))
             self.assertTrue(any("your agents finish" in error for error in errors))

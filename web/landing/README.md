@@ -1,13 +1,12 @@
 # Hero landing page
 
-Tracked source for the future canonical `https://heroengine.ai/` landing page.
+Tracked source for the canonical `https://heroengine.ai/` landing page.
 The site is plain HTML, CSS, and JavaScript. Its visual identity remains aligned
 with the hosted docs surface, while the build adds a revision marker without
 mutating tracked source.
 
-The canonical domain is not currently claimed as live. DNS, redirects, the
-first production deployment, anonymous source links, and production smoke
-evidence belong to `hero-public-visibility-launch-gate`.
+The canonical domain, redirects, anonymous source links, and production
+revision markers are verified by the launch and deployment checks.
 
 ## Layout
 
@@ -49,12 +48,12 @@ Preview the validated artifact locally:
 python3 -m http.server 8080 --directory dist
 ```
 
-## Launch-gated deployment
+## Production deployment
 
 Pull requests and pushes run the build and upload `hero-landing-<revision>`;
 they never deploy. A production deployment requires all of the following:
 
-1. The repository visibility and launch gate has approved publication.
+1. The release owner has approved the production revision.
 2. `LANDING_LAUNCH_APPROVED=true` is set as a repository variable.
 3. Cloudflare credentials are configured as repository secrets.
 4. The `Build Landing` workflow is started manually with `deploy=true`.
