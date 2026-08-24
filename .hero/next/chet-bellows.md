@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-24T02:02:45Z
+updated: 2026-08-24T02:50:17Z
 repo: hero-engine/hero
 ---
 
@@ -10,13 +10,11 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 35 commit(s) since, last set 9d 9h ago_
+_possibly stale — 35 commit(s) since, last set 9d 10h ago_
 
 ## Last user ask
 
-> Expand the public-copy diagnosis to remove the landing trust-strip's repository-boundary/compliance prose and visible build revision/timestamp from marketing, while keeping license truth in repo/docs and build metadata machine-readable only in revision.json.
-
-_possibly stale — 1 commit(s) since, last set 40m ago_
+> Finish the Hero public launch: fix the apex domain, make only hero-engine/hero public as Chet Bellows, and publish verified v0.34.0.
 
 ## Suggested next prompt
 
