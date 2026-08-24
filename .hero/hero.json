@@ -70,20 +70,6 @@
   "next": {
     "projected": true
   },
-  "repos": {
-    "hero-cloud": "../hero-cloud",
-    "hero-code": "../hero-code"
-  },
-  "repo_meta": {
-    "hero-cloud": {
-      "peer_id": "5770cae7-b233-45c0-8e5d-765338a6058c",
-      "scanned_at": "2026-05-17T00:28:34Z"
-    },
-    "hero-code": {
-      "peer_id": "ad027c2f-7f74-4a09-bf1d-6515cc906074",
-      "scanned_at": "2026-05-17T00:28:34Z"
-    }
-  },
   "content": {
     "agents_path": "agents",
     "commands_path": "commands",

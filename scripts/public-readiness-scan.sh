@@ -101,6 +101,10 @@ scan_current() {
         finding_fingerprint=$(printf '%s' "$file_name" | fingerprint)
         emit blocker current HEAD "$file_name" 0 machine-local-path "$finding_fingerprint"
         ;;
+      .hero/peer-calls/*)
+        finding_fingerprint=$(printf '%s' "$file_name" | fingerprint)
+        emit blocker current HEAD "$file_name" 0 private-peer-artifact "$finding_fingerprint"
+        ;;
       dist/*|bin/*|.build/*|.hero/cache/*|.hero/graph.db|.hero/index.db)
         finding_fingerprint=$(printf '%s' "$file_name" | fingerprint)
         emit blocker current HEAD "$file_name" 0 generated-artifact "$finding_fingerprint"
@@ -130,6 +134,10 @@ scan_history() {
       .hero/sessions/*|.hero/hero.local.json|.env|.env.*|.envrc)
         finding_fingerprint=$(printf '%s' "$object_id" | fingerprint)
         emit blocker history "object:$object_id" "$file_name" 0 machine-local-path "$finding_fingerprint"
+        ;;
+      .hero/peer-calls/*)
+        finding_fingerprint=$(printf '%s' "$object_id" | fingerprint)
+        emit blocker history "object:$object_id" "$file_name" 0 private-peer-artifact "$finding_fingerprint"
         ;;
       dist/*|bin/*|.build/*|.hero/cache/*|.hero/graph.db|.hero/index.db)
         finding_fingerprint=$(printf '%s' "$object_id" | fingerprint)

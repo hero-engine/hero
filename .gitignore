@@ -23,6 +23,11 @@ index.db-shm
 .hero/cache/
 .hero/**/.tracker-evidence/
 
+# Cross-repo call transcripts can contain private sibling-repository details.
+# Keep the durable call/result state local; public specs may retain only their
+# deliberately authored handoff summaries and interface contracts.
+.hero/peer-calls/
+
 # MCP daemon runtime state (per-process singleton pidfile + debug log) — ephemeral
 .hero/mcp-*.pid
 .hero/mcp-*.pid.*

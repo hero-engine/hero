@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-24T02:50:17Z · 84 ready specs_
+_Generated: 2026-08-24T14:07:11Z · 84 ready specs_
 
 ## hero-public-visibility-launch-gate — "Hero Public Visibility and v0.34 Launch Gate"
 _feature · delivering · horizon: now_

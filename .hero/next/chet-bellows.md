@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-24T02:50:17Z
+updated: 2026-08-24T14:07:11Z
 repo: hero-engine/hero
 ---
 
@@ -10,15 +10,19 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 35 commit(s) since, last set 9d 10h ago_
+_possibly stale — 36 commit(s) since, last set 9d 22h ago_
 
 ## Last user ask
 
-> Finish the Hero public launch: fix the apex domain, make only hero-engine/hero public as Chet Bellows, and publish verified v0.34.0.
+> Before rewriting Hero history, double-check the entire repository for anything else that should not become public, then finish the approved v0.34 launch.
 
 ## Suggested next prompt
 
-> sign in to Cloudflare, deploy the corrected Hero landing and docs, point heroengine.ai at www, then complete the public visibility and v0.34 launch gate
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

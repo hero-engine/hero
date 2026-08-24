@@ -11,15 +11,16 @@ git -C "$scratch" init -q
 git -C "$scratch" config user.name "Readiness Test"
 git -C "$scratch" config user.email "readiness@example.invalid"
 
-mkdir -p "$scratch/cloud/api" "$scratch/.hero/sessions/session-a"
+mkdir -p "$scratch/cloud/api" "$scratch/.hero/sessions/session-a" "$scratch/.hero/peer-calls"
 printf '%s\n' 'package api' > "$scratch/cloud/api/private.go"
 printf '%s\n' 'sqlite fixture' > "$scratch/.hero/sessions/session-a/refs.db"
+printf '%s\n' 'private sibling implementation detail' > "$scratch/.hero/peer-calls/private.md"
 token_prefix=github_pat_
 token_suffix=abcdefghijklmnopqrstuvwxyz123456
 printf '%s\n' "TOKEN=${token_prefix}${token_suffix}" > "$scratch/config.txt"
 git -C "$scratch" add .
 git -C "$scratch" commit -qm "add unsafe fixtures"
-rm -rf "$scratch/cloud" "$scratch/.hero/sessions"
+rm -rf "$scratch/cloud" "$scratch/.hero/sessions" "$scratch/.hero/peer-calls"
 git -C "$scratch" add -u
 git -C "$scratch" commit -qm "remove unsafe fixtures"
 
@@ -31,6 +32,8 @@ set -e
 
 grep -Fq 'cloud/api/private.go' "$scratch/report.tsv"
 grep -Fq '.hero/sessions/session-a/refs.db' "$scratch/report.tsv"
+grep -Fq '.hero/peer-calls/private.md' "$scratch/report.tsv"
+grep -Fq 'private-peer-artifact' "$scratch/report.tsv"
 grep -Fq 'provider-token' "$scratch/report.tsv"
 grep -Fq '<redacted:provider-token>' "$scratch/report.tsv"
 if grep -Fq "${token_prefix}${token_suffix}" "$scratch/report.tsv"; then
