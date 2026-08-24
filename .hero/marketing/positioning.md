@@ -23,7 +23,7 @@ Hero is two connected systems in one:
 1. **Durable project memory is the headline.** Hero keeps the parts of a project that prompts, chat history, and tool-local rule files routinely lose: why decisions were made, which corrections matter, what conventions apply, what failed, what evidence exists, and what should happen next.
 2. **Verified delivery is the execution layer.** Specs, specialized agents, Completion Ledgers, cold audits, and verification use that project memory to move work from intent to tested completion.
 
-The reinforcing loop is the product model: memory informs delivery; delivery produces decisions, evidence, corrections, and current state; those artifacts improve later memory. The components ship, but the broad cross-tool outcome remains **preview** until it is independently validated (`product-two-system-loop`, Class D, preview). That validation is not a v0.34 release dependency.
+The reinforcing loop is the product model: memory informs delivery; delivery produces decisions, evidence, corrections, and current state; those artifacts improve later memory (`product-two-system-loop`, Class A, shipped).
 
 ## Audience
 
@@ -108,7 +108,7 @@ These capabilities support the memory-and-delivery story. Do not turn a mutable 
 | Focused PM/QA/Sales setups can be selected or composed | `optional-domain-packs` | B | optional | State setup and maturity boundaries |
 | Cross-repository work uses explicit project boundaries | `cross-repo-peering` | A | optional | One graph per project; setup required |
 | Sprout remains a separate MIT dependency outside Hero's Apache-2.0 grant | `sprout-license-boundary` | A | shipped | Keep the repository and license boundary explicit |
-| Memory and delivery improve one another across tools | `product-two-system-loop` | D | preview | Do not present as proven until continuity demo passes |
+| Memory and delivery improve one another across sessions and supported tools | `product-two-system-loop` | A | shipped | Hero workspace plus supported harness or CLI |
 
 ## What Hero is
 
@@ -192,13 +192,9 @@ Other candidates:
 - Give every coding agent the project, not just a prompt.
 - Durable context. Verified delivery.
 
-**Test-only candidate — do not publish:** Correct your AI once.
-
-Publication threshold: a revision-tied public test must record a correction in one supported harness, end that session, start a cold session in a different supported harness, retrieve and apply the correction without restating it, and reproduce the result in ten of ten runs across at least two harness pairings with no manual corpus edits between runs. Until that proof exists, use bounded language such as “preserve corrections for later sessions.”
-
 ## Reusable boilerplate
 
-The memory and delivery statements in these blocks are grounded in shipped Class A claims `product-memory-system` and `product-delivery-system`. Any sentence about the reinforcing cross-session loop remains bounded by the preview Class D claim `product-two-system-loop` until independent evidence supports a stronger claim.
+The memory, delivery, and reinforcing-loop statements in these blocks are grounded in shipped Class A claims `product-memory-system`, `product-delivery-system`, and `product-two-system-loop`.
 
 ### 25 words
 
@@ -227,7 +223,6 @@ Hero is a project memory and delivery system for AI-assisted engineering. It pre
 | Root documentation | Explain memory first, delivery second, before installation; use factual quickstarts and no mutable roster counts as proof. |
 | Hosted documentation | Give memory, delivery, and their loop distinct navigation; keep evidence qualifiers beside claims and remove stale or unlicensed generated assets. |
 | Landing page | Lead with “Your project remembers. Your agents deliver.” and show one concrete, revision-tied proof for each system. |
-| Continuity proof | Test the cross-harness memory outcome without pre-declaring it proven; publish the result and prerequisites even if it fails. |
 | Drift guard | Enforce prohibited claims, valid commands/configuration, derived inventories, release versions, deployment revision, and production links. |
 | Repository readiness | Describe only this repository's current Apache-2.0 grant; keep Hero Code, Hero Cloud, and Sprout outside the boundary. |
 | Release and launch gates | Keep open-source, public visibility, release publication, and live-site claims behind their named approvals and evidence. |

@@ -146,9 +146,9 @@ class ReleaseCandidateTests(unittest.TestCase):
         notes = (SCRIPT.parent.parent / "docs" / "releases" / "v0.34.0-candidate.md").read_text()
         normalized = " ".join(notes.split())
         for expected in (
-            "Project memory and verified delivery are shipped",
-            "reinforcing improvement loop remains preview",
-            "measurably enriches memory and improves later sessions remains **preview**",
+            "Memory informs delivery",
+            "Project memory, verified delivery, and their reinforcing loop are shipped",
+            "verified delivery leaves decisions, evidence, corrections, and current state for later sessions",
             "optional and require explicit setup",
             "headless runtime remains preview",
             "Hero Code and Hero Cloud remain separate proprietary products",
@@ -156,7 +156,16 @@ class ReleaseCandidateTests(unittest.TestCase):
             "prepared, not published",
         ):
             self.assertIn(expected, normalized)
-        self.assertNotIn("Hero is open source", normalized)
+        for forbidden in (
+            "hero is open source",
+            "preview outcome",
+            "continuity demonstration",
+            "continuity proof",
+            "still being proven",
+            "does not promise that every tool or session",
+            "reinforcing improvement loop remains preview",
+        ):
+            self.assertNotIn(forbidden, normalized.lower())
 
     def test_launch_checklist_has_every_artifact_and_explicit_gates(self):
         checklist = (SCRIPT.parent.parent / "docs" / "releases" / "v0.34.0-launch-checklist.md").read_text()

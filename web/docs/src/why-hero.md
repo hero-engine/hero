@@ -38,8 +38,6 @@ close.
 
 ## Honest limits
 
-- The memory and delivery components are shipped; the repeatable cross-tool
-  reinforcing loop remains preview until the continuity demonstration passes.
 - Workflows are harness-native, not universal slash commands.
 - External spec-system adapters are planned, not shipped.
 - Tracker, code-host, peering, and headless operations are optional or preview

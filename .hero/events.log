@@ -575,3 +575,5 @@
 {"ts":"2026-08-23T22:00:19.725618Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-v034-release-prep","message":"status -\u003e completed"}
 {"ts":"2026-08-24T00:45:25.799838Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-apache-license-grant-gate","message":"\"Hero Apache-2.0 License Grant Gate\""}
 {"ts":"2026-08-24T00:45:25.799947Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-apache-license-grant-gate","message":"status -\u003e completed"}
+{"ts":"2026-08-24T01:49:29.189699Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"remove-invented-preview-marketing-copy","message":"\"Remove Invented Preview and Internal Launch Copy from Public Marketing\""}
+{"ts":"2026-08-24T01:49:29.18981Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"remove-invented-preview-marketing-copy","message":"status -\u003e completed"}

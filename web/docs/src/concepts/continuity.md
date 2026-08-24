@@ -36,9 +36,9 @@ Per-machine state and private Focus data do not. Supported harnesses consume
 Hero through native installed surfaces, so the exact invocation differs by
 tool even though the project artifacts remain the same.
 
-The components are shipped. The claim that the full memory-and-delivery loop
-works repeatably across cold sessions and different tools remains **preview**
-until the public continuity proof passes.
+The memory-and-delivery loop is the product model: later sessions retrieve the
+project-owned decisions, evidence, corrections, and handoff state produced by
+earlier work, regardless of which supported harness renders the workflow.
 
 ## Corrections and stale knowledge
 

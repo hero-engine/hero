@@ -9,9 +9,9 @@ corpus. Verified delivery is the connected execution system: specs bound the
 work, specialized agents implement it, and Completion Ledgers, cold audits,
 builds, and tests establish whether it is done.
 
-Memory informs delivery. Delivery can add decisions and evidence for later
-sessions. The components are shipped; the repeatable cross-tool continuity
-outcome remains preview until its public proof is complete.
+Memory informs delivery. Delivery leaves decisions, evidence, corrections, and
+a current handoff for later sessions. Together, they give each new session the
+project context it needs and a clear path to verified completion.
 
 **New here? Follow [Getting Started](GETTING-STARTED.md).**
 

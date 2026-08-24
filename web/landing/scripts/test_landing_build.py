@@ -122,7 +122,9 @@ class LandingBuildTests(unittest.TestCase):
             index.write_text(
                 index.read_text(encoding="utf-8").replace(
                     "Local-first project context",
-                    "v0.9 open source · MIT approval-aware agent jobs. Your agents finish.",
+                    "v0.9 open source · MIT approval-aware agent jobs. Your agents finish. "
+                    "Preview outcome: the continuity demonstration is still being proven. "
+                    "Repository boundary: Artifact revision BUILD_TIME_GENERATED_AT.",
                 ).replace('/favicon.svg', '/missing.svg', 1),
                 encoding="utf-8",
             )
@@ -140,6 +142,11 @@ class LandingBuildTests(unittest.TestCase):
             self.assertTrue(any("approval-aware agent jobs" in error for error in errors))
             self.assertTrue(any("open source · mit" in error for error in errors))
             self.assertTrue(any("your agents finish" in error for error in errors))
+            self.assertTrue(any("preview outcome" in error for error in errors))
+            self.assertTrue(any("continuity demonstration" in error for error in errors))
+            self.assertTrue(any("repository boundary" in error for error in errors))
+            self.assertTrue(any("artifact revision" in error for error in errors))
+            self.assertTrue(any("build_time_generated_at" in error for error in errors))
             self.assertTrue(any("missing local asset" in error for error in errors))
             self.assertTrue(any("canonical Hero logo geometry" in error for error in errors))
             self.assertTrue(any("obsolete bolt mark" in error for error in errors))

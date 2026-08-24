@@ -58,6 +58,14 @@ FORBIDDEN_CLAIMS = {
     "diagnosing": "stale fictional status output",
     "approval-aware agent jobs": "no shipped end-to-end approval pause/resume bridge",
     "your agents finish.": "superseded canonical tagline",
+    "preview outcome": "invented internal validation qualifier",
+    "continuity demonstration": "invented internal validation qualifier",
+    "continuity proof": "invented internal validation qualifier",
+    "still being proven": "invented internal validation qualifier",
+    "does not promise that every tool or session": "invented internal validation qualifier",
+    "repository boundary:": "internal repository control rendered as marketing copy",
+    "artifact revision": "build provenance rendered as marketing copy",
+    "build_time_generated_at": "unresolved build timestamp rendered as marketing copy",
 }
 
 

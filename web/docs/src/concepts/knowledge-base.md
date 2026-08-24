@@ -69,9 +69,9 @@ context. The CLI remains available when a harness does not expose the same
 interactive surface. Committed corpus and handoff projections can cross machine
 or tool boundaries; private and machine-local state does not.
 
-The memory system itself is **shipped** and requires a Hero workspace plus a
-supported harness or CLI. The repeatable end-to-end cross-tool loop remains
-**preview** pending its public proof.
+The memory system is **shipped** and requires a Hero workspace plus a supported
+harness or CLI. Its project-owned artifacts feed later design and delivery, and
+verified delivery adds new decisions and evidence back to the corpus.
 
 Continue with [Continuity across sessions and tools](continuity.md), then see
 [Verified delivery](core-loop.md) for the execution path that consumes and

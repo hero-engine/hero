@@ -208,9 +208,6 @@
     .loop-card { padding: 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-1); }
     .loop-card p { color: var(--text-dim); font-size: 14px; }
     .loop-arrow { align-self: center; color: var(--accent); font: 700 22px/1 var(--mono); }
-    .preview-note { margin-top: 18px; padding: 14px 16px; border-left: 3px solid var(--violet); background: rgba(182, 160, 255, .07); color: var(--text-dim); font-size: 14px; }
-    .preview-note strong { color: var(--violet); }
-
     .delivery-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 38px; }
     .step { padding: 25px 23px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-1); }
     .step-index { display: inline-block; margin-bottom: 20px; color: var(--accent); font: 700 12px/1 var(--mono); letter-spacing: .08em; }
@@ -236,10 +233,6 @@
     .copy-btn { padding: 4px 8px; border: 1px solid var(--border-2); border-radius: 4px; background: var(--bg-2); color: var(--text-dim); font: 700 11px/1.3 var(--sans); cursor: pointer; }
     .copy-btn:hover { color: var(--text); }
     .start-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
-
-    .trust-strip { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 24px; margin-top: 40px; padding: 20px 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-2); }
-    .trust-strip p { color: var(--text-dim); font-size: 14px; }
-    .revision { color: var(--text-mute); font: 12px/1.5 var(--mono); overflow-wrap: anywhere; }
 
     footer { padding: 48px 0 58px; border-top: 1px solid var(--border); background: var(--bg-1); }
     .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 32px; }
@@ -270,7 +263,6 @@
       .system-grid, .capability-grid, .footer-grid { grid-template-columns: 1fr; }
       .system-card { min-height: 0; }
       .system-number { margin-bottom: 26px; }
-      .trust-strip { grid-template-columns: 1fr; }
     }
     @media (max-width: 420px) {
       .wrap { width: min(100% - 24px, 1120px); }
@@ -385,7 +377,7 @@
           </article>
         </div>
 
-        <div class="loop" aria-label="Preview reinforcing loop">
+        <div class="loop" aria-label="How memory and delivery reinforce each other">
           <article class="loop-card">
             <h3>Remember the project</h3>
             <p>Recover the relevant decisions, constraints, failures, and current work.</p>
@@ -401,7 +393,6 @@
             <p>Preserve the resulting decisions, proof, corrections, and handoff for later sessions.</p>
           </article>
         </div>
-        <p class="preview-note"><strong>Preview outcome:</strong> the memory and delivery components ship today. A repeatable public cross-tool continuity demonstration is still being proven, so Hero does not promise that every tool or session applies the corpus perfectly.</p>
       </div>
     </section>
 
@@ -503,10 +494,6 @@
           <a class="btn" href="https://docs.heroengine.ai/getting-started/first-workflow/">Run the first workflow</a>
         </div>
 
-        <div class="trust-strip">
-          <p><strong>Repository boundary:</strong> this site documents the Apache-2.0-licensed Hero CLI repository. Hero Code and Hero Cloud are separate proprietary products. Public source links stay gated until the repository visibility and launch checks confirm anonymous access.</p>
-          <div class="revision">Landing source: <a href="/revision.json"><span data-source-revision>BUILD_TIME_SOURCE_REVISION</span></a><br />Built: BUILD_TIME_GENERATED_AT</div>
-        </div>
       </div>
     </section>
   </main>
@@ -535,7 +522,7 @@
           </ul>
         </div>
       </div>
-      <div class="footer-bottom"><span>Hero Engine</span><span>Artifact revision <a href="/revision.json">BUILD_TIME_SOURCE_REVISION</a></span></div>
+      <div class="footer-bottom"><span>Hero Engine</span></div>
     </div>
   </footer>
 

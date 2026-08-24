@@ -24,10 +24,9 @@ the result can be closed.
 
 [Follow the delivery-system path](concepts/core-loop.md)
 
-The reinforcing cross-session, cross-tool loop is currently **preview**: the
-components ship, but the repeatable continuity proof is not yet public. Hero
-preserves the artifacts needed for that loop; it does not claim that every tool
-or session applies them perfectly.
+Memory informs delivery. Delivery leaves decisions, evidence, corrections, and
+a current handoff for later sessions. Together, they give each new session the
+project context it needs and a clear path to verified completion.
 
 ## Capability status at a glance
 

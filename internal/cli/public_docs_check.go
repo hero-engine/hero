@@ -83,6 +83,17 @@ var publicNarrativeRules = []publicNarrativeRule{
 	{regexp.MustCompile(`(?i)\bsprout is included in this repository\b`), "Sprout is a separate dependency, not part of this repository"},
 }
 
+var inventedContinuityRules = []publicNarrativeRule{
+	{regexp.MustCompile(`(?i)\b(?:preview outcome|continuity (?:demonstration|proof)|still being proven)\b`), "invented continuity-proof qualifier is not public product truth"},
+	{regexp.MustCompile(`(?i)\bdoes not promise that every tool or session\b`), "invented perfection disclaimer is not public product truth"},
+}
+
+var publicTruthAuthorityPaths = []string{
+	".hero/marketing/positioning.md",
+	".hero/specs/hero-public-truth-baseline/public-claim-registry.yaml",
+	"docs/releases/v0.34.0-candidate.md",
+}
+
 var heroConfigBlock = regexp.MustCompile(`(?s)<!--\s*hero-config\s*-->\s*` + "```json" + `\s*(.*?)\s*` + "```")
 var heroQuickstartBlock = regexp.MustCompile(`(?s)<!--\s*hero-quickstart\s*-->\s*` + "```(?:bash|sh)" + `\s*(.*?)\s*` + "```")
 var executableShellBlock = regexp.MustCompile(`(?s)` + "```(?:bash|sh|console)" + `\s*(.*?)\s*` + "```")
@@ -96,6 +107,7 @@ func publicDocsIssues(projectRoot string) []string {
 		issues = append(issues, publicConfigExampleIssues(path, content)...)
 	}
 	issues = append(issues, publicExecutableInvocationIssues(surfaces)...)
+	issues = append(issues, publicTruthAuthorityIssues(projectRoot)...)
 	issues = append(issues, repositoryBoundaryIssues(surfaces)...)
 	issues = append(issues, repositoryLicenseIssues(projectRoot)...)
 	issues = append(issues, docsDependencyIssues(filepath.Join(projectRoot, "requirements-docs.txt"))...)
@@ -495,8 +507,17 @@ func exercisePublicQuickstart(binary, block string) error {
 }
 
 func publicNarrativeIssues(path, content string) []string {
+	issues := narrativeRuleIssues(path, content, publicNarrativeRules)
+	issues = append(issues, narrativeRuleIssues(path, content, inventedContinuityRules)...)
+	if privateSourceLink.MatchString(content) {
+		issues = append(issues, fmt.Sprintf("%s: public source link is enabled before the visibility gate", path))
+	}
+	return issues
+}
+
+func narrativeRuleIssues(path, content string, rules []publicNarrativeRule) []string {
 	var issues []string
-	for _, rule := range publicNarrativeRules {
+	for _, rule := range rules {
 		if path == "web/docs/src/releases/index.md" && rule.reason == "stale v0.9 product copy" {
 			continue
 		}
@@ -506,8 +527,18 @@ func publicNarrativeIssues(path, content string) []string {
 			issues = append(issues, fmt.Sprintf("%s:%d: %s", path, line, rule.reason))
 		}
 	}
-	if privateSourceLink.MatchString(content) {
-		issues = append(issues, fmt.Sprintf("%s: public source link is enabled before the visibility gate", path))
+	return issues
+}
+
+func publicTruthAuthorityIssues(projectRoot string) []string {
+	var issues []string
+	for _, path := range publicTruthAuthorityPaths {
+		data, err := os.ReadFile(filepath.Join(projectRoot, filepath.FromSlash(path)))
+		if err != nil {
+			issues = append(issues, fmt.Sprintf("%s: %v", path, err))
+			continue
+		}
+		issues = append(issues, narrativeRuleIssues(path, string(data), inventedContinuityRules)...)
 	}
 	return issues
 }
@@ -596,6 +627,18 @@ func revisionTemplateIssues(projectRoot string) []string {
 	landing, err := os.ReadFile(filepath.Join(projectRoot, "web/landing/site/index.html"))
 	if err != nil || !strings.Contains(string(landing), `name="hero-source-revision" content="BUILD_TIME_SOURCE_REVISION"`) {
 		issues = append(issues, "web/landing/site/index.html: missing build-time source revision metadata")
+	} else {
+		landingSource := strings.ToLower(string(landing))
+		for phrase, reason := range map[string]string{
+			"repository boundary:":    "internal repository control is rendered as marketing copy",
+			"artifact revision":       "build provenance is rendered as marketing copy",
+			"build_time_generated_at": "unresolved build timestamp is rendered as marketing copy",
+			"data-source-revision":    "build provenance is rendered as marketing copy",
+		} {
+			if strings.Contains(landingSource, phrase) {
+				issues = append(issues, fmt.Sprintf("web/landing/site/index.html: %s", reason))
+			}
+		}
 	}
 	return issues
 }

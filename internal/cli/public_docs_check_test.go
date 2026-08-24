@@ -63,6 +63,8 @@ func TestPublicNarrativeMutationsAreRejected(t *testing.T) {
 		{"Sprout is included in Hero's Apache-2.0 grant.", "separate MIT-licensed"},
 		{"Sprout is proprietary.", "separate public MIT-licensed"},
 		{"Sprout is included in this repository.", "separate dependency"},
+		{"Preview outcome: continuity proof is still being proven.", "continuity-proof qualifier"},
+		{"Hero does not promise that every tool or session applies it perfectly.", "perfection disclaimer"},
 		{`Source: https://github.com/hero-engine/hero/`, "source link"},
 	}
 	for _, tc := range cases {
@@ -89,6 +91,23 @@ func TestPublicNarrativeSurfaceDiscoveryIncludesNavigationReleasesAndAssets(t *t
 		if _, ok := surfaces[path]; !ok {
 			t.Errorf("public surface %s was not discovered", path)
 		}
+	}
+}
+
+func TestPublicTruthAuthoritiesRejectInventedContinuityQualifiers(t *testing.T) {
+	root := t.TempDir()
+	for _, path := range publicTruthAuthorityPaths {
+		fullPath := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(fullPath, []byte("The continuity proof is still being proven."), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	issues := publicTruthAuthorityIssues(root)
+	if len(issues) != len(publicTruthAuthorityPaths)*2 {
+		t.Fatalf("issues = %v, want two invented qualifiers for each authority", issues)
 	}
 }
 
@@ -200,6 +219,29 @@ func TestRevisionTemplateRejectsMissingFieldsAndLandingMetadata(t *testing.T) {
 	issues := revisionTemplateIssues(root)
 	joined := strings.Join(issues, "\n")
 	if !strings.Contains(joined, "missing generated_at") || !strings.Contains(joined, "missing build-time source revision metadata") {
+		t.Fatalf("issues = %v", issues)
+	}
+}
+
+func TestRevisionTemplateRejectsVisibleLandingProvenance(t *testing.T) {
+	root := t.TempDir()
+	for _, directory := range []string{"web/docs/src", "web/landing/site"} {
+		if err := os.MkdirAll(filepath.Join(root, directory), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(root, "web/docs/src/revision.json"), []byte(`{"source_revision":"x","current_release":"x","generated_at":"x"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "web/landing/site/revision.json"), []byte(`{"source_revision":"x","source_commit":"x","source_digest":"x","source_dirty":false,"generated_at":"x","canonical_url":"x"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	landing := `<meta name="hero-source-revision" content="BUILD_TIME_SOURCE_REVISION"><p>Artifact revision BUILD_TIME_SOURCE_REVISION</p>`
+	if err := os.WriteFile(filepath.Join(root, "web/landing/site/index.html"), []byte(landing), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	issues := revisionTemplateIssues(root)
+	if !strings.Contains(strings.Join(issues, "\n"), "build provenance is rendered as marketing copy") {
 		t.Fatalf("issues = %v", issues)
 	}
 }

@@ -27,10 +27,10 @@ Hero does not replace the coding agent that writes the code.
 
 ## How the systems reinforce one another
 
-Memory informs design and delivery. Delivery can produce decisions, evidence,
-corrections, and a current handoff for future sessions. The individual
-components ship; the full repeatable cross-tool continuity outcome remains
-**preview** until its public proof is complete.
+Memory informs design and delivery. Delivery leaves decisions, evidence,
+corrections, and a current handoff for future sessions. Together, the two
+systems give each new session the project context it needs and a clear path to
+verified completion.
 
 ## Harness-native workflows
 

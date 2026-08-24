@@ -15,7 +15,7 @@ flowchart LR
     L --> A[Fresh cold audit]
     A --> V[Build, tests, verify]
     V --> E[Evidence and current state]
-    E -. preview continuity loop .-> M
+    E --> M
 ```
 
 ### 1. Bound intent
@@ -67,6 +67,5 @@ active harness capable of running the installed agents, a delivery workflow,
 and a project with meaningful validation. The gates establish recorded
 evidence; they do not guarantee correctness or eliminate human supervision.
 
-Next: [Continuity](continuity.md) explains how decisions and evidence can inform
-later sessions. That full cross-tool reinforcing outcome remains **preview**
-until the public continuity proof is complete.
+Next: [Continuity](continuity.md) explains how decisions and evidence inform
+later sessions and keep the reinforcing loop moving.

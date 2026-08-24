@@ -47,16 +47,20 @@ claims:
   - id: product-two-system-loop
     family: product
     claim: Hero is two reinforcing systems in one; project memory informs delivery and verified delivery enriches later project memory.
-    availability: preview
-    evidence_class: D
-    prerequisites: Public wording must remain bounded until independent evidence supports a stronger cross-tool claim; that evidence is not required for v0.34.
+    availability: shipped
+    evidence_class: A
+    prerequisites: A Hero workspace, a supported harness or CLI entry point, and normal capture and delivery workflows.
     evidence:
-      - .hero/planning/initiatives/hero-marketing/spec.md
-      - .hero/knowledge/notes/spec-kit-and-swappable-workflow-providers/spec.md
+      - internal/cli/next_handoff.go
+      - internal/knowledge/
+      - internal/graph/
+      - internal/cli/verify.go
+      - .agents/skills/context-injection/SKILL.md
+      - .agents/skills/auto-knowledge-capture/SKILL.md
     surfaces: [README.md, web/docs/src/index.md, web/docs/src/what-is-hero.md, web/docs/src/why-hero.md, web/landing/site/index.html]
     owner: hero-positioning
-    resolution: pending-update
-    last_verified: 2026-08-23
+    resolution: correct
+    last_verified: 2026-08-24
 
   - id: install-satellite-subcommands
     family: onboarding

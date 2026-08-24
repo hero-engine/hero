@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-08-24T00:45:55Z
+updated: 2026-08-24T01:49:43Z
 repo: hero-engine/hero
 ---
 
@@ -10,13 +10,11 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 32 commit(s) since, last set 9d 8h ago_
+_possibly stale — 33 commit(s) since, last set 9d 9h ago_
 
 ## Last user ask
 
-> Finish the Apache-2.0 grant prep, commit the full working tree as Chet Bellows, and stop before visibility, tagging, release, or deploy
-
-_possibly stale — 1 commit(s) since, last set 15m ago_
+> Expand the public-copy diagnosis to remove the landing trust-strip's repository-boundary/compliance prose and visible build revision/timestamp from marketing, while keeping license truth in repo/docs and build metadata machine-readable only in revision.json.
 
 ## Suggested next prompt
 
