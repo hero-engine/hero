@@ -6,7 +6,7 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 
 ---
 updated: 2026-08-24T17:14:01Z
-repo: hero
+repo: hero-engine/hero
 ---
 
 ## Just finished
@@ -45,4 +45,3 @@ Nothing this session.
 - Pre-Launch Hardening — Federation Polish, Security, Observability — `pre-launch-hardening`
 - "Basic Chat Sheds Research — Extract the Research Apparatus to a Dormant Hero Research Seed" — `chat-sheds-research-to-seed`
 - Launch Readiness — Telemetry, Deploy, and Public-Use Polish — `launch-readiness`
-
