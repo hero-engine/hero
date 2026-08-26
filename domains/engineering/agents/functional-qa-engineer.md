@@ -1,5 +1,6 @@
 ---
 name: functional-qa-engineer
+purpose: review
 description: Validate implemented behavior against requirements, identify regressions, and strengthen functional coverage with engineering rigor.
 mode: subagent
 temperature: 0.1

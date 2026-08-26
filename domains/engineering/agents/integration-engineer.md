@@ -1,5 +1,6 @@
 ---
 name: integration-engineer
+purpose: agent
 description: Implement and harden external integrations, webhook flows, and system boundaries with clear failure handling and operational realism.
 mode: subagent
 temperature: 0.1

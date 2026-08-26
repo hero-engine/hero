@@ -48,7 +48,7 @@ const (
 
 // Options holds all installation parameters.
 type Options struct {
-	SourceDir   string // path to hero repository root (deprecated, use ContentFS)
+	SourceDir   string // deprecated custom/test compatibility source; canonical packs use ContentFS
 	ContentFS   fs.FS  // embedded filesystem with agents/, commands/, skills/
 	Target      Target
 	Mode        Mode
@@ -152,6 +152,16 @@ type CopyAction struct {
 // canonical dirs and harness-dir symlinks pointing at them are removed
 // when their content is detectably Hero-authored.
 func Run(opts Options) (*Result, error) {
+	// ContentFS is the only production path used by install/init/upgrade/domain
+	// commands and therefore the canonical descriptor validation boundary.
+	// SourceDir remains intentionally lenient for deprecated third-party/custom
+	// filesystem sources whose legacy agents may not declare purpose metadata.
+	if opts.ContentFS != nil {
+		if err := validateInstallAgentPurposes(opts.ContentFS); err != nil {
+			return nil, fmt.Errorf("validating canonical agents: %w", err)
+		}
+	}
+
 	// Legacy migration: remove `.hero/{agents,commands,skills}/` canonical
 	// mirror and any harness symlinks pointing at it. Idempotent —
 	// no-op after the first install on the new architecture.

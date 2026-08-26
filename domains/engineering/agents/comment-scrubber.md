@@ -1,5 +1,6 @@
 ---
 name: comment-scrubber
+purpose: agent
 description: Remove AI slop, narrating comments, stubs, misleading documentation, and work-in-progress references. Keep only comments that help.
 mode: subagent
 temperature: 0.1

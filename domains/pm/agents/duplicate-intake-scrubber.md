@@ -1,5 +1,6 @@
 ---
 name: duplicate-intake-scrubber
+purpose: review
 description: Batch/cluster a window of recent intake to surface near-duplicates the write-time detector missed. Report-only — recommends a canonical survivor per cluster; performs no auto-merge.
 mode: subagent
 temperature: 0.1

@@ -1,5 +1,6 @@
 ---
 name: architecture-reviewer
+purpose: review
 description: Review architecture proposals for overengineering, scale dead ends, and operational risk.
 mode: subagent
 temperature: 0.1

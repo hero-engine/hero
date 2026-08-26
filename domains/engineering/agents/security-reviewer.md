@@ -1,5 +1,6 @@
 ---
 name: security-reviewer
+purpose: review
 description: Review code and design changes for authentication, authorization, data exposure, input handling, and security risk.
 mode: subagent
 temperature: 0.1

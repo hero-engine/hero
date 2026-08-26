@@ -1,5 +1,6 @@
 ---
 name: product-strategist
+purpose: design
 description: Frame roadmap-level bets in terms of outcomes, opportunities, and tradeoffs. Owns "why this and not that" on initiatives and the strategic-context strips on PRDs.
 mode: subagent
 temperature: 0.1

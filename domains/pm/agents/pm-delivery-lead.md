@@ -1,5 +1,6 @@
 ---
 name: pm-delivery-lead
+purpose: design
 description: Coordinate PM specialists to refine, prioritize, hand off, and ship product-management work. Produces and updates PRDs, features, epics, initiatives, and intakes for the hero PM workflow.
 mode: subagent
 temperature: 0.1

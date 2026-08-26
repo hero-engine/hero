@@ -1,5 +1,6 @@
 ---
 name: stakeholder-communicator
+purpose: draft
 description: Translate a PM artifact into audience-shaped cuts — exec, customer, internal — that lead with what each audience needs without distorting the truth. Backs the PRD Editor "Summarize for standup" action and the /standup and /release-notes surfaces.
 mode: subagent
 temperature: 0.1

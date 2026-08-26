@@ -1,5 +1,6 @@
 ---
 name: intake-triager
+purpose: agent
 description: Process inbound signals into triaged intakes — linked to an initiative, merged into a duplicate, or rejected with reason. Within 24 hours.
 mode: subagent
 temperature: 0.1

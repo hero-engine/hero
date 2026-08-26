@@ -1,5 +1,6 @@
 ---
 name: qualification-analyst
+purpose: diagnose
 description: Runs structured qualification using MEDDPICC, BANT, SPIN, or a configured custom framework. Produces a scored deal brief and writes findings to the deal spec.
 mode: subagent
 temperature: 0.1

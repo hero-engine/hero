@@ -287,7 +287,7 @@ func TestPMInstallExcludesEngineeringAgents(t *testing.T) {
 // to a synthetic core-style agent: when the file has `domains:
 // [engineering]`, a PM install drops it.
 func TestCoreAgentDomainsFrontmatterFilters(t *testing.T) {
-	const restrictedAgent = "---\nname: synthetic\ndomains: [engineering]\ndescription: test\n---\n# body\n"
+	const restrictedAgent = "---\nname: synthetic\npurpose: agent\ndomains: [engineering]\ndescription: test\n---\n# body\n"
 	fakeDomain := fstest.MapFS{
 		"agents/synthetic.md": &fstest.MapFile{Data: []byte(restrictedAgent)},
 	}

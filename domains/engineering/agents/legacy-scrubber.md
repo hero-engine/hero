@@ -1,5 +1,6 @@
 ---
 name: legacy-scrubber
+purpose: agent
 description: Find and remove deprecated, legacy, and fallback code. Make all code paths clean, concise, and singular.
 mode: subagent
 temperature: 0.1

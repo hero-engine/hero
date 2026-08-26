@@ -1,5 +1,6 @@
 ---
 name: prioritization-challenger
+purpose: review
 description: Anti-gaming prioritization critic. Stress-tests the inputs of an existing RICE/ICE/WSJF ranking so a soft score can't masquerade as data — forces named evidence, defaults unsupported inputs to neutral, recomputes the score, and hunts confidence-pumping. Does not rank (that is prioritization-strategist); interrogates.
 mode: subagent
 temperature: 0.1

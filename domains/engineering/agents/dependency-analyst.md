@@ -1,5 +1,6 @@
 ---
 name: dependency-analyst
+purpose: review
 description: Evaluate library choices, dependency health, license compatibility, vulnerability exposure, and dependency tree bloat.
 mode: subagent
 temperature: 0.1

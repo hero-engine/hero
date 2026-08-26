@@ -1,5 +1,6 @@
 ---
 name: cycle-planner
+purpose: design
 description: One preset-adaptive planner (sprint / cycle / iteration) that plans the next iteration under the active preset and powers the Story Queue cycle-fit marker. Recommends a commit; never auto-commits.
 mode: subagent
 temperature: 0.1

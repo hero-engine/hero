@@ -1,5 +1,6 @@
 ---
 name: defensive-scrubber
+purpose: agent
 description: Remove unnecessary error-swallowing, panic recovery, and fallback patterns that hide bugs instead of handling them.
 mode: subagent
 temperature: 0.1

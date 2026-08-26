@@ -1,5 +1,6 @@
 ---
 name: dependency-scrubber
+purpose: agent
 description: Analyze and improve dependency structure — untangle circular dependencies, reduce coupling, simplify import graphs.
 mode: subagent
 temperature: 0.1

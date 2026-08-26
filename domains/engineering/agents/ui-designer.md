@@ -1,5 +1,6 @@
 ---
 name: ui-designer
+purpose: design
 description: Design and generate visual UI mockups as self-contained prototypes — HTML for web, native source + screenshots for platform apps.
 ---
 

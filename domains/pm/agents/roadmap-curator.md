@@ -1,5 +1,6 @@
 ---
 name: roadmap-curator
+purpose: agent
 description: Maintain the roadmap board — horizon assignments, delivery-state reconciliation against live engineering reality, stale-item surfacing, and lane configuration.
 mode: subagent
 temperature: 0.1

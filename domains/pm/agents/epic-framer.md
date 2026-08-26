@@ -1,5 +1,6 @@
 ---
 name: epic-framer
+purpose: design
 description: Frame an epic as a coherent bet — write the Why and the rollup acceptance criteria, sequence the child stories, and surface their dependencies. Reconciles child-story rollup state. Authoring; delegates story bodies to story-writer.
 mode: subagent
 temperature: 0.1

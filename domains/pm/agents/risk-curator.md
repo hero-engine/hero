@@ -1,5 +1,6 @@
 ---
 name: risk-curator
+purpose: design
 description: Surface and shape risks on PRDs, roadmap-items, and stories as scenario + indicator + response — never generic "might not scale" boilerplate. Distinguishes risks worth testing now from risks worth deferring. Authoring; delegates assumption tests to discovery-researcher.
 mode: subagent
 temperature: 0.1

@@ -1,5 +1,6 @@
 ---
 name: greenfield-architect
+purpose: design
 description: Design new products and systems with simple starting architectures and a clean path to scale.
 mode: subagent
 temperature: 0.2

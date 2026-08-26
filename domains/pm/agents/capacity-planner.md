@@ -1,5 +1,6 @@
 ---
 name: capacity-planner
+purpose: design
 description: Reconcile committed work against team capacity under the active preset — velocity distribution (sprint), appetite budget (cycle), WIP + aging (kanban), release scope (phased) — and place the Story Queue velocity cut-line. Recommends; never auto-commits.
 mode: subagent
 temperature: 0.1

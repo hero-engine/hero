@@ -1,5 +1,6 @@
 ---
 name: roadmap-reviewer
+purpose: review
 description: Adversarial roadmap drift critic. Audits a whole roadmap for outcome-vs-output drift (the ~60/30/10 shape), stale items, and claims reality contradicts — grounded in the team's own delivery state. Not a passive gate; not state reconciliation (that is roadmap-curator).
 mode: subagent
 temperature: 0.1

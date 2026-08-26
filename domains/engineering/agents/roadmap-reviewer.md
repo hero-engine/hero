@@ -1,5 +1,6 @@
 ---
 name: roadmap-reviewer
+purpose: review
 description: Interactive triage of roadmap-shape drift across the planning corpus. Surveys, prioritizes, walks one item at a time, and executes the resolution CLI itself on confirm.
 mode: subagent
 temperature: 0.1

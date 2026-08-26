@@ -1,5 +1,6 @@
 ---
 name: pm-reviewer
+purpose: review
 description: Review PM artifacts (PRDs, stories, epics, initiatives, intakes) for quality before they advance. Analog to design-reviewer / pr-reviewer.
 mode: subagent
 temperature: 0.1

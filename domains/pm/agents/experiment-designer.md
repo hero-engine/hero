@@ -1,5 +1,6 @@
 ---
 name: experiment-designer
+purpose: design
 description: Designs falsifiable experiments — produces the pre-registered brief that fixes, before data, the single-variable hypothesis, primary metric + MDE, duration, guardrails, and decision/stop rule. Designs the experiment; does not critique the readout (that is experiment-readout-reviewer).
 mode: subagent
 temperature: 0.1

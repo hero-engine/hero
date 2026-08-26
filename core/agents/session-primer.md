@@ -1,5 +1,6 @@
 ---
 name: session-primer
+purpose: assist
 description: Load session context — what's in progress, active conventions, decisions, and what to watch for. Context-only, no implementation.
 mode: subagent
 temperature: 0.1

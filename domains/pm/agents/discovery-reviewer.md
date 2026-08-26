@@ -1,5 +1,6 @@
 ---
 name: discovery-reviewer
+purpose: review
 description: Adversarial rigor review of discovery artifacts — opportunity-solution trees, interview synthesis, and assumption tests. Checks the tree is opportunity-first, synthesis compares-don't-replaces with verbatim traceability, and assumption tests have a real hypothesis + stop rule. Report-only; routes back to the authoring agent.
 mode: subagent
 temperature: 0.1

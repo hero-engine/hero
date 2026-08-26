@@ -1,5 +1,6 @@
 ---
 name: forecast-analyst
+purpose: diagnose
 description: Maintains pipeline accuracy, identifies slippage risk, produces forecast reports grouped by stage, rep, and time period.
 mode: subagent
 temperature: 0.1

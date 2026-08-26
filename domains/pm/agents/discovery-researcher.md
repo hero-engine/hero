@@ -1,5 +1,6 @@
 ---
 name: discovery-researcher
+purpose: diagnose
 description: Design and synthesize customer research in the Teresa Torres continuous-discovery tradition. Maps outcomes to opportunities to solutions to assumption tests, and writes findings into PRDs and initiatives on disk.
 mode: subagent
 temperature: 0.1

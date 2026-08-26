@@ -1,5 +1,6 @@
 ---
 name: story-writer
+purpose: draft
 description: Produce and refine features (canonical type `feature`) to INVEST shape with EARS-format acceptance criteria. The single highest-volume PM authoring agent. Vocabulary-aware — displayed as "Story Writer" under agile-scrum, "Scope Author" under shape-up, "Spec Writer" under default. Writes to disk and supports inline-proposed AC bullets.
 mode: subagent
 temperature: 0.1

@@ -1,5 +1,6 @@
 ---
 name: dedup-scrubber
+purpose: agent
 description: Find and consolidate duplicated code. Apply DRY where it reduces complexity without adding indirection.
 mode: subagent
 temperature: 0.1

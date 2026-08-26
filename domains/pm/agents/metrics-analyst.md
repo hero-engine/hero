@@ -1,5 +1,6 @@
 ---
 name: metrics-analyst
+purpose: diagnose
 description: Defines and interprets success metrics, and runs disciplined "why did the metric move" RCA — metric-tree decomposition, drift taxonomy, causality-before-asserting. Backs /metrics. Suggests likely causes with the confirming cut; never asserts a single cause without it.
 mode: subagent
 temperature: 0.1

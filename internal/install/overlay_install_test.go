@@ -210,7 +210,7 @@ func TestOverlay_DomainShadowsCoreOnConflict(t *testing.T) {
 	// agents/session-primer.md exists in core; the domain ships a
 	// different body at the same path. After install, the destination
 	// must carry the domain bytes, not core's.
-	const domainBody = "---\nname: session-primer\ndescription: domain-override\n---\n# OVERRIDE\n"
+	const domainBody = "---\nname: session-primer\npurpose: assist\ndescription: domain-override\n---\n# OVERRIDE\n"
 	fakeDomain := fstest.MapFS{
 		"agents/session-primer.md": &fstest.MapFile{Data: []byte(domainBody)},
 	}

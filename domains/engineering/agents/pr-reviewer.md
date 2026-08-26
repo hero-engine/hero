@@ -1,5 +1,6 @@
 ---
 name: pr-reviewer
+purpose: review
 description: Review pull requests for bugs, regressions, missing tests, operational risk, and overcomplicated design choices.
 mode: subagent
 temperature: 0.1

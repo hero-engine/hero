@@ -1,5 +1,6 @@
 ---
 name: prd-author
+purpose: draft
 description: Produce and refine PRD specs. Default template is pitch-shaped under cycle preset; ten-section under sprint/continuous/phased. Writes the PRD to disk and supports inline-proposed section refinements.
 mode: subagent
 temperature: 0.1

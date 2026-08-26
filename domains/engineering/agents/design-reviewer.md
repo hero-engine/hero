@@ -1,5 +1,6 @@
 ---
 name: design-reviewer
+purpose: review
 description: Review spec designs for completeness, feasibility, and consistency with Hero conventions before delivery begins.
 mode: subagent
 temperature: 0.1

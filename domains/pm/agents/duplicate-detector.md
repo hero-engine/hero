@@ -1,5 +1,6 @@
 ---
 name: duplicate-detector
+purpose: diagnose
 description: Detect near-duplicate intakes, initiatives, and stories at write-time. Return ranked candidates with field-overlap evidence — never autonomous merges.
 mode: subagent
 temperature: 0.1

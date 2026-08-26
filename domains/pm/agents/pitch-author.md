@@ -1,5 +1,6 @@
 ---
 name: pitch-author
+purpose: draft
 description: Shape a Shape Up pitch — appetite as a budget (not an estimate), rabbit holes as named traps, no-gos as scope defense. The dedicated pitch specialist split out of prd-author; backs the PRD Editor "Convert to pitch" action. Refuses to ship a pitch with an empty Appetite or empty No-Gos.
 mode: subagent
 temperature: 0.1

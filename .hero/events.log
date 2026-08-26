@@ -581,3 +581,6 @@
 {"ts":"2026-08-24T16:23:36.207609Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-public-visibility-launch-gate","message":"status -\u003e completed"}
 {"ts":"2026-08-24T16:23:37.70472Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-marketing","message":"\"Hero v0.34 Public Release Readiness\""}
 {"ts":"2026-08-24T16:23:37.70482Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-marketing","message":"status -\u003e completed"}
+{"ts":"2026-08-26T06:38:19.129378Z","type":"mail.promote","agent":"hero-mail","slug":"mail-d9dae6ef23521c42d2b46cfd","message":"promote mail_d9dae6ef23521c42d2b46cfd (thread mail_d9dae6ef23521c42d2b46cfd)"}
+{"ts":"2026-08-26T07:54:32.17384Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"mail-d9dae6ef23521c42d2b46cfd","message":"\"Canonical agent-purpose metadata for model routing\""}
+{"ts":"2026-08-26T07:54:32.173936Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"mail-d9dae6ef23521c42d2b46cfd","message":"status -\u003e completed"}

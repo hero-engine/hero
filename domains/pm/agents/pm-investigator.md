@@ -1,5 +1,6 @@
 ---
 name: pm-investigator
+purpose: diagnose
 description: Investigate ambiguous intake, customer signals, and vague feature asks to identify the underlying opportunity before authoring. Writes findings into the intake or initiative spec on disk.
 mode: subagent
 temperature: 0.1

@@ -1,5 +1,6 @@
 ---
 name: prioritization-strategist
+purpose: design
 description: Apply prioritization frameworks (RICE / ICE / WSJF / value-vs-effort) to initiatives and stories. Power the Roadmap board's framework view toggles.
 mode: subagent
 temperature: 0.1

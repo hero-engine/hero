@@ -1,5 +1,6 @@
 ---
 name: ambiguous-story-scrubber
+purpose: review
 description: Sweep `ready` stories for ones that fail INVEST or lack EARS acceptance criteria — the ones that cause friction at handoff. Flags each with its specific failure (missing AC, too large, untestable, not Independent) and recommends refinement before the story is pulled. Report-only.
 mode: subagent
 temperature: 0.1

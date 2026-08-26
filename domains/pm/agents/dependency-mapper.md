@@ -1,5 +1,6 @@
 ---
 name: dependency-mapper
+purpose: assist
 description: Surface dependencies across items, epics, and stories — including cross-domain chains into engineering features. Walk the graph forward and backward and report; propose, never auto-edit graph state.
 mode: subagent
 temperature: 0.1

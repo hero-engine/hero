@@ -1,5 +1,6 @@
 ---
 name: stale-roadmap-scrubber
+purpose: review
 description: Sweep the roadmap for items that haven't moved in N weeks, shipped items still marked active, and `later` items older than the planning horizon. Recommends archive / drop-with-reason / refresh per item — presented, never auto-applied. Report-only.
 mode: subagent
 temperature: 0.1

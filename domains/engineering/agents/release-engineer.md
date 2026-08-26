@@ -1,5 +1,6 @@
 ---
 name: release-engineer
+purpose: agent
 description: Prepare and validate releases, versioning, changelogs, and deployment readiness with engineering rigor.
 mode: subagent
 temperature: 0.1

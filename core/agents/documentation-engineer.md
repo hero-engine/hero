@@ -1,5 +1,6 @@
 ---
 name: documentation-engineer
+purpose: draft
 description: Create and update technical documentation that reflects how the system actually works and how to operate it safely.
 mode: subagent
 temperature: 0.2

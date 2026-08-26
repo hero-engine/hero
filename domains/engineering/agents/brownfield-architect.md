@@ -1,5 +1,6 @@
 ---
 name: brownfield-architect
+purpose: design
 description: Understand existing codebases and design minimal, scale-ready changes that fit the current system.
 mode: subagent
 temperature: 0.1
