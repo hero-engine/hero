@@ -37,6 +37,15 @@ func ValidateListResponse(v ListResponse) *attention.ContractError {
 	if err := validateVersion(v.SchemaVersion); err != nil {
 		return err
 	}
+	if len(v.Diagnostics) > MaxListDiagnostics {
+		return invalid("diagnostics", "must contain at most 8 entries")
+	}
+	for i := range v.Diagnostics {
+		if err := validateError(&v.Diagnostics[i]); err != nil {
+			err.Field = indexed("diagnostics", i, strings.TrimPrefix(err.Field, "error."))
+			return err
+		}
+	}
 	if v.Error != nil {
 		return validateError(v.Error)
 	}

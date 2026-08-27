@@ -121,9 +121,24 @@ func TestValidateListResponsePageInvariants(t *testing.T) {
 		Items:         []MessageSummary{validSummary(0)},
 		Page:          &PageMetadata{Limit: 1, Returned: 1, HasMore: true},
 		NextCursor:    "mailread.v1.next",
+		Diagnostics: []attention.ContractError{{
+			Code: attention.ErrorUnavailable, Message: "some registered projects were skipped",
+			Details: map[string]string{"category": "registry", "skipped_count": "1"},
+		}},
 	}
 	if err := ValidateListResponse(response); err != nil {
 		t.Fatalf("valid response: %#v", err)
+	}
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var roundTrip ListResponse
+	if err := json.Unmarshal(encoded, &roundTrip); err != nil {
+		t.Fatal(err)
+	}
+	if len(roundTrip.Diagnostics) != 1 || roundTrip.Diagnostics[0].Details["category"] != "registry" {
+		t.Fatalf("diagnostics round trip = %#v", roundTrip.Diagnostics)
 	}
 
 	invalid := response
@@ -135,6 +150,12 @@ func TestValidateListResponsePageInvariants(t *testing.T) {
 	errorResponse := ListResponse{SchemaVersion: 1, Error: &attention.ContractError{Code: attention.ErrorUnavailable, Message: "registry unavailable"}}
 	if err := ValidateListResponse(errorResponse); err != nil {
 		t.Fatalf("structured failure: %#v", err)
+	}
+
+	tooManyDiagnostics := response
+	tooManyDiagnostics.Diagnostics = make([]attention.ContractError, MaxListDiagnostics+1)
+	if err := ValidateListResponse(tooManyDiagnostics); err == nil || err.Field != "diagnostics" {
+		t.Fatalf("diagnostics bound error = %#v", err)
 	}
 }
 

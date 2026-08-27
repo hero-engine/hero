@@ -230,14 +230,84 @@ func TestServiceActionReplayConflictAndReplyDelegateToSource(t *testing.T) {
 	}
 }
 
-func TestServiceStaleRegistryPathIsUnavailableNotEmpty(t *testing.T) {
-	service, err := NewService(t.TempDir(), queryRegistry(map[string]string{"gone": filepath.Join(t.TempDir(), "missing")}))
+func TestServiceExactTargetIgnoresUnrelatedStaleRegistryEntries(t *testing.T) {
+	state, project := t.TempDir(), t.TempDir()
+	writeQueryProject(t, project, "peer_healthy", "Healthy", nil)
+	store, _ := mail.NewStore(state)
+	deliverQueryMessage(t, store, "peer_healthy", "sender", "mail_healthy", "mail_thread", "2026-08-17T10:00:00Z", "body")
+	invalid := t.TempDir()
+	missing := filepath.Join(t.TempDir(), "missing")
+	service, err := NewService(state, queryRegistry(map[string]string{
+		"001_gone":    missing,
+		"002_invalid": invalid,
+		"healthy":     project,
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion, ProjectPeerID: "peer_healthy"})
+	if result.Error != nil || len(result.Diagnostics) != 0 || len(result.Items) != 1 || result.Items[0].MessageID != "mail_healthy" {
+		t.Fatalf("exact healthy project = %#v", result)
+	}
+	if _, err := os.Stat(missing); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("unrelated registry entry was unexpectedly repaired: %v", err)
+	}
+}
+
+func TestServiceAggregateRetainsBoundedRegistryDiagnostics(t *testing.T) {
+	state, project := t.TempDir(), t.TempDir()
+	writeQueryProject(t, project, "peer_healthy", "Healthy", nil)
+	store, _ := mail.NewStore(state)
+	deliverQueryMessage(t, store, "peer_healthy", "sender", "mail_healthy", "mail_thread", "2026-08-17T10:00:00Z", "body")
+	projects := map[string]string{"healthy": project}
+	for i := 0; i < maxRegistryIssueDiagnostics+3; i++ {
+		projects["gone_"+leftPad3(i)] = filepath.Join(t.TempDir(), "missing")
+	}
+	service, err := NewService(state, queryRegistry(projects))
 	if err != nil {
 		t.Fatal(err)
 	}
 	result := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion})
-	if result.Error == nil || result.Error.Code != attention.ErrorUnavailable || result.Page != nil {
-		t.Fatalf("stale registry path = %#v", result)
+	if result.Error != nil || len(result.Items) != 1 || result.Items[0].MessageID != "mail_healthy" || len(result.Diagnostics) != 1 {
+		t.Fatalf("partial aggregate = %#v", result)
+	}
+	diagnostic := result.Diagnostics[0]
+	entries := strings.Split(diagnostic.Details["skipped_entries"], ",")
+	if diagnostic.Code != attention.ErrorUnavailable || diagnostic.Details["category"] != "registry" || diagnostic.Details["skipped_count"] != "11" || len(entries) != maxRegistryIssueDiagnostics {
+		t.Fatalf("aggregate diagnostics = %#v", result.Diagnostics)
+	}
+	encoded := string(mustJSON(t, result))
+	if strings.Contains(encoded, string(filepath.Separator)) || !strings.Contains(encoded, `"diagnostics"`) {
+		t.Fatalf("unsafe or missing public aggregate diagnostics = %s", encoded)
+	}
+}
+
+func TestServiceUnavailableRegistryIsNotFalseEmpty(t *testing.T) {
+	service, err := NewService(t.TempDir(), queryRegistry(map[string]string{
+		"gone": filepath.Join(t.TempDir(), "missing"),
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, request := range []mailread.ListRequest{
+		{SchemaVersion: mailread.SchemaVersion},
+		{SchemaVersion: mailread.SchemaVersion, ProjectPeerID: "peer_gone"},
+	} {
+		result := service.List(request)
+		if result.Error == nil || result.Error.Code != attention.ErrorUnavailable || result.Page != nil || result.Error.Details["category"] != "registry" || result.Error.Details["skipped_entries"] != "gone:path" {
+			t.Fatalf("unavailable registry = %#v", result)
+		}
+	}
+}
+
+func TestServiceHealthyEmptyRegistryRemainsAuthoritativeEmpty(t *testing.T) {
+	service, err := NewService(t.TempDir(), queryRegistry(map[string]string{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion})
+	if result.Error != nil || result.Page == nil || result.TotalCount != 0 || len(result.Items) != 0 {
+		t.Fatalf("healthy empty registry = %#v", result)
 	}
 }
 

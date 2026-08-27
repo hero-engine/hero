@@ -13,6 +13,7 @@ const (
 	BundleVersion             = 1
 	DefaultListLimit          = 20
 	MaxListLimit              = 100
+	MaxListDiagnostics        = 8
 	MaxCursorBytes            = 4096
 	ConformanceManifestSHA256 = "69cc93c0a4566d1fd4f9678ead9d2fef3c7c9655559d2c55eb94551f0facb69e"
 
@@ -70,14 +71,15 @@ type MessageSummary struct {
 }
 
 type ListResponse struct {
-	SchemaVersion int                      `json:"schema_version"`
-	Revision      string                   `json:"revision,omitempty"`
-	TotalCount    int                      `json:"total_count"`
-	UnreadCount   int                      `json:"unread_count"`
-	Items         []MessageSummary         `json:"items"`
-	Page          *PageMetadata            `json:"page,omitempty"`
-	NextCursor    string                   `json:"next_cursor,omitempty"`
-	Error         *attention.ContractError `json:"error,omitempty"`
+	SchemaVersion int                       `json:"schema_version"`
+	Revision      string                    `json:"revision,omitempty"`
+	TotalCount    int                       `json:"total_count"`
+	UnreadCount   int                       `json:"unread_count"`
+	Items         []MessageSummary          `json:"items"`
+	Page          *PageMetadata             `json:"page,omitempty"`
+	NextCursor    string                    `json:"next_cursor,omitempty"`
+	Diagnostics   []attention.ContractError `json:"diagnostics,omitempty"`
+	Error         *attention.ContractError  `json:"error,omitempty"`
 }
 
 type DetailResponse struct {

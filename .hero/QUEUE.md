@@ -6,7 +6,29 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-08-24T16:52:06Z · 85 ready specs_
+_Generated: 2026-08-27T15:42:33Z · 84 ready specs_
+
+## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/specs/retrieval-contradiction-detection/spec.md)_
+
+---
+
+## team-connect — "Team Connect — CLI Registration with Team Server"
+_feature · delivering · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/team-connect/spec.md)_
+
+---
+
+## mail-thread-foreground-read-action — Mail Thread Foreground Read Action
+_feature · delivering · horizon: now_
+
+Add the service-level foreground-read regression first, then expose the exact
+descriptor through the existing thread projection and HTTP action route.
+
+---
 
 ## mail-b7ca19966ac5041e6ff604dd — "Mail thread lifecycle contract and state"
 _feature · delivering · horizon: now_
@@ -22,65 +44,13 @@ without changing Mail-read v1 behavior.
 
 **Files:** `contracts/attention/mailthread/contract.go`, `internal/attention/mail/store.go`, `internal/attention/mail/thread.go`
 **Skip:** do not infer thread identity or completion from Mail content.
-_Generated: 2026-08-23T02:34:51Z · 80 ready specs_
-
-## mail-thread-foreground-read-action — Mail Thread Foreground Read Action
-_feature · delivering · horizon: now_
-
-Add the service-level foreground-read regression first, then expose the exact
-descriptor through the existing thread projection and HTTP action route.
-
----
-_Generated: 2026-08-23T16:22:53Z · 79 ready specs_
-
-## retrieval-contradiction-detection — Retrieval Contradiction Detection — Surface Stale Facts at Read Time
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/specs/retrieval-contradiction-detection/spec.md)_
-
----
-
-## hero-public-visibility-launch-gate — "Hero Public Visibility and v0.34 Launch Gate"
-_feature · delivering · horizon: now_
-
-This is the final human-controlled exposure gate; green dependencies do not authorize a visibility change.
-
-**Status:** delivering — the approved history sanitation and archive-and-replace launch are complete; `v0.34.0` publication, production revision parity, and final anonymous journeys are in progress.
-
-**Pick up at:** publish `v0.34.0` from the sanitized public revision, redeploy the landing and docs artifacts at that revision, complete anonymous install and integrity checks, then run the cold audit and verify gate.
-
-→ `.hero/planning/initiatives/hero-marketing/hero-public-visibility-launch-gate/spec.md`
-
-**Files:** `scripts/public-readiness-scan.sh`, `.hero/specs/hero-public-repo-readiness/exposure-audit.md`, `.build/release-candidate/v0.34.0/provenance.json`, `docs/releases/v0.34.0-launch-checklist.md`, this spec
-**Skip:** broad campaign execution and any visibility/license change to Sprout, `hero-code`, or `hero-cloud`.
-
----
-
-## team-connect — "Team Connect — CLI Registration with Team Server"
-_feature · delivering · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/team-connect/spec.md)_
 
 ---
 
 ## agent-outposts — "Agent Outposts — Operable External Systems with Scoped Credentials and Audit-by-Construction"
 _feature · delivering · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## mail-da2727fd11615a9cafa5125c — Mail Da2727fd11615a9cafa5125c
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/mail-da2727fd11615a9cafa5125c/spec.md)_
-
----
-
-## mail-d20bcb1654f2bb82d4d973b1 — Mail D20bcb1654f2bb82d4d973b1
-_feature · planning · horizon: now_
-
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/mail-d20bcb1654f2bb82d4d973b1/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/agent-outposts/spec.md)_
 
 ---
 
@@ -128,7 +98,7 @@ Build a Hero-native system that actively manages session context — not just *i
 ## hero-surface-architecture — Hero Surface Architecture — One Surface, Every Layer, Every Role
 _initiative · planning · horizon: now_
 
-_(no `## Goal` run opener — hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
+_(no `## Goal` run opener — hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/initiatives/hero-surface-architecture/spec.md)_
 
 ---
 
@@ -185,15 +155,6 @@ Hero's digest shipped a `hero recall` reference for however long — the command
 
 **Files:** `internal/digest/digest.go:930`, `internal/cli/root.go`, `internal/install/agents_md.go`, `internal/cli/install.go:115`
 **Skip:** don't build general claim-checking (relations resolve, statuses accurate) — command refs only.
-
----
-
-## hero-marketing — "Hero v0.34 Public Release Readiness"
-_initiative · planning · horizon: now_
-
-_Run opener — arm with `/drive hero-marketing`_
-
-Deliver the complete v0.34 public-readiness path: an inventory of the shipped product, memory-first positioning, current root and hosted documentation, a current public site, repository-readiness materials, drift guards, and a clean release candidate. The owner has authorized preparing this repository for an Apache-2.0 grant. Adding the license, changing repository visibility, and publishing the release remain explicit final mutations rather than prep work.
 
 ---
 
@@ -351,7 +312,7 @@ Cold-start prompt:
 ## synthesis-maintenance — "Synthesis Maintenance — Write-Through Coherence for the Hero Graph"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/synthesis-maintenance/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/synthesis-maintenance/spec.md)_
 
 ---
 
@@ -421,14 +382,28 @@ Resume by reading `.hero/planning/features/satellite-corpus-integration/spec.md`
 ## premise-interrogation — "Premise Interrogation — Force-Question the Framing Before Designing"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/premise-interrogation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/premise-interrogation/spec.md)_
 
 ---
 
 ## peer-call-multi-cli — "Peer Call Multi-CLI — Pluggable Subagent Backends"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/peer-call-multi-cli/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/peer-call-multi-cli/spec.md)_
+
+---
+
+## mail-da2727fd11615a9cafa5125c — Mail Da2727fd11615a9cafa5125c
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/mail-da2727fd11615a9cafa5125c/spec.md)_
+
+---
+
+## mail-d20bcb1654f2bb82d4d973b1 — Mail D20bcb1654f2bb82d4d973b1
+_feature · planning · horizon: now_
+
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/mail-d20bcb1654f2bb82d4d973b1/spec.md)_
 
 ---
 
@@ -468,14 +443,14 @@ capture-then-edit), capture auto / promote manual.
 ## hihcp-fuzzy-path-resolution — "Add Workspace-Relative Path Fuzzy Resolution"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/hihcp-fuzzy-path-resolution/spec.md)_
 
 ---
 
 ## hero-search-tiered-response — hero search response tiering — max_results + pagination instead of compact boolean
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-search-tiered-response/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/hero-search-tiered-response/spec.md)_
 
 ---
 
@@ -534,14 +509,14 @@ _feature · planning · horizon: now_
 ## agent-safety-conventions — "Agent Safety Conventions — Harness-Agnostic Behavioral Guardrails"
 _feature · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/agent-safety-conventions/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/agent-safety-conventions/spec.md)_
 
 ---
 
 ## tracker-semantic-priority-field-mapping — "\"Jira custom field cannot be configured as canonical Hero priority\""
 _bug · planning · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/bugs/tracker-semantic-priority-field-mapping/spec.md)_
 
 ---
 
@@ -696,21 +671,21 @@ data through CLI commands, MCP tools, and the `hero prime` context pipeline.
 ## spec-prioritization — Spec Prioritization — Now / Next / Someday / Parking-Lot
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/spec-prioritization/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/spec-prioritization/spec.md)_
 
 ---
 
 ## project-charter — Project Charter — Mission, Principles, and Auto-Injection
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/project-charter/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/project-charter/spec.md)_
 
 ---
 
 ## lean-agent-profile — Lean Agent Profile — Opt-In Trim for Top-Tier Models
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/lean-agent-profile/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/lean-agent-profile/spec.md)_
 
 ---
 
@@ -740,7 +715,7 @@ Adds a HashiCorp-style comparison section that helps readers honestly choose bet
 ## hero-runner — Hero Runner — Headless Agent Execution via Claude API
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-runner/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/hero-runner/spec.md)_
 
 ---
 
@@ -763,28 +738,28 @@ Second non-engineering Hero domain pack: QA. The thesis: **Hero QA is the qualit
 ## graph-memory — Graph Memory — Unified Substrate for Hero's Knowledge Corpus
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/graph-memory/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/graph-memory/spec.md)_
 
 ---
 
 ## graph-memory-federation — Graph Memory Federation — Multi-Repo, Multi-Team, Cross-Unit Topology
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/graph-memory-federation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/graph-memory-federation/spec.md)_
 
 ---
 
 ## graph-memory-7c-live-test — Graph Memory Phase 7c — Live Multi-Dev Sync Test
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/graph-memory-7c-live-test/spec.md)_
 
 ---
 
 ## e2e-onboarding — E2E Onboarding Suite — Fresh Repo to Productive Workspace
 _feature · planning · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/e2e-onboarding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/e2e-onboarding/spec.md)_
 
 ---
 
@@ -804,63 +779,63 @@ dogfooding the polished core before we deploy.
 ## hero-telemetry — Hero Telemetry — Opt-In Usage Analytics + Feedback Channel
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-telemetry/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/hero-telemetry/spec.md)_
 
 ---
 
 ## hero-docs-site — Hero Docs Site — Public, Searchable, Self-Serve Reference
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-docs-site/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/hero-docs-site/spec.md)_
 
 ---
 
 ## hero-distribution — Hero Distribution — Homebrew, Install Script, GitHub Releases
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-distribution/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/hero-distribution/spec.md)_
 
 ---
 
 ## hero-demo-content — Hero Interactive Install Terminal Demo
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-demo-content/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/hero-demo-content/spec.md)_
 
 ---
 
 ## hero-community — Hero Community — Discord/Discussions, Contributor Guide, Issue Templates
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/hero-community/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/hero-community/spec.md)_
 
 ---
 
 ## configurable-workspace-location — Configurable Workspace Location — Hero Dir Anywhere
 _feature · planning · horizon: someday_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/configurable-workspace-location/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/configurable-workspace-location/spec.md)_
 
 ---
 
 ## multi-domain-core — "Multi-Domain Core Engine"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/multi-domain-core/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/multi-domain-core/spec.md)_
 
 ---
 
 ## greenfield-scaffolding — "Greenfield Scaffolding"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/greenfield-scaffolding/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/greenfield-scaffolding/spec.md)_
 
 ---
 
 ## cross-spec-awareness — "Cross-Spec Awareness"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/cross-spec-awareness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/cross-spec-awareness/spec.md)_
 
 ---
 
@@ -890,7 +865,7 @@ The deliverable is reviewable in two cuts: (a) the seam + direct backend (smalle
 ## architectural-drift-detection — "Architectural Drift Detection"
 _feature · draft · horizon: next_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/features/architectural-drift-detection/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/features/architectural-drift-detection/spec.md)_
 
 ---
 
@@ -949,28 +924,28 @@ then the dispatch intercept and registry wiring. Three files, one new
 ## hihcp-rgignore — "Add .rgignore to hero-code Repo"
 _bug · handed_off · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/hihcp-rgignore/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/bugs/hihcp-rgignore/spec.md)_
 
 ---
 
 ## hihcp-permission-bridge-validation — "Harden Permission Bridge Payload Validation"
 _bug · handed_off · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/bugs/hihcp-permission-bridge-validation/spec.md)_
 
 ---
 
 ## hihcp-mcp-first-turn-readiness — "Gate First Turn on Hero MCP Readiness"
 _bug · handed_off · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/bugs/hihcp-mcp-first-turn-readiness/spec.md)_
 
 ---
 
 ## hihcp-mcp-auto-reconnect — "Auto-Recover from MCP Server Disconnect Mid-Session"
 _bug · handed_off · horizon: now_
 
-_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-mainline.VP2J8d/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
+_(no `## Kickoff` section — run `/design` or hand-edit /private/tmp/hero-mail-main.PaKrG3/.hero/planning/bugs/hihcp-mcp-auto-reconnect/spec.md)_
 
 ---
 

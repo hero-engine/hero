@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -59,6 +60,50 @@ type projectSource struct {
 	mail          mailService
 }
 
+const maxRegistryIssueDiagnostics = 8
+
+type registryIssue struct {
+	slug     string
+	category string
+}
+
+type registryResolution struct {
+	sources      []projectSource
+	issues       []registryIssue
+	skippedCount int
+}
+
+func (r *registryResolution) addIssue(slug, category string) {
+	r.skippedCount++
+	if len(r.issues) >= maxRegistryIssueDiagnostics {
+		return
+	}
+	r.issues = append(r.issues, registryIssue{
+		slug:     safeRegistrySlug(slug),
+		category: category,
+	})
+}
+
+func (r registryResolution) unavailable() *attention.ContractError {
+	details := map[string]string{
+		"category":      "registry",
+		"skipped_count": strconv.Itoa(r.skippedCount),
+	}
+	if len(r.issues) > 0 {
+		values := make([]string, len(r.issues))
+		for i, issue := range r.issues {
+			values[i] = issue.slug + ":" + issue.category
+		}
+		details["skipped_entries"] = strings.Join(values, ",")
+	}
+	return &attention.ContractError{
+		Code:    attention.ErrorUnavailable,
+		Message: "registered Mail projects could not be resolved",
+		Field:   "project_peer_id",
+		Details: details,
+	}
+}
+
 // Service resolves the current machine registry and delegates to Mail's
 // source-owned services. It stores no projection or pagination state.
 type Service struct {
@@ -91,10 +136,11 @@ func (s *Service) List(request mailread.ListRequest) mailread.ListResponse {
 	if limit == 0 {
 		limit = mailread.DefaultListLimit
 	}
-	sources, contractErr := s.resolve(request.ProjectPeerID)
+	resolution, contractErr := s.resolveRegistry(request.ProjectPeerID)
 	if contractErr != nil {
 		return fail(contractErr)
 	}
+	sources := resolution.sources
 
 	type orderedSummary struct {
 		summary mailread.MessageSummary
@@ -169,6 +215,9 @@ func (s *Service) List(request mailread.ListRequest) mailread.ListResponse {
 		UnreadCount:   unreadCount,
 		Items:         items,
 		Page:          &mailread.PageMetadata{Limit: limit, Returned: len(items), HasMore: end < len(summaries)},
+	}
+	if request.ProjectPeerID == "" && resolution.skippedCount > 0 {
+		response.Diagnostics = []attention.ContractError{*resolution.unavailable()}
 	}
 	if response.Page.HasMore {
 		last := items[len(items)-1]
@@ -305,8 +354,14 @@ func (s *Service) resolveOne(peerID string) (projectSource, *attention.ContractE
 }
 
 func (s *Service) resolve(peerID string) ([]projectSource, *attention.ContractError) {
+	resolution, contractErr := s.resolveRegistry(peerID)
+	return resolution.sources, contractErr
+}
+
+func (s *Service) resolveRegistry(peerID string) (registryResolution, *attention.ContractError) {
+	var resolution registryResolution
 	if s == nil || s.registry == nil || s.store == nil {
-		return nil, unavailable(errors.New("Mail query service is unavailable"))
+		return resolution, unavailable(errors.New("Mail query service is unavailable"))
 	}
 	entries := s.registry.List()
 	slugs := make([]string, 0, len(entries))
@@ -319,14 +374,17 @@ func (s *Service) resolve(peerID string) ([]projectSource, *attention.ContractEr
 		entry := entries[slug]
 		canonicalPath, err := canonicalProjectPath(entry.Path)
 		if err != nil {
-			return nil, unavailable(fmt.Errorf("resolve registered project %q: %w", slug, err))
+			resolution.addIssue(slug, "path")
+			continue
 		}
 		cfg, err := config.Load(canonicalPath)
 		if err != nil {
-			return nil, unavailable(fmt.Errorf("load registered project %q: %w", slug, err))
+			resolution.addIssue(slug, "config")
+			continue
 		}
 		if !validTargetID(cfg.PeerID) {
-			return nil, unavailable(fmt.Errorf("registered project %q has an invalid peer_id", slug))
+			resolution.addIssue(slug, "identity")
+			continue
 		}
 		displayName := filepath.Base(canonicalPath)
 		if cfg.Peering != nil && strings.TrimSpace(cfg.Peering.Display) != "" {
@@ -339,7 +397,7 @@ func (s *Service) resolve(peerID string) ([]projectSource, *attention.ContractEr
 		}
 		if existing, ok := byPeer[cfg.PeerID]; ok {
 			if existing.canonicalPath != canonicalPath {
-				return nil, &attention.ContractError{
+				return resolution, &attention.ContractError{
 					Code: attention.ErrorUnavailable, Message: "multiple registered project paths claim one peer_id",
 					Field: "project_peer_id", Details: map[string]string{"project_peer_id": cfg.PeerID},
 				}
@@ -351,20 +409,34 @@ func (s *Service) resolve(peerID string) ([]projectSource, *attention.ContractEr
 	if peerID != "" {
 		source, ok := byPeer[peerID]
 		if !ok {
-			return nil, &attention.ContractError{Code: attention.ErrorMissing, Message: "registered project peer_id was not found", Field: "project_peer_id"}
+			if resolution.skippedCount > 0 {
+				return resolution, resolution.unavailable()
+			}
+			return resolution, &attention.ContractError{Code: attention.ErrorMissing, Message: "registered project peer_id was not found", Field: "project_peer_id"}
 		}
-		return []projectSource{source}, nil
+		resolution.sources = []projectSource{source}
+		return resolution, nil
+	}
+	if len(byPeer) == 0 && resolution.skippedCount > 0 {
+		return resolution, resolution.unavailable()
 	}
 	peerIDs := make([]string, 0, len(byPeer))
 	for id := range byPeer {
 		peerIDs = append(peerIDs, id)
 	}
 	sort.Strings(peerIDs)
-	sources := make([]projectSource, 0, len(peerIDs))
+	resolution.sources = make([]projectSource, 0, len(peerIDs))
 	for _, id := range peerIDs {
-		sources = append(sources, byPeer[id])
+		resolution.sources = append(resolution.sources, byPeer[id])
 	}
-	return sources, nil
+	return resolution, nil
+}
+
+func safeRegistrySlug(slug string) string {
+	if len(slug) == 0 || len(slug) > 64 || !validTargetID(slug) {
+		return "invalid-slug"
+	}
+	return slug
 }
 
 func canonicalProjectPath(path string) (string, error) {

@@ -1,22 +1,18 @@
 ---
 user: chet-bellows
-updated: 2026-08-24T17:14:01Z
-repo: hero
+updated: 2026-08-27T15:42:33Z
+repo: hero-engine/hero
 ---
 
 # chet-bellows's handoff
 
 ## Last user ask
 
-> Diagnose the missing Project Mail thread lifecycle MCP parity: add linked bug spec for thread list, detail, action, and contract tools that delegate to authoritative services without localhost HTTP or policy duplication.
+_(none recorded — `hero next ask "..."` to set)_
 
 ## Suggested next prompt
 
-> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
-
-_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
 
 ## Recent reflections
 

@@ -6,7 +6,59 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestRunRegistersOnlyInIsolatedHome(t *testing.T) {
+	sentinelHome := t.TempDir()
+	sentinelPath := filepath.Join(sentinelHome, ".hero", "projects.json")
+	if err := os.MkdirAll(filepath.Dir(sentinelPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	sentinel := []byte("{\n  \"projects\": {\"user-project\": {\"path\": \"/private/user-project\"}}\n}\n")
+	if err := os.WriteFile(sentinelPath, sentinel, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sentinelTime := time.Unix(1_700_000_000, 0)
+	if err := os.Chtimes(sentinelPath, sentinelTime, sentinelTime); err != nil {
+		t.Fatal(err)
+	}
+
+	isolatedHome := t.TempDir()
+	t.Setenv("HOME", isolatedHome)
+	sourceDir, targetDir := t.TempDir(), t.TempDir()
+	createContent(t, sourceDir)
+	if err := os.MkdirAll(filepath.Join(targetDir, ".hero"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Run(Options{
+		SourceDir: sourceDir,
+		Target:    TargetGeneric,
+		Mode:      ModeProject,
+		TargetDir: targetDir,
+	}); err != nil {
+		t.Fatalf("Run failed: %v", err)
+	}
+
+	after, err := os.ReadFile(sentinelPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(sentinelPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != string(sentinel) || !info.ModTime().Equal(sentinelTime) {
+		t.Fatalf("sentinel registry changed: bytes=%q mtime=%s", after, info.ModTime())
+	}
+	registered, err := os.ReadFile(filepath.Join(isolatedHome, ".hero", "projects.json"))
+	if err != nil {
+		t.Fatalf("isolated registry was not written: %v", err)
+	}
+	if !strings.Contains(string(registered), targetDir) || strings.Contains(string(registered), "user-project") {
+		t.Fatalf("isolated registry = %s", registered)
+	}
+}
 
 func TestRunOpenCodeProject(t *testing.T) {
 	// Set up source directory with agents, commands, skills
