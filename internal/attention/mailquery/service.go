@@ -4,11 +4,13 @@
 package mailquery
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -55,9 +57,10 @@ func (s *Service) ThreadAction(request mailthread.ActionRequest) mailthread.Acti
 }
 
 type projectSource struct {
-	project       attention.ProjectReference
-	canonicalPath string
-	mail          mailService
+	project            attention.ProjectReference
+	canonicalPath      string
+	repositoryIdentity string
+	mail               mailService
 }
 
 const maxRegistryIssueDiagnostics = 8
@@ -107,8 +110,9 @@ func (r registryResolution) unavailable() *attention.ContractError {
 // Service resolves the current machine registry and delegates to Mail's
 // source-owned services. It stores no projection or pagination state.
 type Service struct {
-	store    *mail.Store
-	registry *projectregistry.Registry
+	store                     *mail.Store
+	registry                  *projectregistry.Registry
+	resolveRepositoryIdentity func(string) (string, error)
 }
 
 func NewService(stateRoot string, registry *projectregistry.Registry) (*Service, error) {
@@ -119,7 +123,10 @@ func NewService(stateRoot string, registry *projectregistry.Registry) (*Service,
 	if err != nil {
 		return nil, err
 	}
-	return &Service{store: store, registry: registry}, nil
+	return &Service{
+		store: store, registry: registry,
+		resolveRepositoryIdentity: gitRepositoryIdentity,
+	}, nil
 }
 
 func (s *Service) List(request mailread.ListRequest) mailread.ListResponse {
@@ -369,7 +376,7 @@ func (s *Service) resolveRegistry(peerID string) (registryResolution, *attention
 		slugs = append(slugs, slug)
 	}
 	sort.Strings(slugs)
-	byPeer := make(map[string]projectSource, len(slugs))
+	groups := make(map[string][]projectSource, len(slugs))
 	for _, slug := range slugs {
 		entry := entries[slug]
 		canonicalPath, err := canonicalProjectPath(entry.Path)
@@ -395,41 +402,110 @@ func (s *Service) resolveRegistry(peerID string) (registryResolution, *attention
 			canonicalPath: canonicalPath,
 			mail:          mail.NewService(s.store, canonicalPath, cfg),
 		}
-		if existing, ok := byPeer[cfg.PeerID]; ok {
-			if existing.canonicalPath != canonicalPath {
-				return resolution, &attention.ContractError{
-					Code: attention.ErrorUnavailable, Message: "multiple registered project paths claim one peer_id",
-					Field: "project_peer_id", Details: map[string]string{"project_peer_id": cfg.PeerID},
-				}
-			}
-			continue // sorted slugs preserve the lexicographically smallest alias
-		}
-		byPeer[cfg.PeerID] = candidate
+		groups[cfg.PeerID] = append(groups[cfg.PeerID], candidate)
 	}
+	peerIDs := make([]string, 0, len(groups))
 	if peerID != "" {
-		source, ok := byPeer[peerID]
-		if !ok {
+		if _, ok := groups[peerID]; !ok {
 			if resolution.skippedCount > 0 {
 				return resolution, resolution.unavailable()
 			}
 			return resolution, &attention.ContractError{Code: attention.ErrorMissing, Message: "registered project peer_id was not found", Field: "project_peer_id"}
 		}
-		resolution.sources = []projectSource{source}
-		return resolution, nil
+		peerIDs = append(peerIDs, peerID)
+	} else {
+		for id := range groups {
+			peerIDs = append(peerIDs, id)
+		}
+		sort.Strings(peerIDs)
 	}
-	if len(byPeer) == 0 && resolution.skippedCount > 0 {
+	if len(groups) == 0 && resolution.skippedCount > 0 {
 		return resolution, resolution.unavailable()
 	}
-	peerIDs := make([]string, 0, len(byPeer))
-	for id := range byPeer {
-		peerIDs = append(peerIDs, id)
-	}
-	sort.Strings(peerIDs)
 	resolution.sources = make([]projectSource, 0, len(peerIDs))
 	for _, id := range peerIDs {
-		resolution.sources = append(resolution.sources, byPeer[id])
+		source, aliases, err := resolvePeerCandidates(groups[id], s.resolveRepositoryIdentity)
+		if err != nil {
+			if peerID == id {
+				return resolution, registryIdentityConflict(id)
+			}
+			resolution.addIssue(source.project.RegistrySlug, "identity-conflict")
+			continue
+		}
+		resolution.sources = append(resolution.sources, source)
+		for _, alias := range aliases {
+			resolution.addIssue(alias.project.RegistrySlug, "worktree-alias")
+		}
 	}
 	return resolution, nil
+}
+
+func resolvePeerCandidates(candidates []projectSource, resolveIdentity func(string) (string, error)) (projectSource, []projectSource, error) {
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].project.RegistrySlug != candidates[j].project.RegistrySlug {
+			return candidates[i].project.RegistrySlug < candidates[j].project.RegistrySlug
+		}
+		return candidates[i].canonicalPath < candidates[j].canonicalPath
+	})
+	if len(candidates) == 1 {
+		return candidates[0], nil, nil
+	}
+	identities := make(map[string]string, len(candidates))
+	for i := range candidates {
+		identity, ok := identities[candidates[i].canonicalPath]
+		if !ok {
+			var err error
+			identity, err = resolveIdentity(candidates[i].canonicalPath)
+			if err != nil || strings.TrimSpace(identity) == "" {
+				identity = candidates[i].canonicalPath
+			}
+			identities[candidates[i].canonicalPath] = identity
+		}
+		candidates[i].repositoryIdentity = identity
+	}
+	for i := 1; i < len(candidates); i++ {
+		if candidates[i].repositoryIdentity != candidates[0].repositoryIdentity {
+			return candidates[0], nil, errors.New("multiple registered repositories claim one peer_id")
+		}
+	}
+	selected := 0
+	for i := range candidates {
+		if isPrimaryWorktree(candidates[i]) {
+			selected = i
+			break
+		}
+	}
+	source := candidates[selected]
+	aliases := append(candidates[:selected:selected], candidates[selected+1:]...)
+	return source, aliases, nil
+}
+
+func isPrimaryWorktree(source projectSource) bool {
+	dotGit, err := canonicalProjectPath(filepath.Join(source.canonicalPath, ".git"))
+	return err == nil && dotGit == source.repositoryIdentity
+}
+
+func gitRepositoryIdentity(projectPath string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	output, err := exec.CommandContext(ctx, "git", "-C", projectPath, "rev-parse", "--path-format=absolute", "--git-common-dir").Output()
+	if err != nil {
+		return "", err
+	}
+	identity := strings.TrimSpace(string(output))
+	if identity == "" {
+		return "", errors.New("git returned an empty common directory")
+	}
+	return canonicalProjectPath(identity)
+}
+
+func registryIdentityConflict(peerID string) *attention.ContractError {
+	return &attention.ContractError{
+		Code: attention.ErrorUnavailable, Message: "multiple registered repositories claim one peer_id",
+		Field: "project_peer_id", Details: map[string]string{
+			"category": "registry_identity_conflict", "project_peer_id": peerID,
+		},
+	}
 }
 
 func safeRegistrySlug(slug string) string {

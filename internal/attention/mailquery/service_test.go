@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -43,6 +44,29 @@ func queryRegistry(projects map[string]string) *projectregistry.Registry {
 		entries[slug] = &projectregistry.ProjectEntry{Path: path}
 	}
 	return &projectregistry.Registry{Projects: entries}
+}
+
+func runQueryGit(tb testing.TB, path string, args ...string) string {
+	tb.Helper()
+	command := exec.Command("git", append([]string{"-C", path}, args...)...)
+	output, err := command.CombinedOutput()
+	if err != nil {
+		tb.Fatalf("git %v: %v\n%s", args, err, output)
+	}
+	return strings.TrimSpace(string(output))
+}
+
+func initQueryGitRepository(tb testing.TB, root, peerID, display string) {
+	tb.Helper()
+	if err := os.MkdirAll(root, 0o700); err != nil {
+		tb.Fatal(err)
+	}
+	runQueryGit(tb, root, "init")
+	runQueryGit(tb, root, "config", "user.email", "mailquery@example.com")
+	runQueryGit(tb, root, "config", "user.name", "Mail Query Tests")
+	writeQueryProject(tb, root, peerID, display, nil)
+	runQueryGit(tb, root, "add", ".hero")
+	runQueryGit(tb, root, "commit", "-m", "seed project identity")
 }
 
 func deliverQueryMessage(tb testing.TB, store *mail.Store, recipientPeer, senderPeer, id, thread, createdAt, body string) attention.MailEnvelope {
@@ -163,7 +187,11 @@ func TestServiceRegistryDeduplicatesCanonicalPathAndRejectsPeerConflict(t *testi
 	writeQueryProject(t, project, "peer_shared", "Shared", nil)
 	store, _ := mail.NewStore(state)
 	deliverQueryMessage(t, store, "peer_shared", "sender", "mail_one", "mail_one", "2026-08-17T10:00:00Z", "body")
-	service, _ := NewService(state, queryRegistry(map[string]string{"zeta": project, "alpha": project}))
+	projectLink := filepath.Join(t.TempDir(), "project-link")
+	if err := os.Symlink(project, projectLink); err != nil {
+		t.Fatal(err)
+	}
+	service, _ := NewService(state, queryRegistry(map[string]string{"zeta": project, "omega": projectLink, "alpha": project}))
 	result := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion})
 	if result.Error != nil || len(result.Items) != 1 || result.Items[0].Project.RegistrySlug != "alpha" {
 		t.Fatalf("canonical duplicate = %#v", result)
@@ -172,9 +200,112 @@ func TestServiceRegistryDeduplicatesCanonicalPathAndRejectsPeerConflict(t *testi
 	other := t.TempDir()
 	writeQueryProject(t, other, "peer_shared", "Copied", nil)
 	conflicted, _ := NewService(state, queryRegistry(map[string]string{"one": project, "two": other}))
-	conflict := conflicted.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion})
-	if conflict.Error == nil || conflict.Error.Code != attention.ErrorUnavailable || conflict.Error.Details["project_peer_id"] != "peer_shared" {
+	conflict := conflicted.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion, ProjectPeerID: "peer_shared"})
+	if conflict.Error == nil || conflict.Error.Code != attention.ErrorUnavailable || conflict.Error.Details["category"] != "registry_identity_conflict" || conflict.Error.Details["project_peer_id"] != "peer_shared" {
 		t.Fatalf("peer conflict = %#v", conflict)
+	}
+}
+
+func TestServiceRegistryCollapsesLinkedWorktreeToPrimaryCheckout(t *testing.T) {
+	state := t.TempDir()
+	repositories := t.TempDir()
+	primary := filepath.Join(repositories, "primary repository")
+	worktree := filepath.Join(repositories, "linked worktree")
+	initQueryGitRepository(t, primary, "peer_shared", "Shared")
+	runQueryGit(t, primary, "worktree", "add", "--detach", worktree, "HEAD")
+	store, _ := mail.NewStore(state)
+	deliverQueryMessage(t, store, "peer_shared", "sender", "mail_one", "mail_one", "2026-08-17T10:00:00Z", "body")
+	service, _ := NewService(state, queryRegistry(map[string]string{"alpha_alias": worktree, "zeta_primary": primary}))
+
+	exact := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion, ProjectPeerID: "peer_shared"})
+	if exact.Error != nil || len(exact.Items) != 1 || exact.Items[0].Project.RegistrySlug != "zeta_primary" || len(exact.Diagnostics) != 0 {
+		t.Fatalf("exact worktree result = %#v", exact)
+	}
+	aggregate := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion})
+	if aggregate.Error != nil || len(aggregate.Items) != 1 || len(aggregate.Diagnostics) != 1 || aggregate.Diagnostics[0].Details["skipped_entries"] != "alpha_alias:worktree-alias" {
+		t.Fatalf("aggregate worktree result = %#v", aggregate)
+	}
+}
+
+func TestServiceExactTargetIgnoresUnrelatedPeerConflict(t *testing.T) {
+	state, healthy := t.TempDir(), t.TempDir()
+	writeQueryProject(t, healthy, "peer_healthy", "Healthy", nil)
+	conflictA, conflictB := t.TempDir(), t.TempDir()
+	writeQueryProject(t, conflictA, "peer_conflict", "Conflict A", nil)
+	writeQueryProject(t, conflictB, "peer_conflict", "Conflict B", nil)
+	store, _ := mail.NewStore(state)
+	deliverQueryMessage(t, store, "peer_healthy", "sender", "mail_healthy", "mail_healthy", "2026-08-17T10:00:00Z", "body")
+	service, _ := NewService(state, queryRegistry(map[string]string{
+		"conflict_a": conflictA, "conflict_b": conflictB, "healthy": healthy,
+	}))
+
+	result := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion, ProjectPeerID: "peer_healthy"})
+	if result.Error != nil || len(result.Items) != 1 || result.Items[0].MessageID != "mail_healthy" {
+		t.Fatalf("exact healthy result = %#v", result)
+	}
+}
+
+func TestServiceIndependentGitRepositoriesFailWithBoundedIdentityConflict(t *testing.T) {
+	state := t.TempDir()
+	repositories := t.TempDir()
+	first := filepath.Join(repositories, "first repository")
+	second := filepath.Join(repositories, "second repository")
+	initQueryGitRepository(t, first, "peer_conflict", "First")
+	initQueryGitRepository(t, second, "peer_conflict", "Second")
+	service, _ := NewService(state, queryRegistry(map[string]string{"first": first, "second": second}))
+
+	result := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion, ProjectPeerID: "peer_conflict"})
+	if result.Error == nil || result.Error.Code != attention.ErrorUnavailable || result.Error.Details["category"] != "registry_identity_conflict" || result.Error.Details["project_peer_id"] != "peer_conflict" {
+		t.Fatalf("identity conflict = %#v", result)
+	}
+	encoded := string(mustJSON(t, result))
+	if strings.Contains(encoded, first) || strings.Contains(encoded, second) {
+		t.Fatalf("identity conflict exposed a path: %s", encoded)
+	}
+}
+
+func TestServiceAggregateRetainsHealthyProjectsAcrossAliasesAndConflicts(t *testing.T) {
+	state := t.TempDir()
+	repositories := t.TempDir()
+	primary := filepath.Join(repositories, "alias primary")
+	worktree := filepath.Join(repositories, "alias worktree")
+	initQueryGitRepository(t, primary, "peer_alias", "Alias")
+	runQueryGit(t, primary, "worktree", "add", "--detach", worktree, "HEAD")
+	healthy := t.TempDir()
+	writeQueryProject(t, healthy, "peer_healthy", "Healthy", nil)
+	conflictA, conflictB := t.TempDir(), t.TempDir()
+	writeQueryProject(t, conflictA, "peer_conflict", "Conflict A", nil)
+	writeQueryProject(t, conflictB, "peer_conflict", "Conflict B", nil)
+	store, _ := mail.NewStore(state)
+	deliverQueryMessage(t, store, "peer_alias", "sender", "mail_alias", "mail_alias", "2026-08-17T10:00:00Z", "alias")
+	deliverQueryMessage(t, store, "peer_healthy", "sender", "mail_healthy", "mail_healthy", "2026-08-17T10:00:01Z", "healthy")
+	service, _ := NewService(state, queryRegistry(map[string]string{
+		"alias_primary": primary, "alias_worktree": worktree, "conflict_a": conflictA,
+		"conflict_b": conflictB, "healthy": healthy,
+	}))
+
+	result := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion})
+	if result.Error != nil || len(result.Items) != 2 || len(result.Diagnostics) != 1 {
+		t.Fatalf("aggregate result = %#v", result)
+	}
+	diagnostic := result.Diagnostics[0]
+	if diagnostic.Details["skipped_count"] != "2" || !strings.Contains(diagnostic.Details["skipped_entries"], "alias_worktree:worktree-alias") || !strings.Contains(diagnostic.Details["skipped_entries"], "conflict_a:identity-conflict") {
+		t.Fatalf("aggregate diagnostic = %#v", diagnostic)
+	}
+}
+
+func TestServiceRepositoryIdentityProbeFailureFallsBackToCanonicalPath(t *testing.T) {
+	state, first, second := t.TempDir(), t.TempDir(), t.TempDir()
+	writeQueryProject(t, first, "peer_conflict", "First", nil)
+	writeQueryProject(t, second, "peer_conflict", "Second", nil)
+	service, _ := NewService(state, queryRegistry(map[string]string{"first": first, "second": second}))
+	service.resolveRepositoryIdentity = func(string) (string, error) {
+		return "", errors.New("probe failed")
+	}
+
+	result := service.List(mailread.ListRequest{SchemaVersion: mailread.SchemaVersion, ProjectPeerID: "peer_conflict"})
+	if result.Error == nil || result.Error.Details["category"] != "registry_identity_conflict" {
+		t.Fatalf("probe failure result = %#v", result)
 	}
 }
 
