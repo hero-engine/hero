@@ -72,7 +72,7 @@
       "kind": "fixture",
       "purpose": "Mail thread lifecycle v1 fixture: thread-detail.json",
       "media_type": "application/json",
-      "sha256": "f7f8d08ea5d693645307092f744d74d0b6923b396e1c34ef68b01bf3933fb0c4",
+      "sha256": "6775f9986294d4f4e33277a2fdcae8c90e39733c01b645706d4f9f7ddeb9cfcf",
       "schema": "schemas/thread-detail-response.schema.json"
     },
     {
@@ -80,7 +80,7 @@
       "kind": "fixture",
       "purpose": "Mail thread lifecycle v1 fixture: thread-list.json",
       "media_type": "application/json",
-      "sha256": "0129bacbe2f1b967c351e6993277c9ec88ba7fa109e7a6d131da00f031178d96",
+      "sha256": "c73b20c27dfeafab777f4c1b5bd3a9f891e3aa80d63ff8f0f5b6df4e538963ef",
       "schema": "schemas/thread-list-response.schema.json"
     },
     {
@@ -159,7 +159,7 @@
       "kind": "schema",
       "purpose": "Mail thread lifecycle v1 schema: thread-list-response.schema.json",
       "media_type": "application/json",
-      "sha256": "5c1ff39051e70f4642fdb1252a6d63e74ef40f82cf52e8fa9cd52ebc5b24488e"
+      "sha256": "7df7baeddae0d6b0c64175ea308f5e6a019ff70b3e4159d7247e74d691f36e85"
     },
     {
       "path": "schemas/thread-view.schema.json",

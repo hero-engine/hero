@@ -19,7 +19,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["identity", "project", "subject", "activity_at", "unread", "actionable", "lifecycle", "bucket", "message_count", "unread_count", "revision", "actions"]
+        "required": ["identity", "project", "sender", "subject", "activity_at", "unread", "actionable", "lifecycle", "bucket", "message_count", "unread_count", "revision", "actions"]
       }
     },
     "page": {"type": "object"},

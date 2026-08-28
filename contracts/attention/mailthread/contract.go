@@ -11,7 +11,7 @@ import (
 const (
 	SchemaVersion             = 1
 	BundleVersion             = 1
-	ConformanceManifestSHA256 = "5438ed2da3e91d988a896656f7bc42a878f46bb6f1aa79811061bfe744abcd5a"
+	ConformanceManifestSHA256 = "23421f7ef2461c83abcb93730c40c3067c9dc1357b5052760c4fbe0779ded754"
 
 	Compatibility = "Mail-read v1 remains authoritative for message receipts; unknown additive fields and identifiers remain inert and decodable, and unknown actions are never executable."
 )
@@ -165,6 +165,7 @@ type ThreadCounts struct {
 type ThreadSummary struct {
 	Identity     Identity                     `json:"identity"`
 	Project      attention.ProjectReference   `json:"project"`
+	Sender       attention.ProjectReference   `json:"sender"`
 	Subject      string                       `json:"subject"`
 	Kind         string                       `json:"kind,omitempty"`
 	ActivityAt   string                       `json:"activity_at"`

@@ -3,6 +3,7 @@
   "summary": {
     "identity": {"project_peer_id": "peer_a", "thread_id": "mail_thread_1"},
     "project": {"peer_id": "peer_a", "registry_slug": "alpha", "display_name": "Alpha"},
+    "sender": {"peer_id": "peer_b", "registry_slug": "beta", "display_name": "Beta"},
     "subject": "Review request",
     "kind": "request",
     "activity_at": "2026-08-22T10:00:00Z",

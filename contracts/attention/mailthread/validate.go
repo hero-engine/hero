@@ -244,6 +244,9 @@ func ValidateThreadSummary(v ThreadSummary) *attention.ContractError {
 	if v.Project.PeerID != v.Identity.ProjectPeerID {
 		return invalid("project.peer_id", "must match identity.project_peer_id")
 	}
+	if v.Sender.PeerID == "" || v.Sender.DisplayName == "" {
+		return invalid("sender", "must contain peer_id and display_name")
+	}
 	if err := required("subject", v.Subject); err != nil {
 		return err
 	}

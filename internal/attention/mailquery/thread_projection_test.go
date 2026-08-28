@@ -55,6 +55,9 @@ func TestThreadProjectionBucketsCountsHistoryAndStablePagination(t *testing.T) {
 		t.Fatalf("composite needs-attention identities = %#v", needs)
 	}
 	for _, item := range needs.Items {
+		if item.Sender.PeerID != "sender" || item.Sender.DisplayName != "sender" {
+			t.Fatalf("summary sender did not match listed message: %#v", item)
+		}
 		if item.Identity.ProjectPeerID == "peer_a" && (item.Kind != attention.MailKindRequest || item.MessageCount != 3 || item.Subject == "Subject mail_request_status") {
 			t.Fatalf("status traffic hid actionable request: %#v", item)
 		}

@@ -63,6 +63,7 @@ func TestThreadSummaryClassificationKeepsReadAndActionableIndependent(t *testing
 	base := ThreadSummary{
 		Identity: Identity{ProjectPeerID: "peer_a", ThreadID: "mail_one"},
 		Project:  attention.ProjectReference{PeerID: "peer_a", DisplayName: "Alpha"},
+		Sender:   attention.ProjectReference{PeerID: "peer_b", DisplayName: "Beta"},
 		Subject:  "Review", ActivityAt: "2026-08-22T10:00:00Z",
 		Actionable: true, Lifecycle: LifecycleOpen, Bucket: BucketNeedsAttention,
 		MessageCount: 2, Revision: 7,

@@ -223,7 +223,8 @@ func summarizeThread(project attention.ProjectReference, view mailthread.ThreadV
 		messages[i] = mailthread.MessageView{Envelope: items[i].MailEnvelope, Receipt: items[i].Receipt, Unread: items[i].Receipt == nil || items[i].Receipt.ReadAt == ""}
 	}
 	summary := mailthread.ThreadSummary{
-		Identity: view.State.Identity, Project: project, Subject: listed.Subject, Kind: listed.Kind,
+		Identity: view.State.Identity, Project: project, Sender: listed.Sender,
+		Subject: listed.Subject, Kind: listed.Kind,
 		ActivityAt: activity.UTC().Format(time.RFC3339Nano), Unread: view.Read.UnreadCount > 0,
 		Actionable: actionable, Lifecycle: view.State.Lifecycle, Bucket: bucket,
 		MessageCount: view.Read.MessageCount, UnreadCount: view.Read.UnreadCount,
