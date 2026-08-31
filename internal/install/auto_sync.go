@@ -3,7 +3,6 @@ package install
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
 // auto_sync.go — keeps multi-harness installs at the same binary
@@ -59,34 +58,18 @@ func DetectFirstInstalledTarget(projectDir string) (Target, error) {
 	return candidates[0], nil
 }
 
-// detectInstalledTargetDirs scans projectDir for harness destBase
+// detectInstalledTargetDirs scans projectDir for installed harnesses
 // directories. Returns the set of installed targets EXCLUDING
 // excludeTarget (the one we just installed).
 func detectInstalledTargetDirs(projectDir string, excludeTarget Target) ([]Target, error) {
-	candidates := []struct {
-		target Target
-		path   string
-	}{
-		{TargetClaude, ".claude"},
-		{TargetOpenCode, ".opencode"},
-		{TargetCursor, filepath.Join(".cursor", "rules")},
-		{TargetCodex, ".codex"},
-		{TargetCopilot, filepath.Join(".github", "copilot-instructions.md")},
-		{TargetGeneric, ".ai"},
-		{TargetGrok, ".grok"},
-	}
 	var found []Target
-	for _, c := range candidates {
-		if c.target == excludeTarget {
+	for _, t := range inventoryTargets {
+		if t == excludeTarget {
 			continue
 		}
-		full := filepath.Join(projectDir, c.path)
-		// Either a dir (most targets) or a regular file (copilot's marker
-		// instructions file) confirms the install.
-		if _, err := os.Lstat(full); err != nil {
-			continue
+		if targetInstalledOnDisk(t, projectDir) {
+			found = append(found, t)
 		}
-		found = append(found, c.target)
 	}
 	return found, nil
 }
