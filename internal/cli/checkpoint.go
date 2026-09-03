@@ -351,6 +351,12 @@ local:
 	// checkpoint never fails because of snapshot-side issues.
 	projectSnapshot(projectRoot, heroDir, cfg, sharedNextPath)
 
+	// Refresh QUEUE.md so it stays as fresh as NEXT.md across all
+	// harnesses. Content-hash gated: the Generated timestamp in the
+	// HTML comment header is normalized before comparison so timestamp-
+	// only changes don't dirty the working tree.
+	refreshQueueSnapshot(heroDir)
+
 	// Keep the project graph's Commit nodes current so the next
 	// `hero resume`'s "Just changed" reflects commits made this session
 	// — including ones made outside the git post-commit hook, since this
@@ -383,6 +389,34 @@ func ingestRecentCommits(projectRoot, heroDir string) {
 	if _, err := gitutil.WriteGitLogGraph(projectRoot, repoKey, 50, store); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: commit graph ingest failed: %v\n", err)
 	}
+}
+
+// refreshQueueSnapshot renders QUEUE.md from the spec corpus with
+// content-hash gating. The Generated timestamp in the HTML comment
+// header is normalized before comparison so timestamp-only changes
+// don't dirty the working tree. Best-effort: errors warn to stderr.
+func refreshQueueSnapshot(heroDir string) {
+	content, err := RenderQueueSnapshot(heroDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: queue snapshot render failed: %v\n", err)
+		return
+	}
+	target := filepath.Join(heroDir, QueueFileName)
+	existing, readErr := os.ReadFile(target)
+	if readErr == nil && normalizeQueueTimestamp(string(existing)) == normalizeQueueTimestamp(content) {
+		return
+	}
+	if err := os.WriteFile(target, []byte(content), 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: queue snapshot write failed: %v\n", err)
+	}
+}
+
+var queueTimestampRe = regexp.MustCompile(`_Generated: [^·]+·`)
+
+// normalizeQueueTimestamp replaces the volatile Generated timestamp
+// in the QUEUE.md header so content comparison ignores it.
+func normalizeQueueTimestamp(s string) string {
+	return queueTimestampRe.ReplaceAllString(s, "_Generated: <preserved> ·")
 }
 
 // projectSnapshot refreshes .hero/SNAPSHOT.md and the pointer line

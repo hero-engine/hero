@@ -1273,3 +1273,59 @@ func Test_autoEmitUserAsk_PostCommitNoStdinPath(t *testing.T) {
 		t.Errorf("post-commit path created a UserAsk without a transcript: count=%d", n)
 	}
 }
+
+// Test_refreshQueueSnapshot_WritesQueueFile verifies that checkpoint
+// refreshes QUEUE.md via refreshQueueSnapshot.
+func Test_refreshQueueSnapshot_WritesQueueFile(t *testing.T) {
+	env := newTestEnv(t)
+	queuePath := filepath.Join(env.heroDir, QueueFileName)
+
+	// No QUEUE.md yet — refreshQueueSnapshot should create it.
+	refreshQueueSnapshot(env.heroDir)
+
+	if _, err := os.Stat(queuePath); err != nil {
+		t.Fatalf("QUEUE.md should be written by refreshQueueSnapshot: %v", err)
+	}
+	body, _ := os.ReadFile(queuePath)
+	if !strings.Contains(string(body), "Hero Ready Queue") {
+		t.Errorf("QUEUE.md missing expected header:\n%s", body)
+	}
+}
+
+// Test_refreshQueueSnapshot_ContentHashGating verifies that
+// refreshQueueSnapshot skips the write when only the Generated
+// timestamp changed (content-hash gating).
+func Test_refreshQueueSnapshot_ContentHashGating(t *testing.T) {
+	env := newTestEnv(t)
+	queuePath := filepath.Join(env.heroDir, QueueFileName)
+
+	refreshQueueSnapshot(env.heroDir)
+	before := mustStatModTime(t, queuePath)
+	time.Sleep(20 * time.Millisecond)
+
+	// Second call — content unchanged, only Generated timestamp differs.
+	refreshQueueSnapshot(env.heroDir)
+	after := mustStatModTime(t, queuePath)
+
+	if !after.Equal(before) {
+		t.Fatalf("QUEUE.md mtime advanced on timestamp-only change: before=%s after=%s", before, after)
+	}
+}
+
+// Test_normalizeQueueTimestamp verifies the regex-based timestamp
+// normalization for QUEUE.md content comparison.
+func Test_normalizeQueueTimestamp(t *testing.T) {
+	a := `_Generated: 2026-08-27T15:41:23Z · 84 ready specs_`
+	b := `_Generated: 2026-09-02T10:03:10Z · 84 ready specs_`
+
+	if normalizeQueueTimestamp(a) != normalizeQueueTimestamp(b) {
+		t.Error("normalizeQueueTimestamp should produce identical output for different timestamps")
+	}
+
+	c := `_Generated: 2026-08-27T15:41:23Z · 84 ready specs_`
+	d := `_Generated: 2026-08-27T15:41:23Z · 85 ready specs_`
+
+	if normalizeQueueTimestamp(c) == normalizeQueueTimestamp(d) {
+		t.Error("normalizeQueueTimestamp should preserve differences outside the timestamp")
+	}
+}

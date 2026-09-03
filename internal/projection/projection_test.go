@@ -146,17 +146,19 @@ func TestNextMD_PrioritiesOrdered(t *testing.T) {
 	seedRepo(t, store)
 
 	out, err := NextMD(store, NextMDOptions{
-		RepoKey: "test-repo", NextN: 3,
+		RepoKey: "test-repo",
 	})
 	if err != nil {
 		t.Fatalf("NextMD: %v", err)
 	}
-	// Index order should be P0 (phase-5) before P1 (phase-6) before P2 (phase-9)
-	i5 := strings.Index(out, "phase-5-queries")
-	i6 := strings.Index(out, "phase-6-jira")
-	i9 := strings.Index(out, "phase-9-pages")
-	if !(i5 < i6 && i6 < i9) {
-		t.Errorf("priorities out of order: 5=%d 6=%d 9=%d", i5, i6, i9)
+	nextSec := section(out, "## Next")
+	// Slot 1 should be the P0 feature (phase-5-queries)
+	if !strings.Contains(nextSec, "phase-5-queries") {
+		t.Error("expected P0 feature in slot 1")
+	}
+	// The /deliver hint should point at the highest-priority item
+	if !strings.Contains(nextSec, "→ `/deliver phase-5-queries`") {
+		t.Error("expected /deliver hint for P0 feature")
 	}
 }
 
@@ -170,7 +172,7 @@ func TestNextMD_EmptyRepo(t *testing.T) {
 	if !strings.Contains(out, "git log") {
 		t.Error("expected git log pointer in Just finished")
 	}
-	if !strings.Contains(out, "No open features in this repo.") {
+	if !strings.Contains(out, "No ready features in this repo.") {
 		t.Error("expected message for empty Next")
 	}
 	if !strings.Contains(out, "Nothing.") {
@@ -367,9 +369,8 @@ func TestNextMD_CarryForward_DeterministicAcrossIngestOrder(t *testing.T) {
 // TestNextMD_Next_TieBreakDeterministic guards the `## Next` pick: with
 // multiple features tied on the top priority, the ordering must break the
 // tie on committed-derivable fields (created DESC, key ASC), never on
-// `ingested_at`. Projecting the same committed features from a clean-scan-
-// like graph and a working-graph-like graph must yield an identical
-// `## Next` section.
+// `ingested_at`. Projecting from two graphs with different ingest order
+// must yield the same slot-1 pick.
 func TestNextMD_Next_TieBreakDeterministic(t *testing.T) {
 	type featNode struct {
 		key, title, created string
@@ -395,7 +396,7 @@ func TestNextMD_Next_TieBreakDeterministic(t *testing.T) {
 			}
 		}
 		for i, f := range order {
-			ingested := "2026-07-11T23:01:00Z" // clean-scan-like cluster
+			ingested := "2026-07-11T23:01:00Z"
 			if bump {
 				ingested = time.Date(2026, 8, 1, 0, 0, i, 0, time.UTC).Format(time.RFC3339)
 			}
@@ -417,11 +418,11 @@ func TestNextMD_Next_TieBreakDeterministic(t *testing.T) {
 	storeA := seed(t, false, false)
 	storeB := seed(t, true, true)
 
-	outA, err := NextMD(storeA, NextMDOptions{RepoKey: "test-repo", NextN: 3})
+	outA, err := NextMD(storeA, NextMDOptions{RepoKey: "test-repo"})
 	if err != nil {
 		t.Fatalf("NextMD A: %v", err)
 	}
-	outB, err := NextMD(storeB, NextMDOptions{RepoKey: "test-repo", NextN: 3})
+	outB, err := NextMD(storeB, NextMDOptions{RepoKey: "test-repo"})
 	if err != nil {
 		t.Fatalf("NextMD B: %v", err)
 	}
@@ -434,12 +435,168 @@ func TestNextMD_Next_TieBreakDeterministic(t *testing.T) {
 	if secA != secB {
 		t.Errorf("Next section not deterministic across ingest order/state:\n--- clean-scan ---\n%s\n--- working-graph ---\n%s", secA, secB)
 	}
-	// Tie-break must be created DESC then key ASC: f-two(07-03) < f-three(07-02) < f-one(07-01).
-	i2 := strings.Index(secA, "f-two")
-	i3 := strings.Index(secA, "f-three")
-	i1 := strings.Index(secA, "f-one")
-	if !(i2 < i3 && i3 < i1) {
-		t.Errorf("Next tie-break not created-DESC/key-ASC: two=%d three=%d one=%d\n%s", i2, i3, i1, secA)
+	// Slot 1 must be f-two (most recently created among same-priority P0).
+	if !strings.Contains(secA, "f-two") {
+		t.Errorf("expected f-two as slot 1 (created-DESC tiebreak):\n%s", secA)
+	}
+	if !strings.Contains(secA, "→ `/deliver f-two`") {
+		t.Errorf("expected /deliver hint for f-two:\n%s", secA)
+	}
+}
+
+// TestNextMD_BlockedSpecExcludedFromNext verifies that a spec with an
+// unresolved depends_on edge is excluded from "## Next" even if it has
+// the highest priority. Regression guard for next-projection-accuracy-
+// and-freshness AC-1.
+func TestNextMD_BlockedSpecExcludedFromNext(t *testing.T) {
+	store := openTestStore(t)
+	seedRepo(t, store)
+
+	// Make phase-5-queries (P0) depend on phase-6-jira (P1, planning).
+	// phase-5-queries should be excluded from Next; phase-6-jira should
+	// take slot 1 instead.
+	fromID, _ := store.GetNodeID("Feature", "phase-5-queries", "")
+	toID, _ := store.GetNodeID("Feature", "phase-6-jira", "")
+	if _, err := store.UpsertEdge(&graph.Edge{
+		FromID: fromID, ToID: toID, Type: "depends_on", Repo: "test-repo",
+	}); err != nil {
+		t.Fatalf("UpsertEdge: %v", err)
+	}
+
+	out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatalf("NextMD: %v", err)
+	}
+	nextSec := section(out, "## Next")
+	if strings.Contains(nextSec, "phase-5-queries") {
+		t.Errorf("blocked spec phase-5-queries should not appear in Next:\n%s", nextSec)
+	}
+	if !strings.Contains(nextSec, "phase-6-jira") {
+		t.Errorf("expected unblocked phase-6-jira in Next:\n%s", nextSec)
+	}
+	if !strings.Contains(nextSec, "→ `/deliver phase-6-jira`") {
+		t.Error("expected /deliver hint for the unblocked feature")
+	}
+	// phase-5-queries should still appear in Blocked on
+	blockedSec := section(out, "## Blocked on")
+	if !strings.Contains(blockedSec, "phase-5-queries") {
+		t.Errorf("blocked spec should appear in Blocked on:\n%s", blockedSec)
+	}
+}
+
+// TestNextMD_TwoSlotBugSurfacing verifies that a P0/P1 bug appears in
+// slot 2 when slot 1 is a feature, and that low-priority bugs do not.
+func TestNextMD_TwoSlotBugSurfacing(t *testing.T) {
+	store := openTestStore(t)
+	seedRepo(t, store)
+
+	// Add a P1 bug — should appear in slot 2
+	if _, err := store.UpsertNode(&graph.Node{
+		Type: "Bug", Key: "auth-crash", Repo: "test-repo",
+		Domain: "engineering",
+		Props: map[string]any{
+			"title": "Auth crash on empty token", "status": "planning", "priority": "P1",
+		},
+		ContentHash: "h-auth-crash",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatalf("NextMD: %v", err)
+	}
+	nextSec := section(out, "## Next")
+	// Slot 1: P0 feature
+	if !strings.Contains(nextSec, "phase-5-queries") {
+		t.Errorf("expected P0 feature in slot 1:\n%s", nextSec)
+	}
+	// Slot 2: P1 bug
+	if !strings.Contains(nextSec, "auth-crash") {
+		t.Errorf("expected P1 bug in slot 2:\n%s", nextSec)
+	}
+	// /deliver points at slot 1
+	if !strings.Contains(nextSec, "→ `/deliver phase-5-queries`") {
+		t.Error("expected /deliver hint for slot 1 feature")
+	}
+}
+
+// TestNextMD_LowPriorityBugNotInSlot2 verifies that a P2+ bug does
+// not earn a slot-2 position.
+func TestNextMD_LowPriorityBugNotInSlot2(t *testing.T) {
+	store := openTestStore(t)
+	seedRepo(t, store)
+
+	if _, err := store.UpsertNode(&graph.Node{
+		Type: "Bug", Key: "minor-ui-glitch", Repo: "test-repo",
+		Domain: "engineering",
+		Props: map[string]any{
+			"title": "Minor UI alignment", "status": "planning", "priority": "P2",
+		},
+		ContentHash: "h-minor-ui-glitch",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatalf("NextMD: %v", err)
+	}
+	nextSec := section(out, "## Next")
+	if strings.Contains(nextSec, "minor-ui-glitch") {
+		t.Errorf("P2 bug should not appear in slot 2:\n%s", nextSec)
+	}
+}
+
+// TestNextMD_BugInSlot1FeatureInSlot2 verifies that when a bug is the
+// highest-priority ready item, it takes slot 1 and a feature fills slot 2.
+func TestNextMD_BugInSlot1FeatureInSlot2(t *testing.T) {
+	store := openTestStore(t)
+	if _, err := store.UpsertNode(&graph.Node{
+		Type: "Repo", Key: "test-repo", Repo: "test-repo", ContentHash: "h-repo",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// P0 bug — should be slot 1
+	if _, err := store.UpsertNode(&graph.Node{
+		Type: "Bug", Key: "critical-crash", Repo: "test-repo",
+		Domain: "engineering",
+		Props: map[string]any{
+			"title": "Critical crash", "status": "planning", "priority": "P0",
+		},
+		ContentHash: "h-critical-crash",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// P1 feature — should be slot 2
+	if _, err := store.UpsertNode(&graph.Node{
+		Type: "Feature", Key: "nice-feature", Repo: "test-repo",
+		Domain: "engineering",
+		Props: map[string]any{
+			"title": "Nice feature", "status": "planning", "priority": "P1",
+		},
+		ContentHash: "h-nice-feature",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatalf("NextMD: %v", err)
+	}
+	nextSec := section(out, "## Next")
+	// Slot 1: P0 bug
+	if !strings.Contains(nextSec, "critical-crash") {
+		t.Errorf("expected P0 bug in slot 1:\n%s", nextSec)
+	}
+	// Slot 2: feature complement
+	if !strings.Contains(nextSec, "nice-feature") {
+		t.Errorf("expected feature in slot 2 when bug is slot 1:\n%s", nextSec)
+	}
+	// /deliver points at slot 1
+	if !strings.Contains(nextSec, "→ `/deliver critical-crash`") {
+		t.Errorf("expected /deliver hint for slot 1 bug:\n%s", nextSec)
 	}
 }
 

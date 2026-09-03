@@ -185,14 +185,14 @@ func PickUserSuggestion(store *graph.Store, user, repoKey, domain string) (text,
 		return sug.Text, sug.Rationale, SuggestionFromAgent
 	}
 	// Agent suggestion is stale or missing — derive from project state.
-	if features, err := openFeaturesByPriority(store, repoKey, 1); err == nil && len(features) > 0 {
-		f := features[0]
+	if ready, err := readyWorkByPriority(store, repoKey, []string{"Feature", "Bug", "Enhancement"}, 1); err == nil && len(ready) > 0 {
+		f := ready[0]
 		title := f.title
 		if title == "" {
 			title = f.slug
 		}
 		return fmt.Sprintf("let's tackle %s", title),
-			fmt.Sprintf("highest-priority open feature: %s (`%s`)", title, f.slug),
+			fmt.Sprintf("highest-priority ready work: %s (`%s`)", title, f.slug),
 			SuggestionFromOpenFeature
 	}
 	if init := topOpenInitiative(store, repoKey); init != "" {

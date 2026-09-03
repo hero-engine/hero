@@ -107,27 +107,46 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 	b.WriteString("Run `git log --oneline -10` for recent commits.\n")
 	b.WriteString("\n")
 
-	// Next
+	// Next — two-slot design:
+	//   Slot 1: top ready item across Feature/Bug/Enhancement
+	//   Slot 2: if slot 1 is a feature, show top ready P0/P1 bug (if any);
+	//           if slot 1 is a bug, show top ready feature (if any).
 	b.WriteString("## Next\n\n")
-	openFeatures, err := openFeaturesByPriority(store, opts.RepoKey, opts.NextN)
+	allReady, err := readyWorkByPriority(store, opts.RepoKey, []string{"Feature", "Bug", "Enhancement"}, opts.NextN+5)
 	if err != nil {
 		return "", fmt.Errorf("next: %w", err)
 	}
-	featurePlural := pluralizeWorkType(opts.Vocab, "feature")
-	if len(openFeatures) == 0 {
-		fmt.Fprintf(&b, "No open %s in this repo.\n", featurePlural)
+	workPlural := pluralizeWorkType(opts.Vocab, "feature")
+	if len(allReady) == 0 {
+		fmt.Fprintf(&b, "No ready %s in this repo.\n", workPlural)
 	} else {
-		for _, f := range openFeatures {
-			fmt.Fprintf(&b, "- **%s** (`%s`", f.title, f.slug)
-			if f.priority != "" {
-				fmt.Fprintf(&b, ", %s", f.priority)
+		slot1 := allReady[0]
+		writeWorkItem(&b, slot1)
+
+		// Slot 2: complement slot 1's type with an urgent counterpart.
+		var slot2 *workRow
+		if slot1.nodeType == "Feature" || slot1.nodeType == "Enhancement" {
+			for i := range allReady[1:] {
+				w := &allReady[i+1]
+				if w.nodeType == "Bug" && (w.priority == "P0" || w.priority == "P1") {
+					slot2 = w
+					break
+				}
 			}
-			if f.status != "" {
-				fmt.Fprintf(&b, ", %s", f.status)
+		} else {
+			for i := range allReady[1:] {
+				w := &allReady[i+1]
+				if w.nodeType == "Feature" || w.nodeType == "Enhancement" {
+					slot2 = w
+					break
+				}
 			}
-			b.WriteString(")\n")
 		}
-		fmt.Fprintf(&b, "\n→ `/deliver %s`\n", openFeatures[0].slug)
+		if slot2 != nil {
+			writeWorkItem(&b, *slot2)
+		}
+
+		fmt.Fprintf(&b, "\n→ `/deliver %s`\n", slot1.slug)
 	}
 	b.WriteString("\n")
 
@@ -190,44 +209,66 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 
 // --- queries ---------------------------------------------------------------
 
-type featureRow struct {
-	slug, title, status, priority string
+type workRow struct {
+	slug, title, status, priority, nodeType string
 }
 
-// openFeaturesByPriority returns up to `limit` Feature nodes whose
-// status is anything but completed/superseded, ranked by priority
-// (P0 > P1 > P2 ...) then by recency.
-func openFeaturesByPriority(store *graph.Store, repoKey string, limit int) ([]featureRow, error) {
-	rows, err := store.DB().Query(
-		`SELECT key,
-		        json_extract(props, '$.title') AS title,
-		        json_extract(props, '$.status') AS status,
-		        json_extract(props, '$.priority') AS priority,
-		        ingested_at
-		   FROM nodes
-		  WHERE type = 'Feature' AND repo = ? AND valid_to IS NULL
-		    AND COALESCE(json_extract(props, '$.status'), '') NOT IN ('completed', 'superseded')
-		  ORDER BY COALESCE(json_extract(props, '$.priority'), 'P9') ASC,
-		           COALESCE(json_extract(props, '$.created'), '') DESC,
-		           key ASC
+// readyWorkByPriority returns up to `limit` ready (unblocked) work items
+// of the given types, ranked by priority (P0 > P1 > P2 ...) then recency.
+// "Ready" means no outgoing depends_on/blocks edge to a non-completed target.
+func readyWorkByPriority(store *graph.Store, repoKey string, types []string, limit int) ([]workRow, error) {
+	if len(types) == 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(types))
+	args := make([]interface{}, 0, len(types)+2)
+	for i, t := range types {
+		placeholders[i] = "?"
+		args = append(args, t)
+	}
+	args = append(args, repoKey, limit)
+
+	query := fmt.Sprintf(
+		`SELECT n.key,
+		        json_extract(n.props, '$.title') AS title,
+		        json_extract(n.props, '$.status') AS status,
+		        json_extract(n.props, '$.priority') AS priority,
+		        n.type
+		   FROM nodes n
+		  WHERE n.type IN (%s) AND n.repo = ? AND n.valid_to IS NULL
+		    AND COALESCE(json_extract(n.props, '$.status'), '') NOT IN ('completed', 'superseded')
+		    AND NOT EXISTS (
+		        SELECT 1 FROM edges e
+		        JOIN nodes b ON e.to_id = b.id AND b.valid_to IS NULL
+		        WHERE e.from_id = n.id
+		          AND e.type IN ('depends_on', 'blocks')
+		          AND e.valid_to IS NULL
+		          AND COALESCE(json_extract(b.props, '$.status'), '')
+		              NOT IN ('completed', 'accepted')
+		    )
+		  ORDER BY COALESCE(json_extract(n.props, '$.priority'), 'P9') ASC,
+		           COALESCE(json_extract(n.props, '$.created'), '') DESC,
+		           n.key ASC
 		  LIMIT ?`,
-		repoKey, limit,
+		strings.Join(placeholders, ", "),
 	)
+
+	rows, err := store.DB().Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var out []featureRow
+	var out []workRow
 	for rows.Next() {
-		var f featureRow
-		var title, status, priority sql.NullString
-		var ingested string
-		if err := rows.Scan(&f.slug, &title, &status, &priority, &ingested); err != nil {
+		var w workRow
+		var title, status, priority, nodeType sql.NullString
+		if err := rows.Scan(&w.slug, &title, &status, &priority, &nodeType); err != nil {
 			return nil, err
 		}
-		f.title, f.status, f.priority = title.String, status.String, priority.String
-		out = append(out, f)
+		w.title, w.status, w.priority = title.String, status.String, priority.String
+		w.nodeType = nodeType.String
+		out = append(out, w)
 	}
 	return out, rows.Err()
 }
@@ -236,8 +277,8 @@ type blockerRow struct {
 	featureSlug, blockerSlug, blockerStatus string
 }
 
-// blockedFeatures finds Features that depend_on something which is
-// not yet completed.
+// blockedFeatures finds deliverable work items (Feature/Bug/Enhancement)
+// that depend_on something which is not yet completed.
 func blockedFeatures(store *graph.Store, repoKey string) ([]blockerRow, error) {
 	rows, err := store.DB().Query(
 		`SELECT f.key AS feature_slug,
@@ -246,7 +287,7 @@ func blockedFeatures(store *graph.Store, repoKey string) ([]blockerRow, error) {
 		   FROM nodes f
 		   JOIN edges e ON e.from_id = f.id AND e.type IN ('depends_on', 'blocks') AND e.valid_to IS NULL
 		   JOIN nodes b ON e.to_id = b.id AND b.valid_to IS NULL
-		  WHERE f.type = 'Feature' AND f.repo = ? AND f.valid_to IS NULL
+		  WHERE f.type IN ('Feature', 'Bug', 'Enhancement') AND f.repo = ? AND f.valid_to IS NULL
 		    AND COALESCE(json_extract(f.props, '$.status'), '') NOT IN ('completed', 'superseded')
 		    AND COALESCE(json_extract(b.props, '$.status'), '') NOT IN ('completed', 'accepted')
 		  ORDER BY f.key, b.key`,
@@ -340,6 +381,18 @@ func contextToCarry(store *graph.Store, repoKey string) ([]string, error) {
 		out = append(out, bullet)
 	}
 	return out, rows.Err()
+}
+
+// writeWorkItem renders a single work-row bullet into the builder.
+func writeWorkItem(b *strings.Builder, w workRow) {
+	fmt.Fprintf(b, "- **%s** (`%s`", w.title, w.slug)
+	if w.priority != "" {
+		fmt.Fprintf(b, ", %s", w.priority)
+	}
+	if w.status != "" {
+		fmt.Fprintf(b, ", %s", w.status)
+	}
+	b.WriteString(")\n")
 }
 
 // --- helpers ---------------------------------------------------------------
