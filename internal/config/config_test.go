@@ -922,6 +922,61 @@ func TestMergeLocal_MethodologyOverridesMapMerge(t *testing.T) {
 	}
 }
 
+// TestMergeLocal_ReposMapMerge is a regression test: hero.local.json's
+// repos/repo_meta keys must join the merged config the same way the
+// dialect override maps do, or `hero repos add --local` (and `hero admin
+// repos add --local`) silently disappears from every command that reads
+// cfg.Repos — `hero peer list`, `hero peer show`, `hero repos list/remove`,
+// and mail-reply peer resolution.
+func TestMergeLocal_ReposMapMerge(t *testing.T) {
+	base := DefaultConfig()
+	base.Repos = map[string]string{
+		"shared-peer": "../shared-peer",
+	}
+	base.RepoMeta = map[string]RepoMetaEntry{
+		"shared-peer": {PeerID: "base-peer-id"},
+	}
+
+	local := Config{
+		Repos: map[string]string{
+			"shared-peer": "../shared-peer-local-path", // collision: local wins
+			"local-only":  "../local-only",             // new key, --local only
+		},
+		RepoMeta: map[string]RepoMetaEntry{
+			"local-only": {PeerID: "local-peer-id"},
+		},
+	}
+
+	merged := MergeLocal(base, local)
+
+	if got := merged.Repos["shared-peer"]; got != "../shared-peer-local-path" {
+		t.Errorf("Repos[shared-peer] = %q, want %q (local should win on collision)", got, "../shared-peer-local-path")
+	}
+	if got := merged.Repos["local-only"]; got != "../local-only" {
+		t.Errorf("Repos[local-only] = %q, want %q (--local-only alias must be visible)", got, "../local-only")
+	}
+	if got := merged.RepoMeta["local-only"].PeerID; got != "local-peer-id" {
+		t.Errorf("RepoMeta[local-only].PeerID = %q, want %q", got, "local-peer-id")
+	}
+	if got := merged.RepoMeta["shared-peer"].PeerID; got != "base-peer-id" {
+		t.Errorf("RepoMeta[shared-peer].PeerID = %q, want %q (non-colliding base preserved)", got, "base-peer-id")
+	}
+}
+
+func TestMergeLocal_ReposIntoNilBase(t *testing.T) {
+	base := DefaultConfig()
+	// base.Repos intentionally nil
+
+	local := Config{
+		Repos: map[string]string{"peer-a": "../peer-a"},
+	}
+
+	merged := MergeLocal(base, local)
+	if got := merged.Repos["peer-a"]; got != "../peer-a" {
+		t.Errorf("Repos[peer-a] = %q, want %q (should populate from nil base)", got, "../peer-a")
+	}
+}
+
 func TestMergeLocal_VocabularyOverridesIntoNilBase(t *testing.T) {
 	base := DefaultConfig()
 	// base.VocabularyOverrides intentionally nil
