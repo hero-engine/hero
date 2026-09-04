@@ -1828,6 +1828,29 @@ func MergeLocal(base, local Config) Config {
 		}
 	}
 
+	// Repos + RepoMeta: entry-by-entry merge, local entries win on alias
+	// collision. `hero repos add --local` (and `hero admin repos add
+	// --local`) writes here specifically so a personal/gitignored
+	// directory layout doesn't leak into the shared hero.json — without
+	// this merge, peer list/show/call and mail-reply resolution (which
+	// all read cfg.Repos) never see repos registered with --local.
+	if len(local.Repos) > 0 {
+		if base.Repos == nil {
+			base.Repos = make(map[string]string)
+		}
+		for k, v := range local.Repos {
+			base.Repos[k] = v
+		}
+	}
+	if len(local.RepoMeta) > 0 {
+		if base.RepoMeta == nil {
+			base.RepoMeta = make(map[string]RepoMetaEntry)
+		}
+		for k, v := range local.RepoMeta {
+			base.RepoMeta[k] = v
+		}
+	}
+
 	return base
 }
 
