@@ -26,9 +26,9 @@ func InitiativeReadyToComplete(parent *Spec, allSpecs []*Spec) bool {
 		return false
 	}
 
-	statusBySlug := make(map[string]Status, len(allSpecs))
+	specBySlug := make(map[string]*Spec, len(allSpecs))
 	for _, s := range allSpecs {
-		statusBySlug[s.Slug] = s.Status
+		specBySlug[s.Slug] = s
 	}
 
 	// Roster gate: every child the initiative declares must resolve to a
@@ -45,8 +45,8 @@ func InitiativeReadyToComplete(parent *Spec, allSpecs []*Spec) bool {
 	// intentionally drop a child the operator removes it from the declaration
 	// or marks it `superseded`, which counts as finished.
 	for _, slug := range DeclaredChildren(parent) {
-		st, ok := statusBySlug[slug]
-		if !ok || !childFinished(st) {
+		child, ok := specBySlug[slug]
+		if !ok || !childFinished(child) {
 			return false
 		}
 	}
@@ -60,7 +60,7 @@ func InitiativeReadyToComplete(parent *Spec, allSpecs []*Spec) bool {
 			if (r.Kind == "parent" || r.Kind == "child-of") &&
 				normalizeRelTarget(r.Target) == parent.Slug {
 				childCount++
-				if !childFinished(s.Status) {
+				if !childFinished(s) {
 					allDone = false
 				}
 				break
@@ -75,9 +75,31 @@ func InitiativeReadyToComplete(parent *Spec, allSpecs []*Spec) bool {
 }
 
 // childFinished reports whether a child's status means the initiative has
-// nothing left to wait on. Superseded counts alongside completed: it is the
-// documented way to drop a child the initiative no longer intends to build,
-// and both gates have to agree on that or the escape hatch doesn't work.
-func childFinished(st Status) bool {
-	return st == StatusCompleted || st == StatusSuperseded
+// nothing left to wait on. Superseded counts alongside the type's own
+// terminal status: it is the documented way to drop a child the initiative
+// no longer intends to build, and both gates have to agree on that or the
+// escape hatch doesn't work.
+func childFinished(child *Spec) bool {
+	return child.Status == StatusSuperseded || child.Status == terminalStatusForType(child.Type)
+}
+
+// terminalStatusForType returns the status that marks a spec of the given
+// type as finished. Feature, bug, and initiative children follow the
+// planning → delivering → completed work lifecycle and terminate at
+// StatusCompleted. Decision specs don't follow that lifecycle at all — this
+// workspace's own convention (and `hero spec verify`'s refusal to run
+// delivery gates against a decision) terminates them at StatusAccepted
+// instead. The remaining knowledge types have no completion lifecycle either
+// and are finished once filed, at StatusActive — mirroring the same mapping
+// statusFromPath already uses when inferring a spec's status from its
+// archival location.
+func terminalStatusForType(t Type) Status {
+	switch t {
+	case TypeDecision:
+		return StatusAccepted
+	case TypeConvention, TypeRule, TypeExternal, TypeContext, TypeNote, TypeTripwire, TypeExplainer:
+		return StatusActive
+	default:
+		return StatusCompleted
+	}
 }
