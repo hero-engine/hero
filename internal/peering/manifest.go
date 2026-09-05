@@ -39,12 +39,22 @@ func GenerateManifest(projectRoot string) (*contractpeering.PeerManifest, error)
 	}
 	heroDir := cfg.HeroDir(projectRoot)
 
+	// Prefer the committed, worktree-invariant hero.json:name. Only
+	// fall back to the live working directory's basename for
+	// workspaces from before `name` was minted at `hero init` — that
+	// fallback varies per git worktree and should not be relied on
+	// once a workspace has a persisted name.
+	name := cfg.Name
+	if name == "" {
+		name = filepath.Base(projectRoot)
+	}
+
 	manifest := &contractpeering.PeerManifest{
 		Schema:           1,
 		ContractsVersion: contractpeering.PeeringContractsVersion,
 		Repo: contractpeering.RepoIdentity{
 			PeerID: cfg.PeerID,
-			Name:   filepath.Base(projectRoot),
+			Name:   name,
 		},
 		GeneratedAt: time.Now().UTC(),
 	}

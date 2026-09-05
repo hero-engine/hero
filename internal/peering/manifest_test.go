@@ -46,6 +46,58 @@ func TestManifestDefaultEmpty(t *testing.T) {
 	}
 }
 
+// TestManifestNamePrefersConfigOverDirectory guards against the
+// worktree-name-stamping bug: repo.name must come from the committed
+// hero.json:name when set, not from the live working directory's
+// basename (which differs per git worktree even though every worktree
+// shares the same hero.json).
+func TestManifestNamePrefersConfigOverDirectory(t *testing.T) {
+	root := t.TempDir()
+	heroDir := filepath.Join(root, ".hero")
+	if err := os.MkdirAll(filepath.Join(heroDir, "knowledge", "conventions"), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	cfg := config.DefaultConfig()
+	cfg.PeerID = "11111111-1111-4111-8111-111111111111"
+	cfg.Name = "canonical-repo-name"
+	if err := cfg.Save(root); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	m, err := GenerateManifest(root)
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+	if m.Repo.Name != "canonical-repo-name" {
+		t.Errorf("repo.name = %q, want the persisted cfg.Name, not the tempdir's own basename (%q)", m.Repo.Name, filepath.Base(root))
+	}
+}
+
+// TestManifestNameFallsBackToDirectory checks the pre-migration
+// fallback: a workspace with no persisted name (older workspaces,
+// from before `hero init` started minting one) keeps the old
+// directory-basename behavior rather than failing.
+func TestManifestNameFallsBackToDirectory(t *testing.T) {
+	root := t.TempDir()
+	heroDir := filepath.Join(root, ".hero")
+	if err := os.MkdirAll(filepath.Join(heroDir, "knowledge", "conventions"), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	cfg := config.DefaultConfig()
+	cfg.PeerID = "11111111-1111-4111-8111-111111111111"
+	if err := cfg.Save(root); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	m, err := GenerateManifest(root)
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+	if m.Repo.Name != filepath.Base(root) {
+		t.Errorf("repo.name = %q, want fallback to directory basename %q", m.Repo.Name, filepath.Base(root))
+	}
+}
+
 // TestManifestPublishesOptIns checks both opt-in mechanisms:
 // frontmatter tag and config glob.
 func TestManifestPublishesOptIns(t *testing.T) {
