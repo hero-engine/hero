@@ -78,6 +78,10 @@ func TestInitWritesHeroJSON(t *testing.T) {
 	if !strings.Contains(content, `"stale_days": 14`) {
 		t.Error("hero.json missing stale_days default")
 	}
+	wantName := filepath.Base(env.dir)
+	if !strings.Contains(content, `"name": "`+wantName+`"`) {
+		t.Errorf("hero.json missing name field for %q; content:\n%s", wantName, content)
+	}
 }
 
 // TestInitBornProjected pins AC-B (born-projected): a freshly
