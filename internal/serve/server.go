@@ -239,7 +239,11 @@ func (s *Server) newAttentionProjectionService() (*projection.Service, error) {
 			return nil, err
 		}
 	}
-	mailSource, err := projection.NewRegistryMailSource(root, registry)
+	cfg, err := config.Load(s.projectRoot)
+	if err != nil {
+		return nil, err
+	}
+	mailSource, err := projection.NewRegistryMailSource(root, registry, cfg.PeerID)
 	if err != nil {
 		return nil, err
 	}

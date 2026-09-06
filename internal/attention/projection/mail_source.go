@@ -16,14 +16,26 @@ import (
 // owning services. Each Mail service remains authoritative for its peer ID;
 // this facade only aggregates their unread views and routes actions back to the
 // service that owns the addressed envelope.
+//
+// The machine-global registry (~/.hero/projects.json) can hold every project
+// ever registered on this machine, including projects that are merely peers
+// of one another and have nothing to do with the project this source was
+// built for. projectPeerID pins Attention's own view of Mail to that one
+// project's own mailbox, mirroring `hero mail inbox` (no --project) — it must
+// never widen to the registry's full "browse every project" behavior that
+// `mailquery.Service` otherwise offers unscoped queries for.
 type RegistryMailSource struct {
-	services []*mail.Service
-	query    *mailquery.Service
+	services      []*mail.Service
+	query         *mailquery.Service
+	projectPeerID string
 }
 
-func NewRegistryMailSource(stateRoot string, registry *projectregistry.Registry) (*RegistryMailSource, error) {
+func NewRegistryMailSource(stateRoot string, registry *projectregistry.Registry, projectPeerID string) (*RegistryMailSource, error) {
 	if registry == nil {
 		return nil, errors.New("project registry is unavailable")
+	}
+	if projectPeerID == "" {
+		return nil, errors.New("project peer ID is required")
 	}
 	store, err := mail.NewStore(stateRoot)
 	if err != nil {
@@ -36,7 +48,7 @@ func NewRegistryMailSource(stateRoot string, registry *projectregistry.Registry)
 	}
 	sort.Strings(slugs)
 	seen := make(map[string]bool)
-	source := &RegistryMailSource{}
+	source := &RegistryMailSource{projectPeerID: projectPeerID}
 	query, err := mailquery.NewService(stateRoot, registry)
 	if err != nil {
 		return nil, err
@@ -57,7 +69,11 @@ func NewRegistryMailSource(stateRoot string, registry *projectregistry.Registry)
 	return source, nil
 }
 
+// Threads always scopes to this source's own project, regardless of what the
+// caller requests: Attention's Mail view must never leak another registered
+// project's mailbox, even a mailbox between two other, unrelated peers.
 func (s *RegistryMailSource) Threads(request mailthread.ThreadListRequest) mailthread.ThreadListResponse {
+	request.ProjectPeerID = s.projectPeerID
 	return s.query.Threads(request)
 }
 

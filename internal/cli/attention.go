@@ -10,6 +10,7 @@ import (
 	"github.com/hero-engine/hero/internal/attention/projection"
 	"github.com/hero-engine/hero/internal/attention/state"
 	"github.com/hero-engine/hero/internal/attention/suggestion"
+	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/projectregistry"
 	"github.com/spf13/cobra"
 )
@@ -101,12 +102,13 @@ func attentionProjectionService() (*projection.Service, error) {
 	if rootOverride == "" {
 		rootOverride = mailStateRootOverride
 	}
+	projectRoot := findProjectRoot()
 	var (
 		root string
 		err  error
 	)
 	if rootOverride == "" {
-		root, err = state.Ensure(state.Options{ProjectRoot: findProjectRoot()})
+		root, err = state.Ensure(state.Options{ProjectRoot: projectRoot})
 	} else {
 		root, err = state.Ensure(state.Options{Root: rootOverride})
 	}
@@ -117,7 +119,11 @@ func attentionProjectionService() (*projection.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	mailSource, err := projection.NewRegistryMailSource(root, registry)
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return nil, err
+	}
+	mailSource, err := projection.NewRegistryMailSource(root, registry, cfg.PeerID)
 	if err != nil {
 		return nil, err
 	}
