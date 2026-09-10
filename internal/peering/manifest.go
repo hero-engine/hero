@@ -15,6 +15,7 @@ import (
 
 	contractpeering "github.com/hero-engine/hero/contracts/peering"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -39,12 +40,22 @@ func GenerateManifest(projectRoot string) (*contractpeering.PeerManifest, error)
 	}
 	heroDir := cfg.HeroDir(projectRoot)
 
+	// Prefer the committed, worktree-invariant hero.json:name. Workspaces
+	// from before `name` was minted at `hero init` have none, so fall back
+	// to a live directory lookup — but resolve through gitutil.RepoRoot
+	// first, so that fallback lands on the main checkout's directory
+	// instead of a linked worktree's own (often unrelated) basename.
+	name := cfg.Name
+	if name == "" {
+		name = filepath.Base(gitutil.RepoRoot(projectRoot))
+	}
+
 	manifest := &contractpeering.PeerManifest{
 		Schema:           1,
 		ContractsVersion: contractpeering.PeeringContractsVersion,
 		Repo: contractpeering.RepoIdentity{
 			PeerID: cfg.PeerID,
-			Name:   filepath.Base(projectRoot),
+			Name:   name,
 		},
 		GeneratedAt: time.Now().UTC(),
 	}

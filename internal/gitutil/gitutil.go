@@ -209,6 +209,32 @@ func NormalizeFilePath(projectRoot, path string) string {
 	return filepath.ToSlash(path)
 }
 
+// RepoRoot returns the root directory of the main git working tree for
+// dir, resolving through linked worktrees (`git worktree add`). A linked
+// worktree gets its own working directory — often named for a branch or
+// session and unrelated to the project (e.g. `.claude/worktrees/<id>`) —
+// but shares one `.git` with the main checkout. `git rev-parse
+// --git-common-dir` resolves to that shared `.git` from any worktree, so
+// its parent is the stable project root regardless of which worktree dir
+// this is invoked from. Falls back to dir itself if git is unavailable or
+// dir is not inside a git working tree.
+func RepoRoot(dir string) string {
+	cmd := git(dir, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	out, err := cmd.Output()
+	if err != nil {
+		return dir
+	}
+	commonDir := strings.TrimSpace(string(out))
+	if commonDir == "" {
+		return dir
+	}
+	root := filepath.Dir(commonDir)
+	if root == "" || root == "." {
+		return dir
+	}
+	return root
+}
+
 // RepoKey returns a stable identifier for the repository rooted at dir.
 // It derives "owner/repo" from the git remote origin URL so that two
 // developers cloning the same repo to different directory names share the

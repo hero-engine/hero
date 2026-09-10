@@ -58,6 +58,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	cfg := config.DefaultConfig()
 	cfg.Folder = initFolder
 	cfg.PeerID = peering.MintPeerID()
+	cfg.Name = filepath.Base(projectRoot)
 
 	// Born projected: fresh workspaces never enter legacy NEXT mode, so
 	// they never hit the checkpoint migration gate. This is set only on
