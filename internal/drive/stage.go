@@ -12,7 +12,7 @@ import (
 type Stage int
 
 const (
-	StageDone          Stage = iota // completed / superseded
+	StageDone          Stage = iota // completed / superseded / accepted (decision)
 	StageReadyDeliver               // designed + adequately scored, not yet completed
 	StageNeedsDesign                // discoverable but not yet designed (stub)
 	StageNeedsScaffold              // declared by the initiative but no spec on disk

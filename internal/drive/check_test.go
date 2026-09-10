@@ -59,6 +59,26 @@ func TestCheckDoneWhenAllChildrenCompleted(t *testing.T) {
 	}
 }
 
+// TestCheckDoneWithAcceptedDecisionChild is the regression for a reported
+// stuck run: a decision-type child that reached StatusAccepted (its terminal
+// status — decisions never reach StatusCompleted) must count as finished,
+// not perpetually remaining.
+func TestCheckDoneWithAcceptedDecisionChild(t *testing.T) {
+	init := mkInit("drive", "guided")
+	decision := &spec.Spec{
+		Slug: "a", Type: spec.TypeDecision, Status: spec.StatusAccepted,
+		Relations: []spec.Relation{{Kind: "parent", Target: "drive"}},
+	}
+	all := []*spec.Spec{init, decision, mkChild("b", "drive", spec.StatusCompleted)}
+	res := Check(init, all, nil, nil)
+	if res.Verdict != "done" {
+		t.Fatalf("verdict=%q, want done (accepted decision child should count as finished)", res.Verdict)
+	}
+	if len(res.Remaining) != 0 {
+		t.Errorf("remaining=%v, want empty", res.Remaining)
+	}
+}
+
 func TestCheckContinueGuided(t *testing.T) {
 	init := mkInit("drive", "guided")
 	all := []*spec.Spec{init,
@@ -572,6 +592,13 @@ func TestCheckAndCompletionGateAgreeOnRoster(t *testing.T) {
 		}},
 		{"both delivered", func(i *spec.Spec) []*spec.Spec {
 			return []*spec.Spec{i, mkChild("alpha", "gov", spec.StatusCompleted), mkChild("bravo", "gov", spec.StatusCompleted)}
+		}},
+		{"one accepted decision one completed", func(i *spec.Spec) []*spec.Spec {
+			decision := &spec.Spec{
+				Slug: "alpha", Type: spec.TypeDecision, Status: spec.StatusAccepted,
+				Relations: []spec.Relation{{Kind: "parent", Target: "gov"}},
+			}
+			return []*spec.Spec{i, decision, mkChild("bravo", "gov", spec.StatusCompleted)}
 		}},
 	}
 	for _, c := range cases {

@@ -38,7 +38,11 @@ type CheckResult struct {
 }
 
 func isCompleted(s *spec.Spec) bool {
-	return s.Status == spec.StatusCompleted || s.Status == spec.StatusSuperseded
+	// StatusAccepted is a decision spec's terminal status — decision specs
+	// never reach StatusCompleted (see domains/engineering/spec-types/decision.md).
+	// Validation restricts "accepted" to decision specs (internal/cli/validate.go),
+	// so no type check is needed here.
+	return s.Status == spec.StatusCompleted || s.Status == spec.StatusSuperseded || s.Status == spec.StatusAccepted
 }
 
 // Children returns an initiative's child specs (those declaring a `parent`

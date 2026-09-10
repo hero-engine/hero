@@ -78,6 +78,10 @@ func InitiativeReadyToComplete(parent *Spec, allSpecs []*Spec) bool {
 // nothing left to wait on. Superseded counts alongside completed: it is the
 // documented way to drop a child the initiative no longer intends to build,
 // and both gates have to agree on that or the escape hatch doesn't work.
+// Accepted also counts: it is a decision spec's terminal status (decision
+// specs never reach StatusCompleted — see
+// domains/engineering/spec-types/decision.md) and validation restricts
+// "accepted" to decision specs, so no type check is needed here.
 func childFinished(st Status) bool {
-	return st == StatusCompleted || st == StatusSuperseded
+	return st == StatusCompleted || st == StatusSuperseded || st == StatusAccepted
 }

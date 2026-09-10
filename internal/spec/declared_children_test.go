@@ -244,6 +244,29 @@ children: [alpha, bravo]
 	}
 }
 
+// TestInitiativeAcceptedDecisionChildCountsAsFinished is the regression for a
+// reported stuck initiative: a decision-type child reaches its terminal
+// status at `accepted`, never `completed` (decisions have no completed
+// status — see domains/engineering/spec-types/decision.md), so the roster
+// gate must recognize it as finished rather than blocking forever.
+func TestInitiativeAcceptedDecisionChildCountsAsFinished(t *testing.T) {
+	init := parseInit(t, `---
+title: Governance
+type: initiative
+status: planning
+slug: gov
+children: [alpha, bravo]
+---
+# Governance
+`)
+	decision := &Spec{Slug: "alpha", Type: TypeDecision, Status: StatusAccepted,
+		Relations: []Relation{{Kind: "parent", Target: "gov"}}}
+	all := []*Spec{init, decision, mkLeaf("bravo", "gov", StatusCompleted)}
+	if !InitiativeReadyToComplete(init, all) {
+		t.Fatal("an accepted decision-type child should count as finished")
+	}
+}
+
 // TestInitiativeSingularChildBehaviorUnchanged is the AC-7 regression guard:
 // the pre-existing singular block-style `child:` roster still completes
 // exactly when it did before.
