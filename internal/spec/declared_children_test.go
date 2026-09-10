@@ -155,6 +155,11 @@ func mkLeaf(slug, parent string, status Status) *Spec {
 		Relations: []Relation{{Kind: "parent", Target: parent}}}
 }
 
+func mkChild(slug, parent string, typ Type, status Status) *Spec {
+	return &Spec{Slug: slug, Type: typ, Status: status,
+		Relations: []Relation{{Kind: "parent", Target: parent}}}
+}
+
 // TestInitiativeBlockedByUnscaffoldedChild is the regression for the reported
 // failure: four children declared via `children:`, one delivered on disk. The
 // initiative must not complete at 1-of-4.
@@ -241,6 +246,37 @@ children: [alpha, bravo]
 	}
 	if !InitiativeReadyToComplete(init, all) {
 		t.Fatal("a superseded declared child should count as finished")
+	}
+}
+
+// TestInitiativeCompletesWithAcceptedDecisionChild is the regression for the
+// reported bug: an initiative whose feature/bug children are all `completed`
+// but whose one `decision`-type child is terminal at its own conventional
+// status, `accepted` (never `completed` — decisions don't follow the
+// feature/bug delivery lifecycle at all), was never recognized as fully
+// finished and sat in `planning` forever.
+func TestInitiativeCompletesWithAcceptedDecisionChild(t *testing.T) {
+	init := parseInit(t, `---
+title: Visualization Authoring Plane
+type: initiative
+status: planning
+slug: gov
+children: [alpha, bravo, adr-authoring-artifacts-home]
+---
+# Visualization Authoring Plane
+`)
+	all := []*Spec{init,
+		mkLeaf("alpha", "gov", StatusCompleted),
+		mkLeaf("bravo", "gov", StatusCompleted),
+		mkChild("adr-authoring-artifacts-home", "gov", TypeDecision, StatusDelivering),
+	}
+	if InitiativeReadyToComplete(init, all) {
+		t.Fatal("decision child still in-flight (not yet accepted) must block")
+	}
+
+	all[3] = mkChild("adr-authoring-artifacts-home", "gov", TypeDecision, StatusAccepted)
+	if !InitiativeReadyToComplete(init, all) {
+		t.Fatal("every declared child is finished (decision accepted, rest completed) — initiative should be ready")
 	}
 }
 

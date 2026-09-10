@@ -37,8 +37,15 @@ type CheckResult struct {
 	Completed  []string   `json:"completed"`
 }
 
+// isCompleted delegates to spec.Spec.IsFinished so this per-child
+// classification and the spec.InitiativeReadyToComplete gate (backing
+// `hero spec verify` auto-complete and `hero check --reconcile`) read the
+// identical predicate and can never disagree about which children remain —
+// see IsFinished's doc comment. Notably: a decision-type child's terminal
+// status is StatusAccepted, not StatusCompleted, since decisions don't
+// follow the feature/bug delivery lifecycle at all.
 func isCompleted(s *spec.Spec) bool {
-	return s.Status == spec.StatusCompleted || s.Status == spec.StatusSuperseded
+	return s.IsFinished()
 }
 
 // Children returns an initiative's child specs (those declaring a `parent`
