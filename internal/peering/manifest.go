@@ -15,6 +15,7 @@ import (
 
 	contractpeering "github.com/hero-engine/hero/contracts/peering"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/gitutil"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -44,7 +45,12 @@ func GenerateManifest(projectRoot string) (*contractpeering.PeerManifest, error)
 		ContractsVersion: contractpeering.PeeringContractsVersion,
 		Repo: contractpeering.RepoIdentity{
 			PeerID: cfg.PeerID,
-			Name:   filepath.Base(projectRoot),
+			// gitutil.RepoRoot resolves through linked worktrees (e.g.
+			// `.claude/worktrees/<session-id>`) to the main checkout's
+			// directory before taking the basename, so the manifest's
+			// identity doesn't drift depending on which worktree
+			// `hero index` was run from.
+			Name: filepath.Base(gitutil.RepoRoot(projectRoot)),
 		},
 		GeneratedAt: time.Now().UTC(),
 	}

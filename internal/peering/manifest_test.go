@@ -2,6 +2,7 @@ package peering
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -131,5 +132,65 @@ func TestGenerateAndWriteManifest(t *testing.T) {
 	}
 	if !strings.Contains(string(data), "peer_id: 33333333-3333-4333-8333-333333333333") {
 		t.Errorf("manifest missing peer_id: %s", data)
+	}
+}
+
+// TestManifestNameSurvivesLinkedWorktree is the regression case: running
+// `hero index` from inside a linked worktree whose directory name is
+// unrelated to the project (e.g. a session ID) must still publish the
+// main checkout's directory name as repo.name, not the worktree's own
+// basename. See gitutil.RepoRoot.
+func TestManifestNameSurvivesLinkedWorktree(t *testing.T) {
+	runGit := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(),
+			"GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=test@test.com",
+			"GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=test@test.com",
+		)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v failed: %v\n%s", args, err, out)
+		}
+	}
+
+	// Main checkout, named like a real project — this is the name that
+	// must end up in the manifest regardless of which worktree generated it.
+	parent := t.TempDir()
+	mainDir := filepath.Join(parent, "inkwyrm")
+	if err := os.MkdirAll(mainDir, 0o755); err != nil {
+		t.Fatalf("mkdir mainDir: %v", err)
+	}
+	runGit(mainDir, "init", "-b", "main")
+	runGit(mainDir, "config", "user.email", "test@test.com")
+	runGit(mainDir, "config", "user.name", "test")
+	if err := os.WriteFile(filepath.Join(mainDir, "README.md"), []byte("# Test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(mainDir, "add", ".")
+	runGit(mainDir, "commit", "-m", "initial commit")
+
+	// Linked worktree with a directory name unrelated to the project —
+	// this is what previously leaked into repo.name.
+	worktreeDir := filepath.Join(parent, "dreamy-wilbur-ff9b6f")
+	runGit(mainDir, "worktree", "add", "-b", "wt-branch", worktreeDir)
+
+	heroDir := filepath.Join(worktreeDir, ".hero")
+	if err := os.MkdirAll(heroDir, 0o755); err != nil {
+		t.Fatalf("mkdir heroDir: %v", err)
+	}
+	cfg := config.DefaultConfig()
+	cfg.PeerID = "44444444-4444-4444-8444-444444444444"
+	if err := cfg.Save(worktreeDir); err != nil {
+		t.Fatalf("save cfg: %v", err)
+	}
+
+	m, err := GenerateManifest(worktreeDir)
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+	if m.Repo.Name != "inkwyrm" {
+		t.Errorf("Repo.Name = %q, want %q (main checkout dir, not the worktree dir %q)",
+			m.Repo.Name, "inkwyrm", filepath.Base(worktreeDir))
 	}
 }
