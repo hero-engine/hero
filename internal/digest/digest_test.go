@@ -187,7 +187,11 @@ func TestMarkdown_RendersDigDeeperHintWhenTruncated(t *testing.T) {
 	sec.Truncated = dropped
 	b := &Brief{Sections: []BriefSection{sec}}
 	md := b.Markdown()
-	if !strings.Contains(md, "hero recall") {
-		t.Errorf("expected 'hero recall' hint in truncated output:\n%s", md)
+	if !strings.Contains(md, "hero search") {
+		t.Errorf("expected 'hero search' hint in truncated output:\n%s", md)
+	}
+	// `hero recall` does not exist; the hint must never point at it again.
+	if strings.Contains(md, "hero recall") {
+		t.Errorf("truncation hint names the nonexistent 'hero recall' command:\n%s", md)
 	}
 }

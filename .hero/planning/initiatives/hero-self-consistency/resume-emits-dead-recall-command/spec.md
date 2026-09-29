@@ -2,7 +2,7 @@
 title: "Cold-start digest emits a dead `hero recall` command — and a test enforces it"
 slug: resume-emits-dead-recall-command
 type: bug
-status: planning
+status: delivering
 domain: engineering
 priority: high
 size: trivial
@@ -97,3 +97,24 @@ Low blast radius, high embarrassment, disproportionate cost. Every truncated dig
 - `go test ./internal/digest/` passes with the corrected assertion.
 - `rg -n 'hero recall' internal/ core/ docs/` returns zero hits.
 - Manually render a truncated digest and confirm the emitted hint names a command that `hero help` lists.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Note |
+|---|---|---|---|
+| 1 | Truncated digest sections emit `hero search <topic>`, not `hero recall <topic>` | DONE | `internal/digest/digest.go` truncation hint now reads `hero search %s`; `TestMarkdown_RendersDigDeeperHintWhenTruncated` asserts it. Exercised: `hero resume` prints ``_…+1 more — `hero search <feature-or-area>` to dig deeper_``. |
+| 2 | No occurrence of `hero recall` in emitted or generated output | DONE | `rg "hero recall"` outside `.hero/` spec/knowledge history finds only the new negative assertion in the test. |
+| 3 | Test asserts the live name and fails if the dead name returns | DONE | `TestMarkdown_RendersDigDeeperHintWhenTruncated` asserts `hero search` is present and `hero recall` is absent. |
+
+### Changes
+
+| # | Change | Status | Note |
+|---|---|---|---|
+| 1 | Point truncation hint at `hero search` | DONE | `internal/digest/digest.go` |
+| 2 | Flip the test that enforced the dead command | DONE | `internal/digest/digest_test.go` |
+
+### Exercise-the-feature check
+
+- [x] Exercised: built `hero` from this branch and ran `hero resume` in this repo; the truncated section's hint reads `hero search <feature-or-area>`. `go test ./...` green.
