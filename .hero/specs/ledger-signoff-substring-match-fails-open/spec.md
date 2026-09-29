@@ -2,13 +2,14 @@
 title: "Completion Ledger sign-off gate fails open — any note mentioning [signed-off] self-approves"
 slug: ledger-signoff-substring-match-fails-open
 type: bug
-status: delivering
+status: completed
 domain: engineering
 priority: high
 severity: high
 root_cause_class: code
 tags: [verify, ledger, gate, governance, parsing, fails-open]
 created: 2026-07-25
+completed_at: 2026-09-29T10:01:11Z
 ---
 
 # Completion Ledger sign-off gate fails open — any note mentioning `[signed-off]` self-approves
