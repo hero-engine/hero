@@ -1,29 +1,31 @@
 ---
 user: chet-bellows
-updated: 2026-08-27T15:42:33Z
-updated: 2026-09-03T00:20:58Z
-repo: hero-engine/hero
+updated: 2026-09-29T03:41:08Z
+repo: davidray/hero
 ---
 
 # chet-bellows's handoff
 
-## Last user ask
-
-_(none recorded — `hero next ask "..."` to set)_
 ## Session goal
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
-
-_possibly stale — 40 commit(s) since, last set 19d 8h ago_
+> _possibly stale — 40 commit(s) since, last set 19d 8h ago_
 
 ## Last user ask
 
-> Proceed with the approved private archive, sanitized public replacement, v0.34.0 publication, production redeploy, and anonymous launch verification.
-> _possibly stale — 2 commit(s) since, last set 9d 1h ago_
+> <system-reminder>
+> You are operating in a git worktree.
+> Worktree path: /Users/dave/code/hero/.claude/worktrees/hero-tokenomics-assessment-1d9c0b
+> Worktree name: hero-tokenomics-assessment-1d9c0b
+> </system-reminder>
 
 ## Suggested next prompt
 
-_(none — `hero next suggest "..."` to set, or open a Feature to derive one)_
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 

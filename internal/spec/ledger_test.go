@@ -331,3 +331,29 @@ func TestParseLedger_NilSpec(t *testing.T) {
 		t.Error("expected ledger to not be found for nil spec")
 	}
 }
+
+func TestParseSignOff(t *testing.T) {
+	cases := []struct {
+		note       string
+		want       bool
+		wantReject bool
+	}{
+		{"[signed-off] bwheeler — accepted the descope", true, false},
+		{"out of scope [signed-off]", true, false},
+		{"upstream dep [SIGNED OFF]", true, false},
+		{"the stricter rule was not taken [signed-off]", true, false},
+		{"implemented", false, false},
+		{"[signed-off] NOT yet given", false, true},
+		{"Needs user sign-off — [signed-off] NOT yet given", false, true},
+		{"needs [signed-off] before shipping", false, true},
+		{"awaiting [signed off] from owner", false, true},
+		{"blocked pending [signed-off]", false, true},
+		{"do not mark [signed-off] until the owner reviews", false, true},
+	}
+	for _, c := range cases {
+		got, reason := parseSignOff(c.note)
+		if got != c.want || (reason != "") != c.wantReject {
+			t.Errorf("parseSignOff(%q) = %v, %q; want %v, rejected=%v", c.note, got, reason, c.want, c.wantReject)
+		}
+	}
+}

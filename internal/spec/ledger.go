@@ -1,7 +1,9 @@
 package spec
 
 import (
+	"fmt"
 	"strings"
+	"unicode"
 )
 
 // LedgerStatus represents the completion state of a ledger row.
@@ -21,7 +23,10 @@ type LedgerRow struct {
 	Summary   string
 	Status    LedgerStatus
 	Note      string
-	SignedOff bool // true if [signed-off] annotation present in Note
+	SignedOff bool // true if Note asserts a [signed-off] annotation (see parseSignOff)
+	// SignOffRejected explains why a [signed-off] marker present in Note was
+	// not honored; empty when there is no marker or it was honored.
+	SignOffRejected string
 }
 
 // LedgerResult holds the parsed Completion Ledger from a spec.
@@ -211,13 +216,66 @@ func parseDataRow(cells []string, fallbackIndex int) LedgerRow {
 		row.Note = stripBold(cells[2])
 	}
 
-	// Check for signed-off annotation
-	noteLower := strings.ToLower(row.Note)
-	if strings.Contains(noteLower, "[signed-off]") || strings.Contains(noteLower, "[signed off]") {
-		row.SignedOff = true
-	}
+	row.SignedOff, row.SignOffRejected = parseSignOff(row.Note)
 
 	return row
+}
+
+var signOffMarkers = []string{"[signed-off]", "[signed off]"}
+
+// signOffDenials are words that, directly adjacent to the marker, mean the note is
+// requesting, deferring, or denying sign-off rather than asserting it.
+var signOffDenials = map[string]bool{
+	"not": true, "no": true, "never": true, "without": true, "missing": true,
+	"need": true, "needs": true, "needed": true, "pending": true, "until": true,
+	"before": true, "await": true, "awaits": true, "awaiting": true,
+	"require": true, "requires": true, "required": true, "requested": true,
+	"requesting": true, "withheld": true, "yet": true,
+}
+
+// parseSignOff reports whether a ledger note asserts sign-off. The marker is
+// honored only as the note's leading or trailing annotation and only when the
+// word directly beside it is not a denial; anything else fails closed and
+// returns the reason so Gate 1 can explain the rejection.
+func parseSignOff(note string) (bool, string) {
+	lower := strings.ToLower(strings.TrimSpace(note))
+	found := false
+	for _, m := range signOffMarkers {
+		for rest, off := lower, 0; ; {
+			i := strings.Index(rest, m)
+			if i < 0 {
+				break
+			}
+			found = true
+			start, end := off+i, off+i+len(m)
+			before, after := lower[:start], lower[end:]
+			if strings.Trim(before, " \t.,;:-—–") != "" && strings.Trim(after, " \t.,;:!-—–") != "" {
+				return false, m + " must lead or end the note"
+			}
+			if w := denialNear(before, after); w != "" {
+				return false, fmt.Sprintf("%s is qualified by %q", m, w)
+			}
+			rest, off = lower[end:], end
+		}
+	}
+	return found, ""
+}
+
+func denialNear(before, after string) string {
+	isSep := func(r rune) bool { return !unicode.IsLetter(r) }
+	var adjacent []string
+	if pre := strings.FieldsFunc(before, isSep); len(pre) > 0 {
+		adjacent = append(adjacent, pre[len(pre)-1])
+	}
+	if post := strings.FieldsFunc(after, isSep); len(post) > 0 {
+		adjacent = append(adjacent, post[0])
+	}
+	for _, w := range adjacent {
+		if signOffDenials[w] {
+			return w
+		}
+	}
+	return ""
 }
 
 // parseIndex extracts a numeric index from a cell like "1", "1.", "AC-1", etc.

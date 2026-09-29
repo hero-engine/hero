@@ -284,6 +284,48 @@ slug: signed-pass
 	}
 }
 
+func TestVerify_DeniedSignOffFailsGate(t *testing.T) {
+	env := newTestEnv(t)
+	specContent := `---
+title: Denied Sign Off
+type: feature
+status: delivering
+slug: denied-signoff
+---
+# Denied Sign Off
+
+## Acceptance Criteria
+
+- AC-1: Do X
+- AC-2: Do Y
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Note |
+|---|---|---|---|
+| 1 | Do X | DONE | implemented |
+| 2 | Do Y | SKIPPED | **Needs user sign-off — [signed-off] NOT yet given** |
+
+### Exercise-the-feature check
+
+- [x] Exercised: ran the command, works
+`
+	env.addSpec("planning/features/denied-signoff/spec.md", specContent)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/denied-signoff/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "denied-signoff", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "denied-signoff")
+	if err == nil {
+		t.Fatalf("verify should fail when the note denies sign-off\noutput: %s", output)
+	}
+	if !strings.Contains(output, "sign-off marker found but rejected") {
+		t.Errorf("expected rejection reason in gate output, got:\n%s", output)
+	}
+}
+
 func TestVerify_AlreadyCompleted(t *testing.T) {
 	env := newTestEnv(t)
 	specContent := `---

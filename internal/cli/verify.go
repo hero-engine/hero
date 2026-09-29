@@ -239,8 +239,14 @@ func checkLedger(s *spec.Spec) GateResult {
 				doneCount++
 			} else {
 				allDone = false
-				gate.Details = append(gate.Details,
-					fmt.Sprintf("AC-%d is %s (not signed-off): %s", row.Index, row.Status, row.Note))
+				if row.SignOffRejected != "" {
+					gate.Details = append(gate.Details,
+						fmt.Sprintf("AC-%d is %s (sign-off marker found but rejected: %s; write `[signed-off] <who> — <why>`): %s",
+							row.Index, row.Status, row.SignOffRejected, row.Note))
+				} else {
+					gate.Details = append(gate.Details,
+						fmt.Sprintf("AC-%d is %s (not signed-off): %s", row.Index, row.Status, row.Note))
+				}
 			}
 		case spec.LedgerPartial:
 			allDone = false

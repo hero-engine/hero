@@ -2,7 +2,7 @@
 title: "Completion Ledger sign-off gate fails open — any note mentioning [signed-off] self-approves"
 slug: ledger-signoff-substring-match-fails-open
 type: bug
-status: planning
+status: delivering
 domain: engineering
 priority: high
 severity: high
@@ -161,3 +161,30 @@ pass Gate 1. When the gate is unsure, it must fail closed.
 | `awaiting [signed off] from owner` → NOT signed off | AC-2, AC-4 |
 | Gate 1 output names the rejected marker | AC-3 |
 | Existing ledgers in `.hero/specs/` still parse as before | AC-5 regression |
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Note |
+|---|---|---|---|
+| 1 | Leading `[signed-off]` is honored | DONE | `parseSignOff` in `internal/spec/ledger.go`; `TestParseSignOff` leading case. Trailing position also honored — existing tests and 7 archived ledgers use `<why> [signed-off]`, so leading-only would violate AC-5. |
+| 2 | Negating/requesting/conditional mention is not honored; Gate 1 fails | DONE | Marker must lead or end the note, and the word directly beside it must not be a denial (not, needs, pending, until, awaiting, …). `TestParseSignOff` covers all four spec examples; `TestVerify_DeniedSignOffFailsGate` reproduces the reported ledger row end-to-end. |
+| 3 | Gate output says the marker was found but rejected, and why | DONE | `LedgerRow.SignOffRejected` surfaced by `checkLedger` in `internal/cli/verify.go`; asserted by `TestVerify_DeniedSignOffFailsGate`. |
+| 4 | Same rules for `[signed off]`, case-insensitive | DONE | Both markers share `parseSignOff`; test cases `[SIGNED OFF]` and `awaiting [signed off]`. |
+| 5 | Well-formed existing ledgers unchanged | DONE | Scratch corpus pass over `.hero/specs` + `.hero/planning`: all 14 sign-off-mentioning rows parse identically before/after (7 honored). A two-word denial window regressed `…was not taken [signed-off]`; narrowed to adjacent-word only. |
+
+### Changes
+
+| # | Change | Status | Note |
+|---|---|---|---|
+| 1 | Anchored sign-off parsing | DONE | `internal/spec/ledger.go` |
+| 2 | Gate 1 rejection message | DONE | `internal/cli/verify.go` |
+| 3 | Skill wording states the anchoring rule | DONE | `core/skills/completion-ledger/SKILL.md` |
+| 4 | Regression tests | DONE | `internal/spec/ledger_test.go`, `internal/cli/verify_test.go` |
+
+### Exercise-the-feature check
+
+- [x] Exercised: `go test ./...` green; `TestVerify_DeniedSignOffFailsGate` runs the real `hero spec verify` command against the exact ledger row from the bug report and it now fails Gate 1 with the rejection reason.
+
+Residual (known, accepted): a trailing marker preceded by a two-word denial such as `do not mark [signed-off]` at the very end of a note is still honored; widening the window regressed a genuine archived sign-off.
