@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-09-29T03:44:54Z · projected from 537 source nodes_
+_Last refreshed: 2026-09-29T04:01:54Z · projected from 537 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 4m ago | hero-runner |
-| docs | maturing | web/docs/ | 4m ago | — |
-| domains/chat | maturing | domains/chat/ | 4m ago | — |
-| domains/engineering | maturing | domains/engineering/ | 4m ago | — |
-| domains/pm | maturing | domains/pm/ | 4m ago | — |
+| core | maturing | cmd/, internal/ | 21m ago | hero-runner |
+| docs | maturing | web/docs/ | 21m ago | — |
+| domains/chat | maturing | domains/chat/ | 21m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 21m ago | — |
+| domains/pm | maturing | domains/pm/ | 21m ago | — |
 | domains/qa | concept | domains/qa/ | — | — |
-| domains/sales | maturing | domains/sales/ | 4m ago | — |
-| landing | building | web/landing/ | 4m ago | hero-landing-page |
+| domains/sales | maturing | domains/sales/ | 21m ago | — |
+| landing | building | web/landing/ | 21m ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 4m ago | agent-outposts |
+| serve | building | internal/serve/ | 21m ago | agent-outposts |
 | (unassigned) | — | — | — | 258 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -57,9 +57,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **hero-core** — `mail-b7ca19966ac5041e6ff604dd` (critical, delivering)
-3. **hero-core** — `mail-thread-foreground-read-action` (high, delivering)
-4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+3. **(unassigned)** — `ledger-signoff-substring-match-fails-open` (high, delivering)
+4. **hero-core** — `mail-thread-foreground-read-action` (high, delivering)
+5. **serve** — `agent-outposts` (medium, delivering)
 
 ## Open risks & blockers
 

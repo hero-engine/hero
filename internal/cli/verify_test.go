@@ -267,7 +267,7 @@ slug: signed-pass
 | # | Criterion | Status | Note |
 |---|---|---|---|
 | 1 | Do X | DONE | implemented |
-| 2 | Do Y | SKIPPED | out of scope [signed-off] |
+| 2 | Do Y | SKIPPED | [signed-off] bwheeler — out of scope |
 
 ### Exercise-the-feature check
 

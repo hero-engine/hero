@@ -241,8 +241,8 @@ func checkLedger(s *spec.Spec) GateResult {
 				allDone = false
 				if row.SignOffRejected != "" {
 					gate.Details = append(gate.Details,
-						fmt.Sprintf("AC-%d is %s (sign-off marker found but rejected: %s; write `[signed-off] <who> — <why>`): %s",
-							row.Index, row.Status, row.SignOffRejected, row.Note))
+						fmt.Sprintf("AC-%d is %s (sign-off marker found but rejected: %s; write %s): %s",
+							row.Index, row.Status, row.SignOffRejected, spec.SignOffForm, row.Note))
 				} else {
 					gate.Details = append(gate.Details,
 						fmt.Sprintf("AC-%d is %s (not signed-off): %s", row.Index, row.Status, row.Note))
@@ -268,8 +268,14 @@ func checkLedger(s *spec.Spec) GateResult {
 	for _, row := range ledger.ChangesRows {
 		if row.Status != spec.LedgerDone && !(row.SignedOff && (row.Status == spec.LedgerSkipped || row.Status == spec.LedgerBlocked)) {
 			allDone = false
-			gate.Details = append(gate.Details,
-				fmt.Sprintf("Changes item %d is %s: %s", row.Index, row.Status, row.Note))
+			if row.SignOffRejected != "" {
+				gate.Details = append(gate.Details,
+					fmt.Sprintf("Changes item %d is %s (sign-off marker found but rejected: %s; write %s): %s",
+						row.Index, row.Status, row.SignOffRejected, spec.SignOffForm, row.Note))
+			} else {
+				gate.Details = append(gate.Details,
+					fmt.Sprintf("Changes item %d is %s: %s", row.Index, row.Status, row.Note))
+			}
 		}
 	}
 	if len(ledger.ChangesRows) > 0 {

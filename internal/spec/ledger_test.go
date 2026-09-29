@@ -151,8 +151,8 @@ status: delivering
 | # | Criterion | Status | Note |
 |---|---|---|---|
 | 1 | Do X | DONE | implemented |
-| 2 | Do Y | SKIPPED | out of scope [signed-off] |
-| 3 | Do Z | BLOCKED | upstream dep [signed off] |
+| 2 | Do Y | SKIPPED | [signed-off] bwheeler — out of scope |
+| 3 | Do Z | BLOCKED | [signed off: bwheeler] upstream dep |
 
 ### Exercise-the-feature check
 
@@ -338,17 +338,34 @@ func TestParseSignOff(t *testing.T) {
 		want       bool
 		wantReject bool
 	}{
+		// Structured forms are honored.
 		{"[signed-off] bwheeler — accepted the descope", true, false},
-		{"out of scope [signed-off]", true, false},
-		{"upstream dep [SIGNED OFF]", true, false},
-		{"the stricter rule was not taken [signed-off]", true, false},
+		{"[SIGNED OFF] Brian Wheeler - deferred to phase 2", true, false},
+		{"[signed-off: bwheeler] accepted the descope", true, false},
+		{"[signed off: dave@example.com]", true, false},
 		{"implemented", false, false},
+		// The reported case and the spec's examples.
 		{"[signed-off] NOT yet given", false, true},
 		{"Needs user sign-off — [signed-off] NOT yet given", false, true},
 		{"needs [signed-off] before shipping", false, true},
 		{"awaiting [signed off] from owner", false, true},
 		{"blocked pending [signed-off]", false, true},
 		{"do not mark [signed-off] until the owner reviews", false, true},
+		// Audit HOLD bypasses: free prose never passes as a signer.
+		{"[signed-off] was never given", false, true},
+		{"[signed-off] is still outstanding", false, true},
+		{"[signed-off]: denied", false, true},
+		{"owner has not given [signed-off]", false, true},
+		{"not approved by owner [signed-off]", false, true},
+		{"please ask for [signed-off]", false, true},
+		{"TODO get [signed-off]", false, true},
+		{"[signed-off] has not been given — see thread", false, true},
+		{"[signed-off] not given — sorry", false, true},
+		{"[signed-off: pending]", false, true},
+		{"[signed-off: ] fine", false, true},
+		// Legacy unstructured sign-offs no longer count.
+		{"out of scope [signed-off]", false, true},
+		{"[signed-off] Explicitly optional per this spec's own text.", false, true},
 	}
 	for _, c := range cases {
 		got, reason := parseSignOff(c.note)

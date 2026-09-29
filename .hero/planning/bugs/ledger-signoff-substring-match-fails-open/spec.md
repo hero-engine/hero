@@ -168,23 +168,23 @@ pass Gate 1. When the gate is unsure, it must fail closed.
 
 | # | Criterion | Status | Note |
 |---|---|---|---|
-| 1 | Leading `[signed-off]` is honored | DONE | `parseSignOff` in `internal/spec/ledger.go`; `TestParseSignOff` leading case. Trailing position also honored — existing tests and 7 archived ledgers use `<why> [signed-off]`, so leading-only would violate AC-5. |
-| 2 | Negating/requesting/conditional mention is not honored; Gate 1 fails | DONE | Marker must lead or end the note, and the word directly beside it must not be a denial (not, needs, pending, until, awaiting, …). `TestParseSignOff` covers all four spec examples; `TestVerify_DeniedSignOffFailsGate` reproduces the reported ledger row end-to-end. |
-| 3 | Gate output says the marker was found but rejected, and why | DONE | `LedgerRow.SignOffRejected` surfaced by `checkLedger` in `internal/cli/verify.go`; asserted by `TestVerify_DeniedSignOffFailsGate`. |
-| 4 | Same rules for `[signed off]`, case-insensitive | DONE | Both markers share `parseSignOff`; test cases `[SIGNED OFF]` and `awaiting [signed off]`. |
-| 5 | Well-formed existing ledgers unchanged | DONE | Scratch corpus pass over `.hero/specs` + `.hero/planning`: all 14 sign-off-mentioning rows parse identically before/after (7 honored). A two-word denial window regressed `…was not taken [signed-off]`; narrowed to adjacent-word only. |
+| 1 | Leading `[signed-off]` is honored | DONE | `parseSignOff` in `internal/spec/ledger.go` honors only the structured leading form `[signed-off] <who> — <why>` or `[signed-off: <who>] <why>` (signer ≤ 3 words, no denial words). `TestParseSignOff` structured cases. |
+| 2 | Negating/requesting/conditional mention is not honored; Gate 1 fails | DONE | Any non-leading marker, and any leading marker followed by prose instead of a dash-terminated signer, fails closed. `TestParseSignOff` covers the four spec examples plus all seven bypasses from the first audit's HOLD; `TestVerify_DeniedSignOffFailsGate` reproduces the reported row end-to-end through `hero spec verify`. |
+| 3 | Gate output says the marker was found but rejected, and why | DONE | `LedgerRow.SignOffRejected` + `spec.SignOffForm` surfaced by `checkLedger` for both AC and Changes rows (`internal/cli/verify.go`); asserted by `TestVerify_DeniedSignOffFailsGate`. |
+| 4 | Same rules for `[signed off]`, case-insensitive | DONE | Shared `parseSignOff`; cases `[SIGNED OFF] Brian Wheeler - …` and `[signed off: dave@example.com]`. |
+| 5 | Well-formed existing ledgers unchanged | SKIPPED | [signed-off] David Christiansen — chose the structured-marker design (option 1) in chat on 2026-09-29 knowing it un-honors the 7 legacy free-form sign-offs in 4 completed, archived specs (cst-initiative-premature-autocomplete, interactive-cli-acceptance-and-merge-gate, spec-completion-loop, token-efficiency-pass). No runtime effect: `SignedOff` is read only by Gate 1, and `verify` exits before Gate 1 for archived completed specs (`internal/cli/verify.go:113`). A lexical rule that preserved them could not also reject the audit's bypasses. |
 
 ### Changes
 
 | # | Change | Status | Note |
 |---|---|---|---|
-| 1 | Anchored sign-off parsing | DONE | `internal/spec/ledger.go` |
-| 2 | Gate 1 rejection message | DONE | `internal/cli/verify.go` |
-| 3 | Skill wording states the anchoring rule | DONE | `core/skills/completion-ledger/SKILL.md` |
-| 4 | Regression tests | DONE | `internal/spec/ledger_test.go`, `internal/cli/verify_test.go` |
+| 1 | Structured sign-off parsing | DONE | `internal/spec/ledger.go` |
+| 2 | Gate 1 rejection message (AC and Changes rows) | DONE | `internal/cli/verify.go` |
+| 3 | Skill documents the structured form | DONE | `core/skills/completion-ledger/SKILL.md` |
+| 4 | Regression tests | DONE | `internal/spec/ledger_test.go`, `internal/cli/verify_test.go` (existing fixtures migrated to the structured form) |
 
 ### Exercise-the-feature check
 
-- [x] Exercised: `go test ./...` green; `TestVerify_DeniedSignOffFailsGate` runs the real `hero spec verify` command against the exact ledger row from the bug report and it now fails Gate 1 with the rejection reason.
+- [x] Exercised: `go test ./...` green; `TestVerify_DeniedSignOffFailsGate` runs the real `hero spec verify` against the exact row from the bug report and it fails Gate 1 naming the rejection and the required form. Scratch corpus pass (deleted) confirmed which archived rows change.
 
-Residual (known, accepted): a trailing marker preceded by a two-word denial such as `do not mark [signed-off]` at the very end of a note is still honored; widening the window regressed a genuine archived sign-off.
+Out of scope, noted for follow-up: the signer is self-declared text, so an agent can still write `[signed-off] <someone> — …` itself; binding sign-off to a real identity is the out-of-band approval design the spec's Boundaries exclude. Two archived specs put the marker in the Status cell (`SKIPPED [signed-off]`), which parses as UNKNOWN — pre-existing and unaffected.

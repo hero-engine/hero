@@ -221,61 +221,88 @@ func parseDataRow(cells []string, fallbackIndex int) LedgerRow {
 	return row
 }
 
-var signOffMarkers = []string{"[signed-off]", "[signed off]"}
+// SignOffForm is the accepted shape of a ledger sign-off, shown to authors
+// whenever a marker is rejected.
+const SignOffForm = "`[signed-off] <who> — <why>` or `[signed-off: <who>] <why>` at the start of the Note"
 
-// signOffDenials are words that, directly adjacent to the marker, mean the note is
-// requesting, deferring, or denying sign-off rather than asserting it.
+var signOffMarkers = []string{"[signed-off", "[signed off"}
+
+// signOffDenials may never appear in the signer attribution; they mean the
+// note is requesting, deferring, or denying sign-off rather than asserting it.
 var signOffDenials = map[string]bool{
 	"not": true, "no": true, "never": true, "without": true, "missing": true,
 	"need": true, "needs": true, "needed": true, "pending": true, "until": true,
 	"before": true, "await": true, "awaits": true, "awaiting": true,
 	"require": true, "requires": true, "required": true, "requested": true,
-	"requesting": true, "withheld": true, "yet": true,
+	"requesting": true, "withheld": true, "yet": true, "denied": true,
+	"outstanding": true, "todo": true, "tbd": true,
 }
 
-// parseSignOff reports whether a ledger note asserts sign-off. The marker is
-// honored only as the note's leading or trailing annotation and only when the
-// word directly beside it is not a denial; anything else fails closed and
-// returns the reason so Gate 1 can explain the rejection.
+// maxSignerWords bounds the attribution so free prose ("was never given") can
+// never pass as a signer name.
+const maxSignerWords = 3
+
+// parseSignOff reports whether a ledger note asserts sign-off. Only the
+// structured form counts: the note must open with the marker and name a
+// signer, either inside the brackets (`[signed-off: bwheeler]`) or directly
+// after them and terminated by a dash (`[signed-off] bwheeler — why`).
+// Everything else fails closed and returns the reason for Gate 1 to report.
 func parseSignOff(note string) (bool, string) {
 	lower := strings.ToLower(strings.TrimSpace(note))
-	found := false
+	var marker string
 	for _, m := range signOffMarkers {
-		for rest, off := lower, 0; ; {
-			i := strings.Index(rest, m)
-			if i < 0 {
-				break
-			}
-			found = true
-			start, end := off+i, off+i+len(m)
-			before, after := lower[:start], lower[end:]
-			if strings.Trim(before, " \t.,;:-—–") != "" && strings.Trim(after, " \t.,;:!-—–") != "" {
-				return false, m + " must lead or end the note"
-			}
-			if w := denialNear(before, after); w != "" {
-				return false, fmt.Sprintf("%s is qualified by %q", m, w)
-			}
-			rest, off = lower[end:], end
+		if strings.Contains(lower, m+"]") || strings.Contains(lower, m+":") {
+			marker = m
+			break
 		}
 	}
-	return found, ""
-}
+	if marker == "" {
+		return false, ""
+	}
+	if !strings.HasPrefix(lower, marker) {
+		return false, "the marker must open the note"
+	}
+	rest := lower[len(marker):]
 
-func denialNear(before, after string) string {
-	isSep := func(r rune) bool { return !unicode.IsLetter(r) }
-	var adjacent []string
-	if pre := strings.FieldsFunc(before, isSep); len(pre) > 0 {
-		adjacent = append(adjacent, pre[len(pre)-1])
+	var signer string
+	switch {
+	case strings.HasPrefix(rest, ":"):
+		close := strings.Index(rest, "]")
+		if close < 0 {
+			return false, "the marker is missing its closing bracket"
+		}
+		signer = rest[1:close]
+	case strings.HasPrefix(rest, "]"):
+		rest = rest[1:]
+		dash := -1
+		for _, sep := range []string{" — ", " – ", " - "} {
+			if i := strings.Index(rest, sep); i >= 0 && (dash < 0 || i < dash) {
+				dash = i
+			}
+		}
+		if dash < 0 {
+			return false, "no signer before a dash after the marker"
+		}
+		signer = rest[:dash]
+	default:
+		return false, "the marker is malformed"
 	}
-	if post := strings.FieldsFunc(after, isSep); len(post) > 0 {
-		adjacent = append(adjacent, post[0])
+
+	words := strings.FieldsFunc(signer, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' && r != '.' && r != '@'
+	})
+	if len(words) == 0 {
+		return false, "no signer is named"
 	}
-	for _, w := range adjacent {
+	if len(words) > maxSignerWords {
+		return false, fmt.Sprintf("the signer must be at most %d words", maxSignerWords)
+	}
+	for _, w := range words {
 		if signOffDenials[w] {
-			return w
+			return false, fmt.Sprintf("the signer contains %q", w)
 		}
 	}
-	return ""
+	return true, ""
 }
 
 // parseIndex extracts a numeric index from a cell like "1", "1.", "AC-1", etc.
