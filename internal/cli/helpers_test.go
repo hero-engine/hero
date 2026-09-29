@@ -113,6 +113,19 @@ func newTestEnvEmpty(t *testing.T) *testEnv {
 }
 
 // addSpec creates a spec file in the test environment.
+// setLedgerSigners registers hero.json ledger.signers for the test workspace.
+func (e *testEnv) setLedgerSigners(ids ...string) {
+	e.t.Helper()
+	cfg, err := config.Load(e.dir)
+	if err != nil {
+		e.t.Fatalf("config.Load: %v", err)
+	}
+	cfg.Ledger = &config.LedgerConfig{Signers: ids}
+	if err := cfg.Save(e.dir); err != nil {
+		e.t.Fatalf("config.Save: %v", err)
+	}
+}
+
 func (e *testEnv) addSpec(relPath string, content string) {
 	e.t.Helper()
 

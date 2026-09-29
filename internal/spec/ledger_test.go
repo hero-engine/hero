@@ -334,52 +334,63 @@ func TestParseLedger_NilSpec(t *testing.T) {
 
 func TestParseSignOff(t *testing.T) {
 	cases := []struct {
-		note       string
-		want       bool
-		wantReject bool
+		note, wantSigner string
+		wantReject       bool
 	}{
-		// Structured forms are honored.
-		{"[signed-off] bwheeler — accepted the descope", true, false},
-		{"[SIGNED OFF] Brian Wheeler - deferred to phase 2", true, false},
-		{"[signed-off: bwheeler] accepted the descope", true, false},
-		{"[signed off: dave@example.com]", true, false},
-		{"implemented", false, false},
-		// The reported case and the spec's examples.
-		{"[signed-off] NOT yet given", false, true},
-		{"Needs user sign-off — [signed-off] NOT yet given", false, true},
-		{"needs [signed-off] before shipping", false, true},
-		{"awaiting [signed off] from owner", false, true},
-		{"blocked pending [signed-off]", false, true},
-		{"do not mark [signed-off] until the owner reviews", false, true},
-		// Audit HOLD bypasses: free prose never passes as a signer.
-		{"[signed-off] was never given", false, true},
-		{"[signed-off] is still outstanding", false, true},
-		{"[signed-off]: denied", false, true},
-		{"owner has not given [signed-off]", false, true},
-		{"not approved by owner [signed-off]", false, true},
-		{"please ask for [signed-off]", false, true},
-		{"TODO get [signed-off]", false, true},
-		{"[signed-off] has not been given — see thread", false, true},
-		{"[signed-off] not given — sorry", false, true},
-		{"[signed-off: pending]", false, true},
-		{"[signed-off: ] fine", false, true},
-		// Second audit HOLD: hyphen/slash-joined denials and missing words.
-		{"[signed-off] not-yet — x", false, true},
-		{"[signed-off:not-given]", false, true},
-		{"[signed-off: awaiting-owner]", false, true},
-		{"[signed-off] refused — see thread", false, true},
-		{"[signed-off] declined - ok", false, true},
-		{"[signed-off] nobody — not given", false, true},
-		{"[signed-off] N/A — n/a", false, true},
-		{"[signed-off] Jean-Luc O'Brien — accepted", true, false},
-		// Legacy unstructured sign-offs no longer count.
-		{"out of scope [signed-off]", false, true},
-		{"[signed-off] Explicitly optional per this spec's own text.", false, true},
+		// Structured forms yield the normalized signer.
+		{"[signed-off] bwheeler — accepted the descope", "bwheeler", false},
+		{"[SIGNED OFF] Brian Wheeler - deferred to phase 2", "brian wheeler", false},
+		{"[signed-off: bwheeler] accepted the descope", "bwheeler", false},
+		{"[signed off: dave@example.com]", "dave@example.com", false},
+		{"[signed-off] Jean-Luc O'Brien – accepted", "jean-luc o'brien", false},
+		{"implemented", "", false},
+		// Structurally rejected: not leading, no dash-terminated signer, empty.
+		{"Needs user sign-off — [signed-off] NOT yet given", "", true},
+		{"needs [signed-off] before shipping", "", true},
+		{"awaiting [signed off] from owner", "", true},
+		{"blocked pending [signed-off]", "", true},
+		{"owner has not given [signed-off]", "", true},
+		{"out of scope [signed-off]", "", true},
+		{"[signed-off] NOT yet given", "", true},
+		{"[signed-off] was never given", "", true},
+		{"[signed-off]: denied", "", true},
+		{"[signed-off: ] fine", "", true},
+		{"[signed-off] Explicitly optional per this spec's own text.", "", true},
 	}
 	for _, c := range cases {
-		got, reason := parseSignOff(c.note)
-		if got != c.want || (reason != "") != c.wantReject {
-			t.Errorf("parseSignOff(%q) = %v, %q; want %v, rejected=%v", c.note, got, reason, c.want, c.wantReject)
+		signer, reason := parseSignOff(c.note)
+		if signer != c.wantSigner || (reason != "") != c.wantReject {
+			t.Errorf("parseSignOff(%q) = %q, %q; want %q, rejected=%v", c.note, signer, reason, c.wantSigner, c.wantReject)
+		}
+	}
+}
+
+func TestResolveSigners(t *testing.T) {
+	notes := []string{
+		"[signed-off] bwheeler — accepted",
+		"[signed-off: Brian Wheeler] accepted",
+		// Denials shaped like a signer fail because no such identity exists.
+		"[signed-off] waiting on owner — see thread",
+		"[signed-off] not-yet — x",
+		"[signed-off: pending]",
+		"[signed-off] hasn't — x",
+		"[signed-off] N/A — n/a",
+	}
+	l := &LedgerResult{}
+	for i, n := range notes {
+		r := LedgerRow{Index: i + 1, Status: LedgerSkipped, Note: n}
+		r.Signer, r.SignOffRejected = parseSignOff(n)
+		r.SignedOff = r.Signer != ""
+		l.ACRows = append(l.ACRows, r)
+	}
+	l.ResolveSigners(map[string]bool{"bwheeler": true, "brian wheeler": true})
+	for i, r := range l.ACRows {
+		want := i < 2
+		if r.SignedOff != want {
+			t.Errorf("%q: SignedOff = %v, want %v", r.Note, r.SignedOff, want)
+		}
+		if !want && r.SignOffRejected == "" {
+			t.Errorf("%q: expected a rejection reason", r.Note)
 		}
 	}
 }

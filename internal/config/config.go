@@ -78,6 +78,7 @@ type Config struct {
 	Cloud                 *CloudConfig                 `json:"cloud,omitempty"`
 	Next                  *NextConfig                  `json:"next,omitempty"`
 	Snapshot              *SnapshotConfig              `json:"snapshot,omitempty"`
+	Ledger                *LedgerConfig                `json:"ledger,omitempty"`
 	Specs                 *SpecsConfig                 `json:"specs,omitempty"`
 	Delivery              *DeliveryConfig              `json:"delivery,omitempty"`
 	Verify                *VerifyConfig                `json:"verify,omitempty"`
@@ -508,6 +509,13 @@ type SnapshotConfig struct {
 	// Archive carries the archive-related sub-settings. Nil-safe:
 	// readers should call accessor methods that supply defaults.
 	Archive *SnapshotArchiveConfig `json:"archive,omitempty"`
+}
+
+// LedgerConfig governs the Completion Ledger. Signers lists identities
+// (names, emails, or handles) allowed to sign off SKIPPED/BLOCKED rows in
+// addition to the repository's git commit authors.
+type LedgerConfig struct {
+	Signers []string `json:"signers,omitempty"`
 }
 
 // SnapshotArchiveConfig controls when archives are written and how

@@ -168,23 +168,24 @@ pass Gate 1. When the gate is unsure, it must fail closed.
 
 | # | Criterion | Status | Note |
 |---|---|---|---|
-| 1 | Leading `[signed-off]` is honored | DONE | `parseSignOff` in `internal/spec/ledger.go` honors only the structured leading form `[signed-off] <who> — <why>` or `[signed-off: <who>] <why>` (signer ≤ 3 words, no denial words). `TestParseSignOff` structured cases. |
-| 2 | Negating/requesting/conditional mention is not honored; Gate 1 fails | DONE | Any non-leading marker, and any leading marker followed by prose instead of a dash-terminated signer, fails closed. `TestParseSignOff` covers the four spec examples plus all bypasses from both audit HOLDs (reworded, hyphen/slash-joined, and refused/declined/nobody/n/a signers); `TestVerify_DeniedSignOffFailsGate` reproduces the reported row end-to-end through `hero spec verify`. |
-| 3 | Gate output says the marker was found but rejected, and why | DONE | `LedgerRow.SignOffRejected` + `spec.SignOffForm` surfaced by `checkLedger` for both AC and Changes rows (`internal/cli/verify.go`); asserted by `TestVerify_DeniedSignOffFailsGate`. |
-| 4 | Same rules for `[signed off]`, case-insensitive | DONE | Shared `parseSignOff`; cases `[SIGNED OFF] Brian Wheeler - …` and `[signed off: dave@example.com]`. |
-| 5 | Well-formed existing ledgers unchanged | SKIPPED | [signed-off] David Christiansen — chose the structured-marker design (option 1) in chat on 2026-09-29 knowing it un-honors the 7 legacy free-form sign-offs in 4 completed, archived specs (cst-initiative-premature-autocomplete, interactive-cli-acceptance-and-merge-gate, spec-completion-loop, token-efficiency-pass). No runtime effect: `SignedOff` is read only by Gate 1, and `verify` exits before Gate 1 for archived completed specs (`internal/cli/verify.go:113`). A lexical rule that preserved them could not also reject the audit's bypasses. |
+| 1 | Leading `[signed-off]` is honored | DONE | `parseSignOff` (`internal/spec/ledger.go`) honors only the structured leading form `[signed-off] <who> — <why>` or `[signed-off: <who>] <why>`; `LedgerResult.ResolveSigners` then requires `<who>` to be a known identity. `TestParseSignOff`, `TestResolveSigners`, `TestVerify_SignedOffPassesGate`. |
+| 2 | Negating/requesting/conditional mention is not honored; Gate 1 fails | DONE | Non-leading or prose-shaped markers fail structurally; denials in the signer slot (`waiting on owner`, `not-yet`, `pending`, `hasn't`, `N/A`) fail because they are not identities — no denial word list to keep current. Known identities = git commit authors (name, email, email user) + hero.json `ledger.signers` (`knownSigners` in `internal/cli/verify.go`). Covers the spec's examples and every bypass from the three audit HOLDs. `TestVerify_DeniedSignOffFailsGate`, `TestVerify_UnknownSignerFailsGate`, `TestKnownSigners_GitAuthorsAndConfig`. |
+| 3 | Gate output says the marker was found but rejected, and why | DONE | `LedgerRow.SignOffRejected` + `spec.SignOffForm` surfaced by `checkLedger` for AC and Changes rows; asserted in both verify tests above. |
+| 4 | Same rules for `[signed off]`, case-insensitive | DONE | Shared `parseSignOff`; signers normalized via `spec.NormalizeSigner`. Cases `[SIGNED OFF] Brian Wheeler - …`, `[signed off: dave@example.com]`. |
+| 5 | Well-formed existing ledgers unchanged | SKIPPED | [signed-off] David Christiansen — chose the structured-marker design (2026-09-29) and then identity-matched signers (2026-09-29) in chat, knowing both un-honor the 7 legacy free-form sign-offs in 4 completed, archived specs (cst-initiative-premature-autocomplete, interactive-cli-acceptance-and-merge-gate, spec-completion-loop, token-efficiency-pass). No runtime effect: `SignedOff` is read only by Gate 1, and `verify` exits before Gate 1 for archived completed specs (`internal/cli/verify.go:113`). |
 
 ### Changes
 
 | # | Change | Status | Note |
 |---|---|---|---|
-| 1 | Structured sign-off parsing | DONE | `internal/spec/ledger.go` |
-| 2 | Gate 1 rejection message (AC and Changes rows) | DONE | `internal/cli/verify.go` |
-| 3 | Skill documents the structured form | DONE | `core/skills/completion-ledger/SKILL.md` |
-| 4 | Regression tests | DONE | `internal/spec/ledger_test.go`, `internal/cli/verify_test.go` (existing fixtures migrated to the structured form) |
+| 1 | Structured sign-off parsing + signer resolution | DONE | `internal/spec/ledger.go` |
+| 2 | Known-identity lookup and Gate 1 rejection messages | DONE | `internal/cli/verify.go` |
+| 3 | `ledger.signers` config | DONE | `internal/config/config.go` (`LedgerConfig`) |
+| 4 | Skill documents the form and identity rule | DONE | `core/skills/completion-ledger/SKILL.md` |
+| 5 | Regression tests | DONE | `internal/spec/ledger_test.go`, `internal/cli/verify_test.go`, `internal/cli/helpers_test.go` (`setLedgerSigners`) |
 
 ### Exercise-the-feature check
 
-- [x] Exercised: `go test ./...` green; `TestVerify_DeniedSignOffFailsGate` runs the real `hero spec verify` against the exact row from the bug report and it fails Gate 1 naming the rejection and the required form. Scratch corpus pass (deleted) confirmed which archived rows change.
+- [x] Exercised: `go test ./...` green. `TestVerify_DeniedSignOffFailsGate` and `TestVerify_UnknownSignerFailsGate` run the real `hero spec verify` against a denial row and an unknown-signer row and both fail Gate 1 naming the reason and required form; `TestVerify_SignedOffPassesGate` passes with a configured signer.
 
-Out of scope, noted for follow-up: the signer is self-declared text, so an agent can still write `[signed-off] <someone> — …` itself; binding sign-off to a real identity is the out-of-band approval design the spec's Boundaries exclude. Two archived specs put the marker in the Status cell (`SKIPPED [signed-off]`), which parses as UNKNOWN — pre-existing and unaffected.
+Scope note (user-approved in chat, 2026-09-29): requiring a known identity touches "who may sign off", which Boundaries listed as out of scope; the user chose it after the denylist approach failed three audits. Residual, out of scope: a known identity's name can still be written by an agent without that person's approval — only an out-of-band approval channel closes that. Two archived specs put the marker in the Status cell (`SKIPPED [signed-off]`), which parses as UNKNOWN — pre-existing and unaffected.

@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/hero-engine/hero/internal/config"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -274,6 +276,7 @@ slug: signed-pass
 - [x] Exercised: ran the command, works
 `
 	env.addSpec("planning/features/signed-pass/spec.md", specContent)
+	env.setLedgerSigners("bwheeler@example.com")
 	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/signed-pass/delivery-audit.md"),
 		strings.Replace(auditReportShip, "test-feature", "signed-pass", -1))
 	env.indexAll()
@@ -323,6 +326,71 @@ slug: denied-signoff
 	}
 	if !strings.Contains(output, "sign-off marker found but rejected") {
 		t.Errorf("expected rejection reason in gate output, got:\n%s", output)
+	}
+}
+
+func TestVerify_UnknownSignerFailsGate(t *testing.T) {
+	env := newTestEnv(t)
+	specContent := `---
+title: Unknown Signer
+type: feature
+status: delivering
+slug: unknown-signer
+---
+# Unknown Signer
+
+## Acceptance Criteria
+
+- AC-1: Do X
+- AC-2: Do Y
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Note |
+|---|---|---|---|
+| 1 | Do X | DONE | implemented |
+| 2 | Do Y | SKIPPED | [signed-off] waiting on owner — see thread |
+
+### Exercise-the-feature check
+
+- [x] Exercised: ran the command, works
+`
+	env.addSpec("planning/features/unknown-signer/spec.md", specContent)
+	env.setLedgerSigners("bwheeler")
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/unknown-signer/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "unknown-signer", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "unknown-signer")
+	if err == nil {
+		t.Fatalf("verify should fail for a signer that is not a known identity\noutput: %s", output)
+	}
+	if !strings.Contains(output, `signer "waiting on owner" is not a known identity`) {
+		t.Errorf("expected unknown-signer rejection in gate output, got:\n%s", output)
+	}
+}
+
+func TestKnownSigners_GitAuthorsAndConfig(t *testing.T) {
+	dir := t.TempDir()
+	for _, args := range [][]string{
+		{"init", "-q"},
+		{"-c", "user.name=Ada Lovelace", "-c", "user.email=ada@example.com", "commit", "-q", "--allow-empty", "-m", "init"},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	cfg := config.Config{Ledger: &config.LedgerConfig{Signers: []string{"Grace Hopper", "bwheeler@example.com"}}}
+	known := knownSigners(dir, cfg)
+	for _, id := range []string{"ada lovelace", "ada@example.com", "ada", "grace hopper", "bwheeler@example.com", "bwheeler"} {
+		if !known[id] {
+			t.Errorf("expected %q to be a known signer; got %v", id, known)
+		}
+	}
+	if known["waiting on owner"] {
+		t.Error("unexpected identity")
 	}
 }
 

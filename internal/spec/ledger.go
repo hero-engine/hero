@@ -3,7 +3,6 @@ package spec
 import (
 	"fmt"
 	"strings"
-	"unicode"
 )
 
 // LedgerStatus represents the completion state of a ledger row.
@@ -23,7 +22,8 @@ type LedgerRow struct {
 	Summary   string
 	Status    LedgerStatus
 	Note      string
-	SignedOff bool // true if Note asserts a [signed-off] annotation (see parseSignOff)
+	SignedOff bool   // structured sign-off present; ResolveSigners clears it for unknown signers
+	Signer    string // normalized signer named by the sign-off marker
 	// SignOffRejected explains why a [signed-off] marker present in Note was
 	// not honored; empty when there is no marker or it was honored.
 	SignOffRejected string
@@ -216,39 +216,25 @@ func parseDataRow(cells []string, fallbackIndex int) LedgerRow {
 		row.Note = stripBold(cells[2])
 	}
 
-	row.SignedOff, row.SignOffRejected = parseSignOff(row.Note)
+	row.Signer, row.SignOffRejected = parseSignOff(row.Note)
+	row.SignedOff = row.Signer != ""
 
 	return row
 }
 
 // SignOffForm is the accepted shape of a ledger sign-off, shown to authors
 // whenever a marker is rejected.
-const SignOffForm = "`[signed-off] <who> — <why>` or `[signed-off: <who>] <why>` at the start of the Note"
+const SignOffForm = "`[signed-off] <who> — <why>` or `[signed-off: <who>] <why>` at the start of the Note, where <who> is a git commit author (name, email, or email user) or a `ledger.signers` entry in hero.json"
 
 var signOffMarkers = []string{"[signed-off", "[signed off"}
 
-// signOffDenials may never appear in the signer attribution; they mean the
-// note is requesting, deferring, or denying sign-off rather than asserting it.
-var signOffDenials = map[string]bool{
-	"not": true, "no": true, "never": true, "without": true, "missing": true,
-	"need": true, "needs": true, "needed": true, "pending": true, "until": true,
-	"before": true, "await": true, "awaits": true, "awaiting": true,
-	"require": true, "requires": true, "required": true, "requested": true,
-	"requesting": true, "withheld": true, "yet": true, "denied": true,
-	"outstanding": true, "todo": true, "tbd": true, "refused": true,
-	"declined": true, "rejected": true, "nobody": true, "none": true,
-}
-
-// maxSignerWords bounds the attribution so free prose ("was never given") can
-// never pass as a signer name.
-const maxSignerWords = 3
-
-// parseSignOff reports whether a ledger note asserts sign-off. Only the
-// structured form counts: the note must open with the marker and name a
-// signer, either inside the brackets (`[signed-off: bwheeler]`) or directly
-// after them and terminated by a dash (`[signed-off] bwheeler — why`).
-// Everything else fails closed and returns the reason for Gate 1 to report.
-func parseSignOff(note string) (bool, string) {
+// parseSignOff extracts the signer from a structured sign-off: the note must
+// open with the marker and name the signer either inside the brackets
+// (`[signed-off: bwheeler]`) or directly after them, terminated by a dash
+// (`[signed-off] bwheeler — why`). It returns the signer, or the reason a
+// marker present in the note was rejected. Whether the signer is a real
+// identity is decided later by LedgerResult.ResolveSigners.
+func parseSignOff(note string) (signer, rejected string) {
 	lower := strings.ToLower(strings.TrimSpace(note))
 	var marker string
 	for _, m := range signOffMarkers {
@@ -258,21 +244,20 @@ func parseSignOff(note string) (bool, string) {
 		}
 	}
 	if marker == "" {
-		return false, ""
+		return "", ""
 	}
 	if !strings.HasPrefix(lower, marker) {
-		return false, "the marker must open the note"
+		return "", "the marker must open the note"
 	}
 	rest := lower[len(marker):]
 
-	var signer string
 	switch {
 	case strings.HasPrefix(rest, ":"):
-		close := strings.Index(rest, "]")
-		if close < 0 {
-			return false, "the marker is missing its closing bracket"
+		end := strings.Index(rest, "]")
+		if end < 0 {
+			return "", "the marker is missing its closing bracket"
 		}
-		signer = rest[1:close]
+		signer = rest[1:end]
 	case strings.HasPrefix(rest, "]"):
 		rest = rest[1:]
 		dash := -1
@@ -282,37 +267,41 @@ func parseSignOff(note string) (bool, string) {
 			}
 		}
 		if dash < 0 {
-			return false, "no signer before a dash after the marker"
+			return "", "no signer before a dash after the marker"
 		}
 		signer = rest[:dash]
 	default:
-		return false, "the marker is malformed"
+		return "", "the marker is malformed"
 	}
 
-	words := strings.FieldsFunc(signer, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' && r != '.' && r != '@'
-	})
-	if len(words) == 0 {
-		return false, "no signer is named"
+	signer = NormalizeSigner(signer)
+	if signer == "" {
+		return "", "no signer is named"
 	}
-	if len(words) > maxSignerWords {
-		return false, fmt.Sprintf("the signer must be at most %d words", maxSignerWords)
-	}
-	// Denials are checked letter-run by letter-run so hyphenated or slashed
-	// phrasing ("not-yet", "n/a") cannot hide inside a signer token.
-	named := false
-	for _, w := range strings.FieldsFunc(signer, func(r rune) bool { return !unicode.IsLetter(r) }) {
-		if signOffDenials[w] {
-			return false, fmt.Sprintf("the signer contains %q", w)
+	return signer, ""
+}
+
+// NormalizeSigner canonicalizes a signer or identity for comparison:
+// lowercase, surrounding punctuation trimmed, inner whitespace collapsed.
+func NormalizeSigner(s string) string {
+	s = strings.Trim(strings.ToLower(s), " \t.,;:<>\"'`*_")
+	return strings.Join(strings.Fields(s), " ")
+}
+
+// ResolveSigners honors a structured sign-off only when its signer is a
+// known identity, so free text in the signer slot ("waiting on owner",
+// "not given") can never approve a row. Unknown signers fail closed with a
+// rejection reason.
+func (l *LedgerResult) ResolveSigners(known map[string]bool) {
+	for _, rows := range [][]LedgerRow{l.ACRows, l.ChangesRows} {
+		for i := range rows {
+			r := &rows[i]
+			if r.SignedOff && !known[r.Signer] {
+				r.SignedOff = false
+				r.SignOffRejected = fmt.Sprintf("signer %q is not a known identity", r.Signer)
+			}
 		}
-		if len([]rune(w)) >= 2 {
-			named = true
-		}
 	}
-	if !named {
-		return false, "no signer is named"
-	}
-	return true, ""
 }
 
 // parseIndex extracts a numeric index from a cell like "1", "1.", "AC-1", etc.
