@@ -363,6 +363,15 @@ func TestParseSignOff(t *testing.T) {
 		{"[signed-off] not given — sorry", false, true},
 		{"[signed-off: pending]", false, true},
 		{"[signed-off: ] fine", false, true},
+		// Second audit HOLD: hyphen/slash-joined denials and missing words.
+		{"[signed-off] not-yet — x", false, true},
+		{"[signed-off:not-given]", false, true},
+		{"[signed-off: awaiting-owner]", false, true},
+		{"[signed-off] refused — see thread", false, true},
+		{"[signed-off] declined - ok", false, true},
+		{"[signed-off] nobody — not given", false, true},
+		{"[signed-off] N/A — n/a", false, true},
+		{"[signed-off] Jean-Luc O'Brien — accepted", true, false},
 		// Legacy unstructured sign-offs no longer count.
 		{"out of scope [signed-off]", false, true},
 		{"[signed-off] Explicitly optional per this spec's own text.", false, true},

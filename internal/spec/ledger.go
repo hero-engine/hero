@@ -235,7 +235,8 @@ var signOffDenials = map[string]bool{
 	"before": true, "await": true, "awaits": true, "awaiting": true,
 	"require": true, "requires": true, "required": true, "requested": true,
 	"requesting": true, "withheld": true, "yet": true, "denied": true,
-	"outstanding": true, "todo": true, "tbd": true,
+	"outstanding": true, "todo": true, "tbd": true, "refused": true,
+	"declined": true, "rejected": true, "nobody": true, "none": true,
 }
 
 // maxSignerWords bounds the attribution so free prose ("was never given") can
@@ -297,10 +298,19 @@ func parseSignOff(note string) (bool, string) {
 	if len(words) > maxSignerWords {
 		return false, fmt.Sprintf("the signer must be at most %d words", maxSignerWords)
 	}
-	for _, w := range words {
+	// Denials are checked letter-run by letter-run so hyphenated or slashed
+	// phrasing ("not-yet", "n/a") cannot hide inside a signer token.
+	named := false
+	for _, w := range strings.FieldsFunc(signer, func(r rune) bool { return !unicode.IsLetter(r) }) {
 		if signOffDenials[w] {
 			return false, fmt.Sprintf("the signer contains %q", w)
 		}
+		if len([]rune(w)) >= 2 {
+			named = true
+		}
+	}
+	if !named {
+		return false, "no signer is named"
 	}
 	return true, ""
 }
