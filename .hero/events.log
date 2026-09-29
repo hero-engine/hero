@@ -592,3 +592,5 @@
 {"ts":"2026-08-24T16:23:36.207609Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-public-visibility-launch-gate","message":"status -\u003e completed"}
 {"ts":"2026-08-24T16:23:37.70472Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-marketing","message":"\"Hero v0.34 Public Release Readiness\""}
 {"ts":"2026-08-24T16:23:37.70482Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-marketing","message":"status -\u003e completed"}
+{"ts":"2026-09-29T11:35:30.585257Z","type":"delivery_complete","agent":"human/david-christiansen","slug":"resume-emits-dead-recall-command","message":"\"Cold-start digest emits a dead `hero recall` command — and a test enforces it\""}
+{"ts":"2026-09-29T11:35:30.585351Z","type":"spec.status_changed","agent":"human/david-christiansen","slug":"resume-emits-dead-recall-command","message":"status -\u003e completed"}

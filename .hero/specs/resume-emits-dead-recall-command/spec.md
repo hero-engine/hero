@@ -2,7 +2,7 @@
 title: "Cold-start digest emits a dead `hero recall` command — and a test enforces it"
 slug: resume-emits-dead-recall-command
 type: bug
-status: delivering
+status: completed
 domain: engineering
 priority: high
 size: trivial
@@ -10,6 +10,7 @@ horizon: now
 created: 2026-07-14
 parent: hero-self-consistency
 tags: [digest, cold-start, dead-command, self-consistency]
+completed_at: 2026-09-29T11:35:29Z
 ---
 
 # Cold-start digest emits a dead `hero recall` command — and a test enforces it
@@ -114,6 +115,8 @@ Low blast radius, high embarrassment, disproportionate cost. Every truncated dig
 |---|---|---|---|
 | 1 | Point truncation hint at `hero search` | DONE | `internal/digest/digest.go` |
 | 2 | Flip the test that enforced the dead command | DONE | `internal/digest/digest_test.go` |
+| 3 | Rename `sectionRecallTopic` or note it | DONE | Noted, not renamed: it is an unexported helper that only picks the placeholder topic, so the name is not user-visible; renaming would widen the diff for no behavior change. |
+| 4 | Sweep for other emitters of the dead command | DONE | `rg "hero recall"` over code, content, and templates: no other emitter. `.hero/QUEUE.md` mentions it only by quoting this spec's own title/kickoff. |
 
 ### Exercise-the-feature check
 
