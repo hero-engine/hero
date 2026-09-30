@@ -164,7 +164,7 @@ Implemented inline with the implementation-principles, go-stack and testing-and-
 | 4 | AC-4: connect aha states the limit; broker keeps working | DONE | `connect.go` prints the notice after the text-mode success line; `TestNonInteractiveConnectAhaStatesBrokerOnlyLimit`; `TestBrokerAhaRequestInjectsCredentialAndReturnsOnlySafeHeaders` still passes |
 | 5 | AC-5: Mail vs Peering paragraphs render identically into CLAUDE.md and AGENTS.md | DONE | `agents_md.go` (after the peer bullets) and `domains/engineering/routing.md` (before the Attention table), with concrete `hero_mail_*` tool names so `TestCanonicalRoutingReferencesResolveAgainstRealSurfaces` passes; `TestRoutingGuidanceReachesAllHarnessNativeRoots` asserts both markers across all 8 targets |
 | 6 | AC-6: checked-in CLAUDE.md/AGENTS.md match the branch binary | DONE | Regenerated with `./hero upgrade` (v0.34.2-6-ge7d31917); a second upgrade was a no-op and `CLAUDE.md` byte-identical; pack parity `TestEngineeringPackBodyMatchesGoFallback` passes |
-| 7 | AC-7: interactive `dsh --profile web --patch '<path>'`, no prompt, not headless | DONE | `mcp_deepseek.go` `DeepSeekLaunchCommand`; exact-string assertion in `deepseek_test.go`; install-output and satellite guidance use the same function; docs updated; native `web` + `headless` composition PASS for engineering/pm/qa (`native-compatibility-*.log`) |
+| 7 | AC-7: interactive `dsh --profile web --patch '<path>'`, no prompt, not headless | DONE | `mcp_deepseek.go` `DeepSeekLaunchCommand`, used by install output, satellite guidance and now the doctor footnote (`doctor.go`, real workspace path). The generated DeepSeek AGENTS.md section (`agents_md.go` `renderDeepSeekWorkflowSection`) names the same profile. Tests: exact-string assertion in `deepseek_test.go`, doctor footnote assertion in `TestDoctorDeepSeekNamesMissingArtifactsDespiteFullCounts`, AGENTS.md section assertion. Docs updated. Native web + headless composition PASS (`native-compatibility-*.log`). Audit round 1 HOLD: doctor footnote was missed; fixed |
 | 8 | AC-8: DeepSeek file set rendered once per install; ownership tests unchanged | DONE | `planDeepSeek` in `target_deepseek.go`, computed once in `install.Run` and passed to `runDeepSeek`; `TestDeepSeekInstallRendersFileSetOnce` (falsified: old code 4 reads vs 2 for one pass); all existing `TestDeepSeek*` pass |
 
 ### Changes
@@ -174,8 +174,8 @@ Implemented inline with the implementation-principles, go-stack and testing-and-
 | 1 | doctor.go + tests | DONE | See AC-1/2 |
 | 2 | tracker.go, connect.go + tests | DONE | See AC-3/4 |
 | 3 | agents_md.go + parity tests; regenerate root files | DONE | Also `domains/engineering/routing.md` and the regenerated `domains/engineering/AGENTS.md` pack file |
-| 4 | DeepSeek launch command + docs | DONE | `mcp_deepseek.go`, `MCP-SETUP.md`, `web/docs/src/configuration/mcp-setup.md`, `scripts/deepseek-compatibility.mjs` (now composes web + headless); README has no launch command; doctor footnote already says "--patch" generically |
-| 5 | Single computation of DeepSeek file set | DONE | `install.go`, `target_deepseek.go`; `registerMCPDeepSeek` keeps its cheap overlay-only preflight for standalone MCP registration |
+| 4 | DeepSeek launch command + docs | DONE | `mcp_deepseek.go`, `doctor.go` footnote, `agents_md.go` DeepSeek section, `MCP-SETUP.md`, `web/docs/src/configuration/mcp-setup.md`, `scripts/deepseek-compatibility.mjs` (composes web + headless). README has no launch command |
+| 5 | Single computation of DeepSeek file set | DONE | `install.go`, `target_deepseek.go`. Deviation from Design 5: `registerMCPDeepSeek` still re-renders the overlay (one YAML marshal plus a single-file preflight) rather than reusing `Run`'s bytes, because the same function serves standalone MCP registration. AC-8 (full file set once) holds and is tested |
 
 ### Exercise-the-feature check
 

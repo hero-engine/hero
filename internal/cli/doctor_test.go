@@ -369,7 +369,9 @@ func TestDoctorDeepSeekNamesMissingArtifactsDespiteFullCounts(t *testing.T) {
 				}},
 			}
 			report := buildDoctorReport(info)
-			for _, want := range []string{"! deepseek missing: " + path, "1 installed target is incomplete", "hero upgrade", "Verdict: NEEDS REPAIR", "activation unverified"} {
+			for _, want := range []string{"! deepseek missing: " + path, "1 installed target is incomplete", "hero upgrade", "Verdict: NEEDS REPAIR", "activation unverified",
+				// sept-review-cleanup AC-7: doctor shows the same interactive launch as install.
+				"Launch from the intended workspace: dsh --profile web --patch '/repo/.dsh/hero.cordis.patch.yml'"} {
 				if !strings.Contains(report, want) {
 					t.Errorf("missing %q:\n%s", want, report)
 				}

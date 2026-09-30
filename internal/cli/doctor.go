@@ -181,15 +181,15 @@ var inventoryTargetNames = []install.Target{
 	install.TargetGrok, install.TargetDeepSeek,
 }
 
+// doctorMissingPathLimit caps the per-target missing-path listing.
+const doctorMissingPathLimit = 10
+
 // buildInventorySection renders the "Installed harness targets" section: one
 // row per installed target with expected-vs-actual agent/command/skill counts,
 // a single "not installed:" line for absent targets, an in-section WARNING when
 // an installed target is short on content (with a version-compatible repair
 // path), and a codex footnote when codex is present. Pure so tests can drive it
 // directly.
-// doctorMissingPathLimit caps the per-target missing-path listing.
-const doctorMissingPathLimit = 10
-
 func buildInventorySection(info doctorInfo) string {
 	var b strings.Builder
 	b.WriteString("Installed harness targets\n")
@@ -294,7 +294,11 @@ func buildInventorySection(info doctorInfo) string {
 		b.WriteString("\n  deepseek loads canonical, command-*, and role-* skills under .dsh/skills/.\n")
 		b.WriteString("  Roles are guidance, not registered native subagents.\n")
 		b.WriteString("  MCP overlay: .dsh/hero.cordis.patch.yml; activation unverified.\n")
-		b.WriteString("  Launch dsh from the intended workspace with --patch /absolute/path/to/.dsh/hero.cordis.patch.yml.\n")
+		overlay := "/absolute/path/to/.dsh/hero.cordis.patch.yml"
+		if info.heroDir != "" {
+			overlay = filepath.Join(filepath.Dir(info.heroDir), ".dsh", "hero.cordis.patch.yml")
+		}
+		fmt.Fprintf(&b, "  Launch from the intended workspace: %s\n", install.DeepSeekLaunchCommand(overlay))
 	}
 
 	b.WriteString("\n")

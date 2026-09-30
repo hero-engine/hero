@@ -169,6 +169,10 @@ func TestDeepSeekOverlayCollisionDryRunAndRemoval(t *testing.T) {
 	if ok, err := RemoveDeepSeekOverlay(h.TargetDir, false, true); err != nil || !ok {
 		t.Fatalf("force removal: %v %v", ok, err)
 	}
+	// sept-review-cleanup AC-7: generated AGENTS.md guidance names the profile dsh requires.
+	if section := renderDeepSeekWorkflowSection(); !strings.Contains(section, "with dsh --profile web --patch /absolute/") {
+		t.Fatalf("DeepSeek AGENTS.md guidance lacks the interactive launch:\n%s", section)
+	}
 	// sept-review-cleanup AC-7: interactive launch, no headless profile or prompt.
 	if got := DeepSeekLaunchCommand("/a'b c"); got != "dsh --profile web --patch '/a'\"'\"'b c'" {
 		t.Fatalf("launch command = %q", got)
