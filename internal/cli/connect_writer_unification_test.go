@@ -404,6 +404,7 @@ func TestConnectRoleOptionsOfferOnlyServiceableRoles(t *testing.T) {
 		"gitlab":     {"delivery", "roadmap", "code-host"},
 		"jira":       {"delivery", "roadmap"},
 		"linear":     {"delivery", "roadmap"},
+		"aha":        {"delivery", "roadmap"},
 		"confluence": {"docs"},
 	}
 	for provider, expected := range want {

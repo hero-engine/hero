@@ -617,6 +617,36 @@ func TestBrokerEffectClassificationIsConservative(t *testing.T) {
 	}
 }
 
+func TestBrokerAhaRequestInjectsCredentialAndReturnsOnlySafeHeaders(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); got != "Bearer "+brokerCanary {
+			t.Fatalf("authorization = %q", got)
+		}
+		w.Header().Set("X-Next-Page", "2")
+		w.Header().Set("Set-Cookie", "secret=cookie")
+		fmt.Fprint(w, `{"features":[]}`)
+	}))
+	defer server.Close()
+
+	resp := testBroker(brokerTestConfig("aha", "PRODUCT", server.URL)).Request(
+		context.Background(),
+		brokercontract.RequestRequest{Method: "GET", RelativePath: "/api/v1/features"},
+	)
+	if resp.Error != nil {
+		t.Fatalf("response error: %+v", resp.Error)
+	}
+	if resp.Headers["X-Next-Page"] != "2" || resp.Headers["Set-Cookie"] != "" {
+		t.Fatalf("response headers = %+v", resp.Headers)
+	}
+	encoded, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), brokerCanary) || strings.Contains(string(encoded), "secret=cookie") {
+		t.Fatal("credential-bearing data escaped the broker response")
+	}
+}
+
 func TestBrokerInputBoundsRejectBeforeProviderAttempt(t *testing.T) {
 	var calls int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

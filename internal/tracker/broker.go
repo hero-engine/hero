@@ -394,6 +394,7 @@ func (b *Broker) Request(ctx context.Context, in brokercontract.RequestRequest) 
 	}
 	defer providerResp.Body.Close()
 	resp.StatusCode = intPtr(providerResp.StatusCode)
+	resp.Headers = safeProviderHeaders(providerResp.Header)
 	body, truncated, err := readBounded(providerResp.Body, limit+redact.maxLen())
 	if err != nil {
 		return finishResponse(failResponse(resp, "provider_error", redact.apply(err.Error()), false), start, b.now)
@@ -518,7 +519,26 @@ func injectAuth(req *http.Request, c config.TrackerConnection, token string) {
 		req.Header.Set("PRIVATE-TOKEN", token)
 	case "linear":
 		req.Header.Set("Authorization", token)
+	case "aha":
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
+}
+
+func safeProviderHeaders(headers http.Header) map[string]string {
+	allowed := []string{
+		"Link", "Retry-After", "X-Next-Page", "X-Page", "X-Per-Page",
+		"X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset",
+	}
+	result := map[string]string{}
+	for _, key := range allowed {
+		if value := headers.Get(key); value != "" {
+			result[key] = value
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
 }
 
 func (b *Broker) CLI(ctx context.Context, in brokercontract.CLIRequest) brokercontract.Response {

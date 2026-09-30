@@ -74,21 +74,22 @@ const (
 // operation-owned structured JSON; Body is reserved for arbitrary provider
 // HTTP response bytes represented as text.
 type Response struct {
-	Version      string          `json:"version"`
-	Operation    Operation       `json:"operation"`
-	Provider     string          `json:"provider,omitempty"`
-	ConnectionID string          `json:"connection_id,omitempty"`
-	Effect       Effect          `json:"effect"`
-	StatusCode   *int            `json:"status_code,omitempty"`
-	ExitCode     *int            `json:"exit_code,omitempty"`
-	Result       json.RawMessage `json:"result,omitempty"`
-	Body         string          `json:"body,omitempty"`
-	Stdout       string          `json:"stdout,omitempty"`
-	Stderr       string          `json:"stderr,omitempty"`
-	Truncated    bool            `json:"truncated"`
-	DurationMS   int64           `json:"duration_ms"`
-	NextCursor   string          `json:"next_cursor,omitempty"`
-	Error        *Error          `json:"error,omitempty"`
+	Version      string            `json:"version"`
+	Operation    Operation         `json:"operation"`
+	Provider     string            `json:"provider,omitempty"`
+	ConnectionID string            `json:"connection_id,omitempty"`
+	Effect       Effect            `json:"effect"`
+	StatusCode   *int              `json:"status_code,omitempty"`
+	Headers      map[string]string `json:"headers,omitempty"`
+	ExitCode     *int              `json:"exit_code,omitempty"`
+	Result       json.RawMessage   `json:"result,omitempty"`
+	Body         string            `json:"body,omitempty"`
+	Stdout       string            `json:"stdout,omitempty"`
+	Stderr       string            `json:"stderr,omitempty"`
+	Truncated    bool              `json:"truncated"`
+	DurationMS   int64             `json:"duration_ms"`
+	NextCursor   string            `json:"next_cursor,omitempty"`
+	Error        *Error            `json:"error,omitempty"`
 }
 
 type GetIssueRequest struct {
