@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -63,11 +64,20 @@ func DeepSeekServerName(root string) (string, error) {
 	if name == "" {
 		name = "project"
 	}
-	if len(name) > 22 {
-		name = strings.TrimRight(name[:22], "-")
+	if len(name) > 20 {
+		name = strings.TrimRight(name[:20], "-")
 	}
-	sum := sha256.Sum256([]byte(canonical))
-	return "hero-" + name + "-" + hex.EncodeToString(sum[:])[:4], nil
+	sum := sha256.Sum256([]byte(rootIdentity(canonical)))
+	return "hero-" + name + "-" + hex.EncodeToString(sum[:])[:6], nil
+}
+
+// rootIdentity folds case on the platforms whose default filesystems are
+// case-insensitive, so two spellings of one project never get two servers.
+func rootIdentity(root string) string {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		return strings.ToLower(root)
+	}
+	return root
 }
 
 // resolveDeepSeekHeroCommand returns an absolute hero path: GUI launches do
@@ -82,7 +92,7 @@ func resolveDeepSeekHeroCommand() (string, error) {
 	// Keep PATH's own (possibly symlinked) path so `make install` or a
 	// package-manager upgrade is picked up without reinstalling.
 	if found, err := exec.LookPath("hero"); err == nil {
-		if abs, err := filepath.Abs(found); err == nil {
+		if abs, err := filepath.Abs(found); err == nil && !transientExecutable(abs) {
 			return abs, nil
 		}
 	}
@@ -92,10 +102,33 @@ func resolveDeepSeekHeroCommand() (string, error) {
 	return "", fmt.Errorf("cannot find a stable `hero` binary for DeepSeek: put hero on PATH (e.g. `make install`) or set %s", deepseekCommandEnv)
 }
 
+// transientExecutable reports go-build and temp-directory binaries, which
+// disappear and must never be written into the DeepSeek home patch. Paths are
+// compared both as given and resolved (macOS /tmp and /var are symlinks).
 func transientExecutable(path string) bool {
-	slash := filepath.ToSlash(path)
-	tmp := filepath.ToSlash(os.TempDir())
-	return strings.Contains(slash, "/go-build") || (tmp != "" && strings.HasPrefix(slash, strings.TrimRight(tmp, "/")+"/"))
+	candidates := []string{path}
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		candidates = append(candidates, resolved)
+	}
+	prefixes := []string{"/tmp/", "/private/tmp/", "/var/folders/", "/private/var/folders/"}
+	for _, tmp := range []string{os.TempDir()} {
+		prefixes = append(prefixes, strings.TrimRight(filepath.ToSlash(tmp), "/")+"/")
+		if resolved, err := filepath.EvalSymlinks(tmp); err == nil {
+			prefixes = append(prefixes, strings.TrimRight(filepath.ToSlash(resolved), "/")+"/")
+		}
+	}
+	for _, c := range candidates {
+		slash := filepath.ToSlash(c)
+		if strings.Contains(slash, "/go-build") {
+			return true
+		}
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(slash, prefix) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 type deepseekMCPEntry struct {
@@ -120,46 +153,114 @@ func deepseekHomeMarkers(server string) (string, string) {
 	return "# hero:managed deepseek-mcp " + server, "# end:hero:managed deepseek-mcp " + server
 }
 
-func deepseekHomeBlock(root, command string) (string, string, error) {
+// deepseekAddedNewline flags a start marker whose block needed a separating
+// newline (the file did not end with one), so removal can restore the exact
+// original bytes.
+const deepseekAddedNewline = " (added-newline)"
+
+func deepseekHomeEntry(root, command string) (deepseekMCPEntry, error) {
+	var entry deepseekMCPEntry
 	canonical, err := canonicalProjectRoot(root)
 	if err != nil {
-		return "", "", err
+		return entry, err
 	}
 	server, err := DeepSeekServerName(canonical)
 	if err != nil {
-		return "", "", err
+		return entry, err
 	}
-	var entry deepseekMCPEntry
 	entry.ID, entry.Name = server+"-mcp", deepseekMCPPluginName
 	entry.Config.ServerName, entry.Config.Transport = server, "stdio"
 	entry.Config.Command = command
 	entry.Config.Args = []string{"mcp", "--project-root", canonical}
 	entry.Config.Cwd = canonical
-	data, err := deepseekMCPPatch(entry)
-	if err != nil {
-		return "", "", err
-	}
-	start, end := deepseekHomeMarkers(server)
-	return server, start + "\n" + string(data) + end + "\n", nil
+	return entry, nil
 }
 
-// cutDeepSeekHomeBlock removes server's marked block, reporting whether it
-// was present. An unterminated block is refused rather than guessed at.
-func cutDeepSeekHomeBlock(content, server string) (string, string, bool, error) {
+// insertDeepSeekHomeBlock places entry's marked block at pos in rest,
+// adding (and flagging) a separating newline only when one is missing.
+func insertDeepSeekHomeBlock(rest string, pos int, entry deepseekMCPEntry) (string, error) {
+	data, err := deepseekMCPPatch(entry)
+	if err != nil {
+		return "", err
+	}
+	start, end := deepseekHomeMarkers(entry.Config.ServerName)
+	prefix := ""
+	if pos > 0 && rest[pos-1] != '\n' {
+		prefix, start = "\n", start+deepseekAddedNewline
+	}
+	return rest[:pos] + prefix + start + "\n" + string(data) + end + "\n" + rest[pos:], nil
+}
+
+// cutDeepSeekHomeBlock removes every block for server, returning the
+// remaining bytes, the first block's text, and where it started in rest.
+// Markers only count as whole lines (CRLF tolerated), so marker-like text in
+// a foreign comment is never matched; an unterminated block is refused.
+func cutDeepSeekHomeBlock(content, server string) (rest, block string, pos int, found bool, err error) {
 	start, end := deepseekHomeMarkers(server)
-	i := strings.Index(content, start+"\n")
-	if i < 0 {
-		return content, "", false, nil
+	rest, pos = content, -1
+	for {
+		i, lineEnd, added := -1, 0, false
+		for off := 0; off < len(rest); {
+			next := strings.IndexByte(rest[off:], '\n')
+			stop := len(rest)
+			if next >= 0 {
+				stop = off + next + 1
+			}
+			line := strings.TrimRight(rest[off:stop], "\r\n")
+			if i < 0 && (line == start || line == start+deepseekAddedNewline) {
+				i, added = off, line != start
+			} else if i >= 0 && line == end {
+				lineEnd = stop
+				break
+			}
+			off = stop
+		}
+		if i < 0 {
+			return rest, block, pos, found, nil
+		}
+		if lineEnd == 0 {
+			return "", "", 0, false, fmt.Errorf("unterminated Hero block %q in DeepSeek home patch", server)
+		}
+		if added && i > 0 && rest[i-1] == '\n' {
+			i--
+		}
+		if !found {
+			block, pos, found = rest[i:lineEnd], i, true
+		}
+		rest = rest[:i] + rest[lineEnd:]
 	}
-	j := strings.Index(content[i:], end)
-	if j < 0 {
-		return "", "", false, fmt.Errorf("unterminated Hero block %q in DeepSeek home patch", server)
+}
+
+// deepseekPatchList parses a home patch the way DeepSeek requires: a YAML
+// list (empty or absent counts as zero entries).
+func deepseekPatchList(content string) ([]interface{}, error) {
+	var parsed interface{}
+	if err := yaml.Unmarshal([]byte(content), &parsed); err != nil {
+		return nil, err
 	}
-	k := i + j + len(end)
-	if k < len(content) && content[k] == '\n' {
-		k++
+	if parsed == nil {
+		return nil, nil
 	}
-	return content[:i] + content[k:], content[i:k], true, nil
+	list, ok := parsed.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("must be a YAML list of patch entries")
+	}
+	return list, nil
+}
+
+// countDeepSeekEntry counts list elements inserting the given entry id.
+func countDeepSeekEntry(list []interface{}, id string) int {
+	n := 0
+	for _, item := range list {
+		m, _ := item.(map[string]interface{})
+		inserts, _ := m["insert"].([]interface{})
+		for _, ins := range inserts {
+			if e, _ := ins.(map[string]interface{}); e != nil && e["id"] == id {
+				n++
+			}
+		}
+	}
+	return n
 }
 
 // readDeepSeekHomePatch returns the current bytes ("" when absent) after
@@ -179,12 +280,8 @@ func readDeepSeekHomePatch(path string) (string, bool, error) {
 	if err != nil {
 		return "", false, err
 	}
-	var parsed interface{}
-	if err := yaml.Unmarshal(data, &parsed); err != nil {
-		return "", false, fmt.Errorf("DeepSeek home patch %s is not valid YAML: %w", path, err)
-	}
-	if _, ok := parsed.([]interface{}); !ok && parsed != nil {
-		return "", false, fmt.Errorf("DeepSeek home patch %s must be a YAML list of patch entries", path)
+	if _, err := deepseekPatchList(string(data)); err != nil {
+		return "", false, fmt.Errorf("DeepSeek home patch %s: %w", path, err)
 	}
 	return string(data), true, nil
 }
@@ -192,27 +289,15 @@ func readDeepSeekHomePatch(path string) (string, bool, error) {
 // PreflightDeepSeekHome fails before any install mutation when the home patch
 // cannot be safely updated or no stable hero binary exists.
 func PreflightDeepSeekHome(root string) error {
-	path, err := DeepSeekHomePatchPath()
-	if err != nil {
-		return err
-	}
-	content, _, err := readDeepSeekHomePatch(path)
-	if err != nil {
-		return err
-	}
-	server, err := DeepSeekServerName(root)
-	if err != nil {
-		return err
-	}
-	if _, _, _, err := cutDeepSeekHomeBlock(content, server); err != nil {
-		return err
-	}
-	_, err = resolveDeepSeekHeroCommand()
+	_, _, _, err := UpsertDeepSeekHomeEntry(root, true)
 	return err
 }
 
 // UpsertDeepSeekHomeEntry writes (or refreshes) this project's Hero MCP block
 // in the DeepSeek home patch. Repeat runs with the same binary are no-ops.
+// The result is re-parsed before writing: a layout Hero cannot extend as
+// text (flow-style list, indented list, explicit document end) is refused,
+// because an unparseable home patch stops every DeepSeek profile booting.
 func UpsertDeepSeekHomeEntry(root string, dryRun bool) (path, server string, changed bool, err error) {
 	if path, err = DeepSeekHomePatchPath(); err != nil {
 		return
@@ -225,29 +310,37 @@ func UpsertDeepSeekHomeEntry(root string, dryRun bool) (path, server string, cha
 	if err != nil {
 		return
 	}
-	server, block, err := deepseekHomeBlock(root, command)
+	entry, err := deepseekHomeEntry(root, command)
 	if err != nil {
 		return
 	}
-	rest, old, found, err := cutDeepSeekHomeBlock(content, server)
+	server = entry.Config.ServerName
+	rest, _, pos, found, err := cutDeepSeekHomeBlock(content, server)
 	if err != nil {
 		return
 	}
-	if found && old == block {
-		return path, server, false, nil
-	}
-	var next string
-	if found {
-		// Replace in place so the file's order is stable.
-		i := strings.Index(content, old)
-		next = content[:i] + block + content[i+len(old):]
-	} else {
+	if !found {
 		if !exists {
 			rest = deepseekHomeCreatedLine
-		} else if rest != "" && !strings.HasSuffix(rest, "\n") {
-			rest += "\n"
 		}
-		next = rest + block
+		pos = len(rest)
+	}
+	next, err := insertDeepSeekHomeBlock(rest, pos, entry)
+	if err != nil {
+		return
+	}
+	if next == content {
+		return path, server, false, nil
+	}
+	before, err := deepseekPatchList(rest)
+	if err != nil {
+		err = fmt.Errorf("DeepSeek home patch %s: %w", path, err)
+		return
+	}
+	after, perr := deepseekPatchList(next)
+	if perr != nil || len(after) != len(before)+1 || countDeepSeekEntry(after, entry.ID) != 1 {
+		err = fmt.Errorf("cannot safely add Hero to DeepSeek home patch %s: its layout (e.g. flow-style [], an indented list, or a `...` document end) cannot be extended without rewriting your entries; convert it to a block-style YAML list and rerun", path)
+		return
 	}
 	if dryRun {
 		return path, server, true, nil
@@ -273,7 +366,7 @@ func RemoveDeepSeekHomeEntry(root string, dryRun bool) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	rest, _, found, err := cutDeepSeekHomeBlock(content, server)
+	rest, _, _, found, err := cutDeepSeekHomeBlock(content, server)
 	if err != nil || !found || dryRun {
 		return found, err
 	}
@@ -309,7 +402,7 @@ func InspectDeepSeekRegistration(root string) DeepSeekRegistration {
 		reg.Problem = err.Error()
 		return reg
 	}
-	_, block, found, err := cutDeepSeekHomeBlock(content, reg.ServerName)
+	_, block, _, found, err := cutDeepSeekHomeBlock(content, reg.ServerName)
 	if err != nil {
 		reg.Problem = err.Error()
 		return reg
@@ -330,7 +423,7 @@ func InspectDeepSeekRegistration(root string) DeepSeekRegistration {
 	canonical, _ := canonicalProjectRoot(root)
 	if info, err := os.Stat(reg.Command); err != nil || info.IsDir() || info.Mode()&0o111 == 0 {
 		reg.Problem = fmt.Sprintf("command %s is not an executable hero binary — rerun install after `make install`", reg.Command)
-	} else if entry.Config.Cwd != canonical {
+	} else if rootIdentity(entry.Config.Cwd) != rootIdentity(canonical) {
 		reg.Problem = fmt.Sprintf("entry serves %s, not this project", entry.Config.Cwd)
 	}
 	return reg

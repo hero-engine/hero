@@ -71,21 +71,27 @@ its harness reads it, and Codex already merges an entry into the user's own
    top-level list:
    `- insert: [{ id: hero-<key>-mcp, name: '@deepseek-ai/dsh-mcp-client', config: { serverName: hero-<key>, transport: stdio, command: <abs hero>, args: [mcp, --project-root, <abs root>], cwd: <abs root> } }]`.
    - `<key>` is the project folder name, lowercased and sanitized to
-     `[a-z0-9-]`, truncated so `hero-<key>` stays ≤ 32 characters, plus `-`
-     and the first 4 hex characters of the SHA-256 of the absolute project
-     root. Stable and unique.
-2. **Merge.** Hero writes only its own text block between
+     `[a-z0-9-]` and truncated to 20 characters, plus `-` and the first 6 hex
+     characters of the SHA-256 of the absolute project root. The root is
+     case-folded on macOS/Windows. Stable, unique, and ≤ 32 characters.
+2. **Merge.** Hero writes only its own text block between whole-line
    `# hero:managed deepseek-mcp <server>` / `# end:hero:managed deepseek-mcp <server>`
-   markers, the same contract as the Codex/Grok TOML upsert. Bytes outside
-   the markers are never rewritten, so foreign entries and comments survive
-   byte-for-byte.
+   markers (CRLF tolerated), the same contract as the Codex/Grok TOML upsert.
+   Bytes outside the markers are never rewritten.
+   - A separating newline Hero had to add is flagged on the start marker, so
+     uninstall restores the exact original bytes.
    - A new file starts with a one-line "Created by hero install" header.
    - Before any mutation, refuse a file that isn't a YAML list, isn't a
      regular file, or is a symlink, or has an unterminated Hero block.
+   - The result is re-parsed before writing and must be a list with exactly
+     one more element carrying Hero's entry. Otherwise, refuse. Flow-style
+     `[]`, indented lists, or a `...` document end would otherwise become YAML
+     DeepSeek cannot parse, and no profile would boot.
    - Reinstall replaces the block in place.
 3. **Binary.** Use `exec.LookPath("hero")` as found (absolute, not following
    links, so upgrades via Homebrew or `make install` carry over). Fall back to
-   `os.Executable()` only if it isn't under a temp or `go-build` directory.
+   `os.Executable()`. Reject either candidate if it is under a temp or `go-build`
+   directory (macOS `/tmp` and `/var` aliases resolved).
    Otherwise fail with an actionable error naming `make install`.
 4. **Project overlay.** Stop generating `.dsh/hero.cordis.patch.yml`. On
    reinstall or upgrade, prune it through the existing checksum-owned prune
@@ -203,21 +209,21 @@ picked up, it should go through `/compose` as an initiative.
 
 ## Completion Ledger
 
-Implemented inline (implementation-principles, go-stack, testing-and-validation). Base `3757f58e`. Evidence logs are in this spec directory.
+Implemented inline (implementation-principles, go-stack, testing-and-validation). Base `3757f58e`. Cold audit round 1 returned HOLD (unextendable YAML layouts could break every DeepSeek profile) plus five smaller findings. All are fixed with regression tests that fail on the round-1 code. Evidence logs are in this spec directory.
 
 ### Acceptance Criteria
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | AC-1: one entry per project, id/serverName/absolute command/pinned root | DONE | `deepseek_home.go` `UpsertDeepSeekHomeEntry`, `DeepSeekServerName`, called from `registerMCPDeepSeek` for project mode. Tests: `TestDeepSeekHomeEntryCreateAndNoop` asserts id, name, serverName (≤32, charset), command, cwd, `--project-root`; `TestDeepSeekNativeLayoutAndInventory` |
-| 2 | AC-2: foreign content preserved byte-for-byte; repeat is a no-op | DONE | Marker-delimited text splice. Tests: `TestDeepSeekHomeEntryPreservesForeignContent` (original with comments restored exactly after uninstall); `TestDeepSeekHomeEntryCreateAndNoop` (repeat `changed=false`, bytes identical) |
+| 1 | AC-1: one entry per project, id/serverName/absolute command/pinned root | DONE | `deepseek_home.go` `UpsertDeepSeekHomeEntry`, `DeepSeekServerName` (name ≤20 plus 6-hex hash of the case-folded root on macOS/Windows; audit round 1). Tests: `TestDeepSeekHomeEntryCreateAndNoop`, `TestDeepSeekServerNameShapeAndCase`, `TestDeepSeekNativeLayoutAndInventory` |
+| 2 | AC-2: foreign content preserved byte-for-byte; repeat is a no-op | DONE | Whole-line, CRLF-tolerant markers; an added separator newline is flagged and removed on uninstall. Tests: `TestDeepSeekHomeEntryPreservesForeignContent`, `TestDeepSeekHomeEntryRestoresMissingTrailingNewline`, `TestDeepSeekHomeMarkersAreWholeLines` (marker text in foreign comments untouched; CRLF-converted block not duplicated), `TestDeepSeekHomeEntryCreateAndNoop`. Audit round 1 findings fixed |
 | 3 | AC-3: two projects, distinct entries, independent | DONE | `TestDeepSeekHomeEntryTwoProjects` |
-| 4 | AC-4: non-list, invalid, symlink, or non-regular fails before mutation, including dry-run | DONE | `PreflightDeepSeekHome` in `planDeepSeek`, which runs before the legacy migration. Tests: `TestDeepSeekHomePatchRefusedBeforeMutation` (3 cases × dry/non-dry, asserts no AGENTS.md/.dsh); CLI `TestDeepSeekWorkspaceCollisionFailsBeforeRootInstall` (malformed home patch, root untouched) |
-| 5 | AC-5: PATH hero (absolute, links kept), else non-temporary executable, else actionable error | DONE | `resolveDeepSeekHeroCommand`, plus `HERO_DEEPSEEK_MCP_COMMAND` pin (absolute required). `TestDeepSeekHeroCommandResolution`. Both TestMains pin a fake executable so tests don't depend on the host PATH |
+| 4 | AC-4: unsafe or unextendable home patch fails before mutation, including dry-run | DONE | `PreflightDeepSeekHome` is a dry-run upsert run by `planDeepSeek` before the legacy migration; the result is re-parsed and must contain exactly one new Hero entry. Tests: `TestDeepSeekHomePatchRefusedBeforeMutation` (mapping, invalid, symlink × dry/non-dry); `TestDeepSeekHomePatchUnextendableLayoutsRefused` (flow `[]`, indented list, `...` end left byte-identical; audit round 1 blocker); CLI `TestDeepSeekWorkspaceCollisionFailsBeforeRootInstall` |
+| 5 | AC-5: PATH hero, else non-temporary executable, else actionable error | DONE | `resolveDeepSeekHeroCommand`: both PATH and `os.Executable()` candidates are rejected when under temp or go-build dirs (macOS `/tmp`, `/private/tmp`, `/var/folders` aliases resolved). `HERO_DEEPSEEK_MCP_COMMAND` is an explicit absolute pin. `TestDeepSeekHeroCommandResolution` |
 | 6 | AC-6: no project overlay; unmodified legacy overlay pruned, modified kept with warning | DONE | `deepseekFiles` writes the overlay only in global mode; `pruneDeepSeek` warning. Tests: `TestDeepSeekLegacyOverlayPruning` (both cases), `TestDeepSeekLegacyOverlayPreservedAndRemovable` |
 | 7 | AC-7: install output names server and path; AGENTS.md naming pattern plus hero_status check; no `--patch` | DONE | `registerMCPDeepSeek` prints server and path; `runDeepSeek` project message; `renderDeepSeekWorkflowSection` updated (asserted in `TestDeepSeekLegacyOverlayPreservedAndRemovable`); satellite guidance (`TestDeepSeekSatelliteLayout`); docs rewritten |
 | 8 | AC-8: doctor reports registered, or names missing/stale/wrong-root with a repair verdict | DONE | `InspectDeepSeekRegistration`; `doctor.go` footnote and `deepseekMCPBroken` verdict. Tests: `TestDeepSeekRegistrationProblems`, `TestDoctorDeepSeekRegistrationProblemNeedsRepair`, `TestDoctorDeepSeekNamesMissingArtifactsDespiteFullCounts`, `TestDeepSeekUpgradeSelectionAndDoctor` |
-| 9 | AC-9: uninstall removes only this entry; file removed only if Hero-created and empty; dry-run safe | DONE | `RemoveDeepSeekHomeEntry` wired in `uninstallDeepSeek`. Tests: `TestDeepSeekHomeEntryPreservesForeignContent` (dry-run no-op, exact restore), `TestDeepSeekHomeEntryTwoProjects` (file removed when empty), `TestDeepSeekUninstallOwnershipAndDryRun`, `TestDeepSeekInstallJSONWorkspace` |
+| 9 | AC-9: uninstall removes only this entry; file removed only if Hero-created and empty; dry-run safe | DONE | `RemoveDeepSeekHomeEntry` now runs first in `uninstallDeepSeek`, so an unsafe home patch fails before project files are removed (`TestDeepSeekUninstallFailsBeforeRemovingFilesOnBadHomePatch`, audit round 1). Also `TestDeepSeekHomeEntryPreservesForeignContent`, `TestDeepSeekHomeEntryTwoProjects`, `TestDeepSeekUninstallOwnershipAndDryRun`, `TestDeepSeekInstallJSONWorkspace` |
 | 10 | AC-10: pinned harness composes web/headless plus home patch with no --patch, one Hero client; initialize, list, hero_status | DONE | `scripts/deepseek-compatibility.mjs` also calls the desktop host's `readProfilePatches` with no overlays, and starts MCP from outside the project. `native-compatibility-{engineering,pm,qa}.log`: 86 tools, zero model calls |
 | 11 | AC-11: other seven targets unchanged | DONE | Only DeepSeek code paths changed; full `go test ./...` passes, including the all-target contract, native, smoke, routing, composition, PM and QA matrices (`go-tests.log`). `mcp_test` portable-command matrix still covers the other 6 MCP targets |
 

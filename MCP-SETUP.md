@@ -43,8 +43,8 @@ app's, loads the home patch `$DSH_HOME/cordis.patch.yml` (default
 `~/.dsh/cordis.patch.yml`). A project install adds one Hero entry per project
 to that file, between `# hero:managed deepseek-mcp <server>` markers:
 
-- **Server name:** `hero-<project>-<hash>`, e.g. `hero-api-3f2a`. Hero tools
-  appear as `mcp__hero-api-3f2a__hero_status` and so on.
+- **Server name:** `hero-<project>-<hash>`, e.g. `hero-api-3f2a9c`. Hero tools
+  appear as `mcp__hero-api-3f2a9c__hero_status` and so on.
 - **Command:** the absolute `hero` path found on your `PATH` at install time.
   GUI apps don't inherit your shell `PATH`. If you reinstall Hero somewhere
   else, rerun the install. To pin a specific build, set

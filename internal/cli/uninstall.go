@@ -351,20 +351,24 @@ func uninstallGeneric(projectRoot string, versionInfo *version.Info) (int, int, 
 }
 
 func uninstallDeepSeek(projectRoot string, versionInfo *version.Info) (int, int, error) {
-	removed, preserved, err := removeHeroFiles(projectRoot, filepath.Join(projectRoot, ".dsh", "skills"), versionInfo)
-	if err != nil {
-		return removed, preserved, err
-	}
+	// Remove the home-patch entry first: if that file cannot be safely
+	// edited, fail before any project file is removed.
+	homeRemoved := 0
 	if cleaned, err := install.RemoveDeepSeekHomeEntry(projectRoot, uninstallDryRun); err != nil {
-		return removed, preserved, err
+		return 0, 0, err
 	} else if cleaned {
 		path, _ := install.DeepSeekHomePatchPath()
 		if uninstallDryRun {
 			fmt.Printf("  Would remove this project's Hero MCP entry from %s\n", path)
 		} else {
 			fmt.Printf("  Removed this project's Hero MCP entry from %s\n", path)
-			removed++
+			homeRemoved++
 		}
+	}
+	removed, preserved, err := removeHeroFiles(projectRoot, filepath.Join(projectRoot, ".dsh", "skills"), versionInfo)
+	removed += homeRemoved
+	if err != nil {
+		return removed, preserved, err
 	}
 	// Legacy (pre-home-patch) project overlay, removed only when unmodified.
 	if cleaned, err := install.RemoveDeepSeekOverlay(projectRoot, uninstallDryRun, false); err != nil {

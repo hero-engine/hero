@@ -3,7 +3,7 @@ PASS native registry precedence and Git-root discovery from nested cwd
 PASS Cordis composition: web profile (2 bundle layers) plus home patch, no --patch
 PASS Cordis composition: headless profile (2 bundle layers) plus home patch, no --patch
 PASS desktop-path composition: readProfilePatches with no overlays loads Hero from the home patch
-PASS native MCP client: initialize + tools/list, 86 Hero tools registered as hero-project-with-spaces-24bb
+PASS native MCP client: initialize + tools/list, 86 Hero tools registered as hero-project-with-spaces-aec234
 PASS native MCP tool execution: hero_status from outside the project (pinned root)
 PASS workspace install: same project entry, no duplicate
-{"harnessRevision":"477b4f420553e8a52c2fbccc464d7561b239c443","heroVersion":"hero version v0.34.2-14-g3757f58e-dirty","domain":"pm","skills":133,"tools":86,"serverName":"hero-project-with-spaces-24bb","modelCalls":0}
+{"harnessRevision":"477b4f420553e8a52c2fbccc464d7561b239c443","heroVersion":"hero version v0.34.2-16-g1ceaef1c-dirty","domain":"pm","skills":133,"tools":86,"serverName":"hero-project-with-spaces-aec234","modelCalls":0}

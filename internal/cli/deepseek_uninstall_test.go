@@ -229,3 +229,28 @@ func TestDeepSeekUninstallPreservesModifiedOverlay(t *testing.T) {
 		t.Fatalf("modified overlay changed: %q %v", data, err)
 	}
 }
+
+// Audit: an unsafe home patch fails uninstall before any project file goes.
+func TestDeepSeekUninstallFailsBeforeRemovingFilesOnBadHomePatch(t *testing.T) {
+	root := installDeepSeekFixture(t)
+	homePatch, err := install.DeepSeekHomePatchPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(homePatch, []byte("not: a list\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	info, err := version.Read(filepath.Join(root, ".hero"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldDry := uninstallDryRun
+	t.Cleanup(func() { uninstallDryRun = oldDry })
+	uninstallDryRun = false
+	if _, _, err := uninstallDeepSeek(root, info); err == nil {
+		t.Fatal("uninstall accepted an unsafe home patch")
+	}
+	if _, err := os.Stat(filepath.Join(root, ".dsh", "skills", "command-deliver", "SKILL.md")); err != nil {
+		t.Fatalf("project files removed before the home-patch failure: %v", err)
+	}
+}

@@ -3,6 +3,7 @@ package install
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -161,13 +162,18 @@ func TestDeepSeekHeroCommandResolution(t *testing.T) {
 	fake := filepath.Join(bin, "hero")
 	os.WriteFile(fake, []byte("#!/bin/sh\n"), 0o755)
 	t.Setenv("PATH", bin)
-	if got, err := resolveDeepSeekHeroCommand(); err != nil || got != fake {
-		t.Fatalf("PATH hero = %q, %v; want %q", got, err, fake)
+	// A temp-dir hero on PATH is transient too; with the go-build test
+	// binary as the only other candidate, resolution must refuse.
+	if got, err := resolveDeepSeekHeroCommand(); err == nil || !strings.Contains(err.Error(), "make install") {
+		t.Fatalf("transient PATH hero accepted: %q, %v", got, err)
 	}
 	for path, want := range map[string]bool{
 		"/private/var/folders/x/go-build123/b001/install.test": true,
 		filepath.Join(os.TempDir(), "hero"):                    true,
 		"/usr/local/bin/hero":                                  false,
+		"/tmp/hero":                                            true,
+		"/private/tmp/hero":                                    true,
+		"/private/var/folders/ab/T/hero":                       true,
 	} {
 		if transientExecutable(path) != want {
 			t.Errorf("transientExecutable(%q) != %v", path, want)
@@ -227,5 +233,105 @@ func TestDeepSeekLegacyOverlayPruning(t *testing.T) {
 				t.Fatalf("unmodified legacy overlay kept: %v", err)
 			}
 		})
+	}
+}
+
+// Audit HOLD: layouts that are valid YAML lists but cannot be extended as
+// text must be refused unchanged, never turned into a file DeepSeek cannot
+// parse (which would stop every profile, desktop included, from booting).
+func TestDeepSeekHomePatchUnextendableLayoutsRefused(t *testing.T) {
+	for name, original := range map[string]string{
+		"flow empty list": "[]\n",
+		"indented list":   "  - id: agent-default-model\n    disabled: false\n",
+		"document end":    "- id: agent-default-model\n  disabled: false\n...\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			h := newInstallHarness(t)
+			mkHeroDir(t, h.TargetDir)
+			path := homePatch(t)
+			os.MkdirAll(filepath.Dir(path), 0o755)
+			os.WriteFile(path, []byte(original), 0o644)
+			opts := Options{SourceDir: h.SourceDir, Target: TargetDeepSeek, Mode: ModeProject, TargetDir: h.TargetDir, Quiet: true}
+			if _, err := Run(opts); err == nil || !strings.Contains(err.Error(), "block-style YAML list") {
+				t.Fatalf("unextendable layout accepted: %v", err)
+			}
+			if got := readHomePatch(t); got != original {
+				t.Fatalf("home patch changed:\n%q", got)
+			}
+			h.mustNotExist("AGENTS.md")
+		})
+	}
+}
+
+// Audit AC-2: a file without a trailing newline is restored exactly.
+func TestDeepSeekHomeEntryRestoresMissingTrailingNewline(t *testing.T) {
+	h := newInstallHarness(t)
+	mkHeroDir(t, h.TargetDir)
+	original := "- id: agent-default-model\n  disabled: false"
+	path := homePatch(t)
+	os.MkdirAll(filepath.Dir(path), 0o755)
+	os.WriteFile(path, []byte(original), 0o644)
+	h.Run(TargetDeepSeek, nil)
+	if reg := InspectDeepSeekRegistration(h.TargetDir); reg.Problem != "" {
+		t.Fatalf("not registered: %+v", reg)
+	}
+	if _, _, changed, err := UpsertDeepSeekHomeEntry(h.TargetDir, false); err != nil || changed {
+		t.Fatalf("repeat changed=%v err=%v", changed, err)
+	}
+	if _, err := RemoveDeepSeekHomeEntry(h.TargetDir, false); err != nil {
+		t.Fatal(err)
+	}
+	if got := readHomePatch(t); got != original {
+		t.Fatalf("not restored exactly:\n%q\nwant\n%q", got, original)
+	}
+}
+
+// Audit AC-2: marker text inside a foreign comment is not a marker, and a
+// Hero block whose line endings an editor converted to CRLF is still found
+// (no duplicate entry on reinstall).
+func TestDeepSeekHomeMarkersAreWholeLines(t *testing.T) {
+	h := newInstallHarness(t)
+	mkHeroDir(t, h.TargetDir)
+	server, _ := DeepSeekServerName(h.TargetDir)
+	start, end := deepseekHomeMarkers(server)
+	foreign := "- id: agent-default-model # note: " + start + "\n  disabled: false # " + end + "\n"
+	path := homePatch(t)
+	os.MkdirAll(filepath.Dir(path), 0o755)
+	os.WriteFile(path, []byte(foreign), 0o644)
+	h.Run(TargetDeepSeek, nil)
+	if !strings.HasPrefix(readHomePatch(t), foreign) {
+		t.Fatalf("foreign comment lines altered:\n%s", readHomePatch(t))
+	}
+	crlf := strings.ReplaceAll(strings.TrimPrefix(readHomePatch(t), foreign), "\n", "\r\n")
+	os.WriteFile(path, []byte(foreign+crlf), 0o644)
+	h.Run(TargetDeepSeek, nil)
+	if n := strings.Count(readHomePatch(t), "serverName: "+server); n != 1 {
+		t.Fatalf("CRLF block duplicated (%d entries):\n%s", n, readHomePatch(t))
+	}
+	if _, err := RemoveDeepSeekHomeEntry(h.TargetDir, false); err != nil {
+		t.Fatal(err)
+	}
+	if got := readHomePatch(t); got != foreign {
+		t.Fatalf("foreign content not restored:\n%q", got)
+	}
+}
+
+// Audit: server names use a 6-hex hash and fold case where filesystems do.
+func TestDeepSeekServerNameShapeAndCase(t *testing.T) {
+	root := t.TempDir()
+	name, err := DeepSeekServerName(filepath.Join(root, "A Very Long Project Name That Keeps Going!!"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := strings.Split(name, "-")
+	if len(name) > 32 || len(parts[len(parts)-1]) != 6 {
+		t.Fatalf("server name %q", name)
+	}
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		upper, _ := DeepSeekServerName(filepath.Join(root, "PROJ"))
+		lower, _ := DeepSeekServerName(filepath.Join(root, "proj"))
+		if upper != lower {
+			t.Fatalf("case spellings differ: %s vs %s", upper, lower)
+		}
 	}
 }
