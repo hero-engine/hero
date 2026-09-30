@@ -48,6 +48,8 @@ func RegisterMCP(target Target, opts Options) error {
 		return registerMCPCodex(opts)
 	case TargetGrok:
 		return registerMCPGrok(opts)
+	case TargetDeepSeek:
+		return registerMCPDeepSeek(opts)
 	default:
 		return nil
 	}

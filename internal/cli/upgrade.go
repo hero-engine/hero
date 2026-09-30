@@ -63,7 +63,7 @@ func init() {
 	upgradeCmd.Flags().BoolVar(&upgradeDryRun, "dry-run", false, "show what would change without modifying files")
 	upgradeCmd.Flags().BoolVar(&upgradeForce, "force", false, "overwrite customized files")
 	upgradeCmd.Flags().BoolVar(&upgradeNoHooks, "no-hooks", false, "skip refreshing the installed pre-commit hook (mirrors `hero scan --no-hooks`)")
-	upgradeCmd.Flags().StringSliceVar(&upgradeTargets, "target", nil, "narrow to one or more targets (claude, opencode, cursor, codex, copilot, generic, grok); default: every detected target")
+	upgradeCmd.Flags().StringSliceVar(&upgradeTargets, "target", nil, "narrow to one or more targets (claude, opencode, cursor, codex, copilot, generic, grok, deepseek); default: every detected target")
 	upgradeCmd.Flags().BoolVar(&upgradePruneOrphans, "prune-orphaned-instruction-files", false, "delete a root instruction file (AGENTS.md/CLAUDE.md) whose target was not installed AND whose entire content is Hero-managed; files with any user content are never deleted (default: keep, maintain managed region)")
 }
 
@@ -105,21 +105,6 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 		fromVersion = info.HeroVersion
 	}
 
-	if fromVersion == binaryVersion && fromVersion != "dev" && !upgradeForce {
-		fmt.Printf("Workspace is already at %s — nothing to upgrade.\n", displayVersion(binaryVersion))
-		return nil
-	}
-
-	// Reject downgrade attempts — binary is older than workspace.
-	if binaryVersion != "dev" && fromVersion != "unknown" && fromVersion != "dev" {
-		cmp := version.CompareVersions(binaryVersion, fromVersion)
-		if cmp < 0 {
-			return fmt.Errorf("cannot downgrade workspace from %s to %s — use a newer hero binary or run 'hero init' to create a fresh workspace", displayVersion(fromVersion), displayVersion(binaryVersion))
-		}
-	}
-
-	fmt.Printf("Upgrading workspace from %s to %s\n\n", displayVersion(fromVersion), displayVersion(binaryVersion))
-
 	// Use the embedded content filesystem (overridable for tests).
 	// When no override is provided, build the merged core + active-domain
 	// FS so upgrade renders the same content shape that install does.
@@ -127,12 +112,12 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 	// on first upgrade; the trust map (built from result.Copied below)
 	// records them so subsequent upgrades manage them rather than
 	// treating them as user-authored.
+	resolved, domainErr := cfg.ResolveDomains()
+	if domainErr != nil {
+		return fmt.Errorf("resolving domain composition: %w", domainErr)
+	}
 	contentFS := upgradeContentFS
 	if contentFS == nil {
-		resolved, domainErr := cfg.ResolveDomains()
-		if domainErr != nil {
-			return fmt.Errorf("resolving domain composition: %w", domainErr)
-		}
 		contentFS, _, domainErr = hero.ComposeContent(toPublicComposition(resolved))
 		if domainErr != nil {
 			return fmt.Errorf("composing domain content: %w", domainErr)
@@ -145,18 +130,63 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	var inferredBackfill []install.Target
+	if len(targets) == 0 && len(upgradeTargets) == 0 {
+		inferredBackfill = install.InferInstalledTargets(projectRoot)
+		targets = inferredBackfill
+	}
+
+	// Workspace version and generated install integrity are independent.
+	// Resolve and inspect the installed targets before treating an equal
+	// version as a no-op: harness files can be deleted or partially written
+	// without changing .hero/version.json.
+	inventory, err := install.InventoryForTargets(projectRoot, contentFS, string(resolved.Primary), targets)
+	if err != nil {
+		return fmt.Errorf("checking installed target integrity: %w", err)
+	}
+	incompleteTargets := incompleteInventoryTargets(inventory)
+	rootFindings, err := install.CheckIntegrity(projectRoot, install.Options{
+		ContentFS: contentFS,
+		Domain:    string(resolved.Primary),
+	})
+	if err != nil {
+		return fmt.Errorf("checking root instruction integrity: %w", err)
+	}
+	for _, finding := range rootFindings {
+		incompleteTargets = appendUniqueString(incompleteTargets, string(finding.Target))
+	}
+
+	// Reject downgrade attempts before any install-state or generated-content
+	// writes. When repair is needed, name the minimum compatible binary and the
+	// safe sequence instead of prescribing a command this binary will reject.
+	if binaryVersion != "dev" && fromVersion != "unknown" && fromVersion != "dev" {
+		cmp := version.CompareVersions(binaryVersion, fromVersion)
+		if cmp < 0 {
+			if len(incompleteTargets) > 0 {
+				return fmt.Errorf("cannot repair incomplete target(s) %s with Hero %s: this workspace requires Hero %s or newer; install or select Hero %s or newer, then run 'hero upgrade'", strings.Join(incompleteTargets, ", "), displayVersion(binaryVersion), displayVersion(fromVersion), displayVersion(fromVersion))
+			}
+			return fmt.Errorf("cannot downgrade workspace from %s to %s — install or select Hero %s or newer", displayVersion(fromVersion), displayVersion(binaryVersion), displayVersion(fromVersion))
+		}
+	}
+
+	if fromVersion == binaryVersion && fromVersion != "dev" && !upgradeForce && len(incompleteTargets) == 0 {
+		fmt.Printf("Workspace is already at %s — nothing to upgrade.\n", displayVersion(binaryVersion))
+		return nil
+	}
+
+	if fromVersion == binaryVersion && len(incompleteTargets) > 0 && !upgradeForce {
+		fmt.Printf("Workspace is at %s but installed target integrity is incomplete (%s) — repairing generated files.\n\n", displayVersion(binaryVersion), strings.Join(incompleteTargets, ", "))
+	} else {
+		fmt.Printf("Upgrading workspace from %s to %s\n\n", displayVersion(fromVersion), displayVersion(binaryVersion))
+	}
 
 	// Backfill for pre-state repos: no persisted targets and no detected
 	// content dirs, but the repo may still carry a Hero-managed instruction
 	// file (e.g. a legacy CLAUDE.md stub). Infer the prior set, persist it,
 	// and proceed. Skipped when the user narrowed via --target.
-	if len(targets) == 0 && len(upgradeTargets) == 0 {
-		inferred := install.InferInstalledTargets(projectRoot)
-		if len(inferred) > 0 {
-			if perr := install.PersistInferredTargets(projectRoot, inferred, binaryVersion); perr != nil {
-				fmt.Fprintf(os.Stderr, "Warning: could not persist inferred targets: %v\n", perr)
-			}
-			targets = inferred
+	if len(inferredBackfill) > 0 {
+		if perr := install.PersistInferredTargets(projectRoot, inferredBackfill, binaryVersion); perr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not persist inferred targets: %v\n", perr)
 		}
 	}
 
@@ -423,13 +453,14 @@ func resolveUpgradeTargets(projectRoot string, info *version.Info, requested []s
 		"copilot":  install.TargetCopilot,
 		"generic":  install.TargetGeneric,
 		"grok":     install.TargetGrok,
+		"deepseek": install.TargetDeepSeek,
 	}
 	seen := map[install.Target]bool{}
 	out := make([]install.Target, 0, len(requested))
 	for _, name := range requested {
 		t, ok := known[strings.ToLower(name)]
 		if !ok {
-			return nil, fmt.Errorf("unknown --target %q (valid: opencode, cursor, claude, codex, copilot, generic, grok)", name)
+			return nil, fmt.Errorf("unknown --target %q (valid: opencode, cursor, claude, codex, copilot, generic, grok, deepseek)", name)
 		}
 		if seen[t] {
 			continue
@@ -469,6 +500,25 @@ func detectInstalledTargets(projectRoot string, info *version.Info) []install.Ta
 // upgrade share one definition of the installed-target union.
 func unionTargets(sets ...[]install.Target) []install.Target {
 	return install.UnionTargets(sets...)
+}
+
+func incompleteInventoryTargets(inventory []install.TargetInventory) []string {
+	var targets []string
+	for _, inv := range inventory {
+		if inv.Incomplete() {
+			targets = append(targets, string(inv.Target))
+		}
+	}
+	return targets
+}
+
+func appendUniqueString(values []string, value string) []string {
+	for _, existing := range values {
+		if existing == value {
+			return values
+		}
+	}
+	return append(values, value)
 }
 
 // handleOrphanedInstructionFiles applies the upgrade orphan policy to the two

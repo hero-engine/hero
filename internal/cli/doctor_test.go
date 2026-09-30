@@ -38,13 +38,14 @@ func healthyGrok() install.TargetInventory {
 
 func TestBuildDoctorReport(t *testing.T) {
 	base := doctorInfo{
-		exe:           "/Users/dev/go/bin/hero",
-		exeResolved:   "/Users/dev/go/bin/hero",
-		pathHero:      "/Users/dev/go/bin/hero",
-		binaryVersion: "0.14.0",
-		binarySchema:  "4",
-		graphSchema:   "4",
-		heroDir:       "/repo/.hero",
+		exe:              "/Users/dev/go/bin/hero",
+		exeResolved:      "/Users/dev/go/bin/hero",
+		pathHero:         "/Users/dev/go/bin/hero",
+		binaryVersion:    "0.14.0",
+		workspaceVersion: "0.14.0",
+		binarySchema:     "4",
+		graphSchema:      "4",
+		heroDir:          "/repo/.hero",
 	}
 
 	t.Run("reports exe, version, both schemas", func(t *testing.T) {
@@ -134,7 +135,7 @@ func TestBuildDoctorReport(t *testing.T) {
 			"35/35", "29/29", "55/55", "84/84",
 			"—", // codex commands cell (NotApplicable), never "0/29"
 			"CLAUDE.md", "AGENTS.md",
-			"not installed: copilot, cursor, generic, grok, opencode",
+			"not installed: copilot, cursor, deepseek, generic, grok, opencode",
 			"codex has no command loader",
 			"(55 canonical + 29 commands = 84)",
 		} {
@@ -167,7 +168,7 @@ func TestBuildDoctorReport(t *testing.T) {
 		if strings.Contains(report, "codex has no command loader") {
 			t.Errorf("codex footnote must be omitted when codex is absent:\n%s", report)
 		}
-		if !strings.Contains(report, "not installed: codex, copilot, cursor, generic, grok, opencode") {
+		if !strings.Contains(report, "not installed: codex, copilot, cursor, deepseek, generic, grok, opencode") {
 			t.Errorf("expected codex on the not-installed line:\n%s", report)
 		}
 	})
@@ -202,9 +203,8 @@ func TestBuildDoctorReport(t *testing.T) {
 		if strings.Contains(report, "hero install") {
 			t.Errorf("shortfall WARNING must NOT mention `hero install`:\n%s", report)
 		}
-		// Verdict is unchanged by a shortfall.
-		if !strings.Contains(report, "Verdict: OK — binary and graph agree on schema 4.") {
-			t.Errorf("shortfall must not alter the Verdict line:\n%s", report)
+		if !strings.Contains(report, "Verdict: NEEDS REPAIR") {
+			t.Errorf("shortfall must produce a non-OK verdict:\n%s", report)
 		}
 	})
 
@@ -216,7 +216,7 @@ func TestBuildDoctorReport(t *testing.T) {
 		info.inventory = []install.TargetInventory{healthyClaude(), healthyCodex()}
 		report := buildDoctorReport(info)
 
-		if !strings.Contains(report, "not installed: copilot, cursor, generic, grok, opencode") {
+		if !strings.Contains(report, "not installed: copilot, cursor, deepseek, generic, grok, opencode") {
 			t.Errorf("expected cursor on the not-installed line:\n%s", report)
 		}
 		if strings.Contains(report, "!") {
@@ -255,7 +255,7 @@ func TestBuildDoctorReport(t *testing.T) {
 		}
 	})
 
-	t.Run("verdict_unchanged_under_shortfall", func(t *testing.T) {
+	t.Run("shortfall_changes_overall_verdict", func(t *testing.T) {
 		healthy := base
 		healthy.inventory = []install.TargetInventory{healthyClaude(), healthyCodex()}
 
@@ -264,8 +264,34 @@ func TestBuildDoctorReport(t *testing.T) {
 		claudeShort.Skills = kc(0, 55)
 		shortInfo.inventory = []install.TargetInventory{claudeShort, healthyCodex()}
 
-		if verdictLine(buildDoctorReport(healthy)) != verdictLine(buildDoctorReport(shortInfo)) {
-			t.Errorf("Verdict line must be byte-identical with and without a shortfall")
+		if !strings.Contains(verdictLine(buildDoctorReport(healthy)), "Verdict: OK") {
+			t.Fatal("healthy inventory should retain OK verdict")
+		}
+		if !strings.Contains(verdictLine(buildDoctorReport(shortInfo)), "Verdict: NEEDS REPAIR") {
+			t.Fatal("incomplete inventory should produce NEEDS REPAIR verdict")
+		}
+	})
+
+	t.Run("older_binary_prescribes_binary_update_before_upgrade", func(t *testing.T) {
+		info := base
+		info.binaryVersion = "0.13.0"
+		info.workspaceVersion = "0.14.0"
+		codexShort := healthyCodex()
+		codexShort.Skills = kc(60, 84)
+		info.inventory = []install.TargetInventory{codexShort}
+
+		report := buildDoctorReport(info)
+		for _, want := range []string{
+			"This binary (v0.13.0) is older than the workspace (v0.14.0)",
+			"Install or select Hero v0.14.0 or newer, then run `hero upgrade`",
+			"Verdict: NEEDS NEWER HERO",
+		} {
+			if !strings.Contains(report, want) {
+				t.Errorf("older-binary report missing %q:\n%s", want, report)
+			}
+		}
+		if strings.Contains(report, "missing. Run `hero upgrade`") {
+			t.Errorf("report must not prescribe immediate upgrade to an incompatible binary:\n%s", report)
 		}
 	})
 
@@ -295,6 +321,18 @@ func TestBuildDoctorReport(t *testing.T) {
 		}
 	})
 
+	t.Run("incomplete install remains actionable before graph creation", func(t *testing.T) {
+		info := base
+		info.graphSchema = ""
+		codexShort := healthyCodex()
+		codexShort.Skills = kc(60, 84)
+		info.inventory = []install.TargetInventory{codexShort}
+		report := buildDoctorReport(info)
+		if !strings.Contains(report, "Installed harness targets") || !strings.Contains(report, "Verdict: NEEDS REPAIR") {
+			t.Errorf("incomplete install must remain visible without a graph:\n%s", report)
+		}
+	})
+
 	t.Run("introspection error is a note, not a failure", func(t *testing.T) {
 		info := base
 		info.inventoryErr = "boom"
@@ -316,4 +354,25 @@ func verdictLine(report string) string {
 		return ""
 	}
 	return report[i:]
+}
+
+func TestDoctorDeepSeekNamesMissingArtifactsDespiteFullCounts(t *testing.T) {
+	for _, path := range []string{".dsh/skills/role-engineer/SKILL.md", ".dsh/hero.cordis.patch.yml"} {
+		t.Run(path, func(t *testing.T) {
+			info := doctorInfo{
+				binaryVersion: "1.0.0", workspaceVersion: "1.0.0", binarySchema: "4", graphSchema: "4", heroDir: "/repo/.hero",
+				inventory: []install.TargetInventory{{
+					Target: install.TargetDeepSeek, RootFile: "AGENTS.md",
+					Agents: install.KindCount{NotApplicable: true}, Commands: install.KindCount{NotApplicable: true},
+					Skills: kc(121, 121), Missing: []string{path},
+				}},
+			}
+			report := buildDoctorReport(info)
+			for _, want := range []string{"! deepseek missing: " + path, "1 installed target is incomplete", "hero upgrade", "Verdict: NEEDS REPAIR", "activation unverified"} {
+				if !strings.Contains(report, want) {
+					t.Errorf("missing %q:\n%s", want, report)
+				}
+			}
+		})
+	}
 }

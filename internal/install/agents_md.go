@@ -49,6 +49,12 @@ func resolveAgentsMdPath(opts Options) string {
 			return filepath.Join(home, ".codex", "AGENTS.md")
 		case TargetOpenCode:
 			return filepath.Join(home, ".config", "opencode", "AGENTS.md")
+		case TargetDeepSeek:
+			base, err := DeepSeekHome()
+			if err != nil {
+				return ""
+			}
+			return filepath.Join(base, "AGENTS.md")
 		case TargetGrok:
 			return filepath.Join(home, ".grok", "AGENTS.md")
 		default:
@@ -529,10 +535,20 @@ func (s agentsMdBodySection) SectionTitle() string {
 
 func (s agentsMdBodySection) Render(_ managed.Context) (string, error) {
 	body := s.body + renderActiveDialectBlock(s.opts)
-	if s.opts.Target == TargetCodex {
+	targets := map[Target]bool{s.opts.Target: true}
+	if s.opts.Mode == ModeProject {
+		for _, t := range UnionTargets(PreviouslyInstalledTargets(s.opts.TargetDir), DetectInstalledTargets(s.opts.TargetDir)) {
+			targets[t] = true
+		}
+	}
+	if targets[TargetCodex] {
 		body += renderCodexWorkflowSection()
-	} else if s.opts.Target == TargetGrok {
+	}
+	if targets[TargetGrok] {
 		body += renderGrokWorkflowSection()
+	}
+	if targets[TargetDeepSeek] {
+		body += renderDeepSeekWorkflowSection()
 	}
 	return body, nil
 }
@@ -671,7 +687,7 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("- `.hero/specs/` — Completed specs (archive)\n")
 	sb.WriteString("- `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)\n")
 	sb.WriteString("- `.hero/hero.json` — Project configuration\n\n")
-	sb.WriteString("`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex; and `.grok/agents/*.md` plus canonical and `command-*` skills under `.grok/skills/` for Grok Build. Codex and Grok have no Hero-owned commands directory, so Hero commands install there as skills. They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.\n\n")
+	sb.WriteString("`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex; and `.grok/agents/*.md` plus canonical and `command-*` skills under `.grok/skills/` for Grok Build. DeepSeek (`dsh`) receives canonical, `command-*`, and `role-*` skills under `.dsh/skills/` plus an explicitly activated `.dsh/hero.cordis.patch.yml` MCP overlay. Codex, Grok, and DeepSeek have no Hero-owned commands directory, so Hero commands install there as skills. DeepSeek roles are guidance, not registered subagents; use native delegation only when available and never substitute self-review for an independent audit. They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.\n\n")
 
 	sb.WriteString("### Declaring Spec Relationships\n\n")
 	sb.WriteString("Relationships (parent/child, depends-on, blocks) become knowledge-graph edges **only** through frontmatter. Body `[[wikilinks]]` are searchable text and form **no** edges. Two syntaxes work:\n\n")
@@ -712,4 +728,19 @@ func generateEngineeringAgentsMdBody(paths contentPathsForBody) string {
 	sb.WriteString("- Imported specs include tracker-prefixed fields (e.g. jira_status, jira_priority, jira_assignee) under a # Jira/GitHub/Linear comment header")
 
 	return sb.String()
+}
+
+func renderDeepSeekWorkflowSection() string {
+	return `
+
+### Running Hero Workflows in DeepSeek
+
+DeepSeek (dsh) loads Hero workflows as command-* skills, and role guidance as role-* skills under .dsh/skills. These are not built-in slash commands or registered named subagents. Route natural-language requests to the matching workflow: deliver/implement to command-deliver, design/plan to command-design, diagnose/fix to command-diagnose, and review to command-review. Use the native skill tool with {name: "command-design"} or {name: "role-engineer"} when available; otherwise read .dsh/skills/<name>/SKILL.md and execute its instructions. For global installation use $DSH_HOME/skills (default ~/.dsh/skills).
+
+A role skill grants no tools, permissions, models, or hooks. Pass its guidance to compatible native delegation when available; otherwise adopt the role in the current agent. Local role adoption is not independent review: if a workflow requires a fresh reviewer or cold audit and the profile cannot provide one, stop at that named gate and report the unavailable capability. Never self-grade or mark delivery verified.
+
+Hero's MCP overlay is generated but activation is required. Launch dsh from the intended workspace with --patch /absolute/path/to/.dsh/hero.cordis.patch.yml (or the global DSH_HOME overlay). The MCP child binds to that launch workspace; use one process per workspace. An explicitly bound --workspace overlay retains its declared root. The portable hero command resolves through the launching process PATH. No profile, allowlist, credentials, or shared Cordis configuration is changed.
+
+DeepSeek also discovers CLAUDE.md and .agents/skills; installing other harnesses may expose duplicate instructions and skills. Hero does not delete or suppress those files. Within a Git tree, DeepSeek discovers skills from the first ancestor with .git; separately rooted or non-Git satellites use their own skills links.
+`
 }

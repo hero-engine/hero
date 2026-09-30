@@ -94,6 +94,8 @@ tmp/
 # `--target codex` install renders core/ + domains/*/ skills here, plus
 # each command as command-<name>/SKILL.md.
 .agents/skills
+.dsh/skills/
+.dsh/hero.cordis.patch.yml
 
 # Local env (direnv) — carries credentials, must not be committed
 .envrc

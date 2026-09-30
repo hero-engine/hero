@@ -69,12 +69,16 @@ hero install project . --target claude
 hero install project . --target copilot
 hero install project . --target generic
 hero install project . --target grok
+hero install project . --target deepseek
 ```
 
 Hero uses each harness's native surface. Claude receives command files. Codex
-and Grok receive `command-*` workflow skills. Other targets receive the native
+Grok, and DeepSeek receive `command-*` workflow skills. Other targets receive the native
 instructions and integration files they support. Natural-language requests
 work across Hero-aware harnesses; slash-command syntax is not universal.
+
+For DeepSeek (`dsh`), installation generates `.dsh/skills/` and an MCP overlay.
+Activate the overlay explicitly following [DeepSeek setup](MCP-SETUP.md#deepseek-harness-dsh).
 
 The default project uses Core plus Engineering, including lightweight PM and QA
 help for engineering work. Focused PM, QA, and Sales setups are optional:

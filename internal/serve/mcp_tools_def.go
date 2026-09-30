@@ -490,7 +490,7 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			Name:        "hero_skill_run",
 			Category:    CategorySearchAndKnowledge,
 			Tier:        TierDeferrable,
-			Description: "Preview or execute a saved skill workflow. Returns the skill steps for the agent to follow. Use hero_search to find available skill slugs.",
+			Description: "Preview a project-authored saved workflow from .hero/skills. This tool does not load built-in Hero commands; those use the harness-native command-* workflow surface. Returns the saved skill steps for the agent to follow.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]PropSchema{

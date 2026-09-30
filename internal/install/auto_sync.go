@@ -74,6 +74,7 @@ func detectInstalledTargetDirs(projectDir string, excludeTarget Target) ([]Targe
 		{TargetCopilot, filepath.Join(".github", "copilot-instructions.md")},
 		{TargetGeneric, ".ai"},
 		{TargetGrok, ".grok"},
+		{TargetDeepSeek, ".dsh"},
 	}
 	var found []Target
 	for _, c := range candidates {

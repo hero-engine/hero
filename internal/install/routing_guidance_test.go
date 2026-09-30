@@ -42,6 +42,7 @@ func TestRoutingGuidanceReachesAllHarnessNativeRoots(t *testing.T) {
 		TargetCodex,
 		TargetGeneric,
 		TargetGrok,
+		TargetDeepSeek,
 	}
 	markers := []string{
 		"## Natural Language Routing",

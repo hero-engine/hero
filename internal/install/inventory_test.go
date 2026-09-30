@@ -3,10 +3,11 @@ package install
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
-// inventory_test.go — Inventory coverage, table-driven over all seven targets
+// inventory_test.go — Inventory coverage, table-driven over all supported targets
 // per the harness-changes-cover-all-targets tripwire. Installs via the shared
 // harness, then asserts the introspection Inventory reports.
 //
@@ -47,10 +48,10 @@ func hasRow(invs []TargetInventory, target Target) bool {
 	return false
 }
 
-// TestInventory_AllSevenTargets is the seven-target gate: every target installs and
+// TestInventory_AllSupportedTargets is the cross-target gate: every target installs and
 // reports a correct, complete row from its real destination paths. A t.Skip on
 // any target here is a failed delivery, not a green one.
-func TestInventory_AllSevenTargets(t *testing.T) {
+func TestInventory_AllSupportedTargets(t *testing.T) {
 	for _, tc := range integrityTargets {
 		t.Run(tc.name, func(t *testing.T) {
 			h := newInstallHarness(t)
@@ -61,9 +62,21 @@ func TestInventory_AllSevenTargets(t *testing.T) {
 				t.Fatalf("expected exactly one installed target row, got %d: %+v", len(invs), invs)
 			}
 			row := findRow(t, invs, tc.target)
+			if row.Incomplete() || len(row.Missing) > 0 {
+				t.Fatalf("fresh %s install reported incomplete: missing=%v row=%+v", tc.target, row.Missing, row)
+			}
 
 			if row.RootFile != tc.rootFile {
 				t.Errorf("root file = %q, want %q", row.RootFile, tc.rootFile)
+			}
+			if tc.target == TargetDeepSeek {
+				if !row.Agents.NotApplicable || !row.Commands.NotApplicable {
+					t.Fatal("DeepSeek roles and workflows must be reported as skills")
+				}
+				if row.Skills.Expected != 6 || row.Skills.Actual != 6 {
+					t.Errorf("DeepSeek skills = %d/%d, want 6/6", row.Skills.Actual, row.Skills.Expected)
+				}
+				return
 			}
 			if row.Agents.Expected != 2 || row.Agents.Actual != 2 {
 				t.Errorf("agents = %d/%d, want 2/2", row.Agents.Actual, row.Agents.Expected)
@@ -164,7 +177,7 @@ func TestInventory_UnionSurvivesMissingInstallState(t *testing.T) {
 	h.Run(TargetClaude, nil)
 
 	statePath := filepath.Join(h.TargetDir, ".hero", "install-state.json")
-	if err := os.Remove(statePath); err != nil {
+	if err := os.Remove(statePath); err != nil && !os.IsNotExist(err) {
 		t.Fatalf("remove install-state.json: %v", err)
 	}
 	if got := PreviouslyInstalledTargets(h.TargetDir); len(got) != 0 {
@@ -201,5 +214,43 @@ func TestInventory_PersistedTargetWithMissingTreeIsZero(t *testing.T) {
 	}
 	if row.Skills.Actual != 0 {
 		t.Errorf("skills actual = %d, want 0 (tree deleted)", row.Skills.Actual)
+	}
+}
+
+func TestInventoryForTargets_ReportsUnpersistedCodexShortfall(t *testing.T) {
+	h := newInstallHarness(t)
+	h.Run(TargetCodex, nil)
+
+	statePath := filepath.Join(h.TargetDir, ".hero", "install-state.json")
+	if err := os.Remove(statePath); err != nil && !os.IsNotExist(err) {
+		t.Fatalf("remove install-state.json: %v", err)
+	}
+	missing := filepath.Join(h.TargetDir, ".agents", "skills", "command-design")
+	if err := os.RemoveAll(missing); err != nil {
+		t.Fatalf("remove command-design: %v", err)
+	}
+	extra := filepath.Join(h.TargetDir, ".agents", "skills", "user-extra", "SKILL.md")
+	if err := os.MkdirAll(filepath.Dir(extra), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(extra, []byte("# User skill\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	invs, err := InventoryForTargets(h.TargetDir, os.DirFS(h.SourceDir), "engineering", []Target{TargetCodex})
+	if err != nil {
+		t.Fatalf("InventoryForTargets: %v", err)
+	}
+	if len(invs) != 1 || invs[0].Target != TargetCodex {
+		t.Fatalf("inventory = %+v, want one codex row", invs)
+	}
+	if !invs[0].Incomplete() {
+		t.Fatalf("codex row should be incomplete after command skill deletion: %+v", invs[0])
+	}
+	if got, want := invs[0].Skills.Actual, invs[0].Skills.Expected; got != want {
+		t.Fatalf("fixture must keep counts equal, got actual=%d expected=%d", got, want)
+	}
+	if len(invs[0].Missing) != 1 || !strings.Contains(invs[0].Missing[0], "command-design") {
+		t.Fatalf("missing artifact identity was not preserved: %v", invs[0].Missing)
 	}
 }

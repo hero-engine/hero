@@ -67,6 +67,7 @@ type HarnessContract struct {
 // meta-test treats absence as "documented gap" when the legacy install
 // no longer writes there. See cleanup paths in each target_*.go.
 var targetContracts = map[Target]map[ContentKind]HarnessContract{
+	TargetDeepSeek: {KindSkills: {Format: FormatYAMLFrontmatter, RequiredFields: []string{"name", "description"}, FilenameRequired: "SKILL.md"}},
 	// Claude Code reads markdown + YAML frontmatter for all three kinds.
 	// Source: https://code.claude.com/docs/en/sub-agents (agents),
 	//         https://code.claude.com/docs/en/skills (commands + skills)

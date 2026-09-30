@@ -65,6 +65,7 @@ var targetLayouts = []TargetLayout{
 	{Target: TargetCopilot, SubDir: filepath.Join(".github", "copilot"), MarkerFile: ""},
 	{Target: TargetGeneric, SubDir: ".ai", MarkerFile: "AGENTS.md"},
 	{Target: TargetGrok, SubDir: ".grok", MarkerFile: "AGENTS.md", LinkableDirs: []string{"agents", "skills"}},
+	{Target: TargetDeepSeek, SubDir: ".dsh", MarkerFile: "AGENTS.md", LinkableDirs: []string{"skills"}},
 }
 
 func (l TargetLayout) linkableDirs() []string {
@@ -293,7 +294,20 @@ func RemoveSatellite(satAbs string, targets []Target) error {
 		}
 		if layout.MarkerFile != "" {
 			markerPath := filepath.Join(satAbs, layout.MarkerFile)
-			if isHeroSatelliteMarkerFile(markerPath) {
+			sharedNeeded := false
+			if t == TargetDeepSeek {
+				for _, other := range targetLayouts {
+					if other.Target == t || other.MarkerFile != layout.MarkerFile {
+						continue
+					}
+					for _, sub := range other.linkableDirs() {
+						if _, err := os.Lstat(filepath.Join(satAbs, other.SubDir, sub)); err == nil {
+							sharedNeeded = true
+						}
+					}
+				}
+			}
+			if !sharedNeeded && isHeroSatelliteMarkerFile(markerPath) {
 				_ = os.Remove(markerPath)
 			}
 		}
@@ -392,7 +406,13 @@ func perTargetMarker(rootAbs, satAbs, scope string, targets []Target, symlinks b
 	for i, t := range targets {
 		names[i] = string(t)
 	}
-	return fmt.Sprintf(`<!-- hero:satellite -->
+	extra := ""
+	for _, t := range targets {
+		if t == TargetDeepSeek {
+			extra = "\nDeepSeek: launch from this satellite directory using " + DeepSeekLaunchCommand(filepath.Join(rootAbs, ".dsh", deepseekOverlayName)) + ". The MCP child keeps its launch workspace; an explicitly bound --workspace overlay retains its declared root. Skills come from the Git root when in the same Git tree; these links support separate Git roots and non-Git satellites.\n"
+		}
+	}
+	return extra + fmt.Sprintf(`<!-- hero:satellite -->
 # Hero satellite
 
 This folder is a satellite of the Hero workspace at `+"`%s`"+`.

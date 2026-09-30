@@ -19,10 +19,16 @@ hero install project . --target generic
 ```
 
 Hero supports OpenCode, Cursor, Claude, GitHub Copilot, Codex, Generic MCP, and
-Grok install targets. The generated workflow surface is harness-native: Claude
-receives command files, while Codex and Grok receive command skills. Run
+Grok and DeepSeek install targets. The generated workflow surface is harness-native: Claude
+receives command files, while Codex, Grok, and DeepSeek receive command skills. Run
 `hero install --help` and `hero doctor` for the current registry and installed
 target inventory.
+
+DeepSeek's `.dsh/hero.cordis.patch.yml` is a generated overlay, not an active
+connection. Launch `dsh` from the intended workspace with `--patch` and the
+absolute overlay path. Its MCP child stays bound to that launch workspace;
+changing session directories does not rebind it. Use one process per workspace,
+including when reusing a global overlay. See [DeepSeek setup](../configuration/mcp-setup.md#deepseek-harness-dsh).
 
 ### Runtime tool registry
 

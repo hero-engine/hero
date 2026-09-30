@@ -88,7 +88,7 @@ var installCmd = &cobra.Command{
 
 Install is harness-native: each target gets only the root instruction file it
 natively reads — CLAUDE.md for claude, AGENTS.md for every other target
-(codex, opencode, cursor, copilot, generic, grok). Installing multiple targets that
+(codex, opencode, cursor, copilot, generic, grok, deepseek). Installing multiple targets that
 include claude produces both files with the same Hero-managed body. The
 installed target set is recorded in .hero/install-state.json so 'hero upgrade'
 stays faithful to what was installed.`,
@@ -127,6 +127,7 @@ var installTargets = []string{
 	string(install.TargetCodex),
 	string(install.TargetGeneric),
 	string(install.TargetGrok),
+	string(install.TargetDeepSeek),
 }
 
 func init() {
@@ -254,7 +255,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	if installForceRoot {
+	if installForceRoot && !installJSON {
 		fmt.Println("Warning: --root forces a root install at this location.")
 		fmt.Println("If an ancestor directory already has a Hero workspace, this will create a nested workspace.")
 		fmt.Println()
@@ -324,7 +325,48 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	var result *install.Result
 	var err error
 	runOnce := func() {
+		var wsOpts *install.Options
+		if installWorkspace != "" && mode == install.ModeProject {
+			wsPath := installWorkspace
+			if !filepath.IsAbs(wsPath) {
+				wsPath = filepath.Join(targetDir, wsPath)
+			}
+			if fi, statErr := os.Stat(wsPath); statErr != nil || !fi.IsDir() {
+				err = fmt.Errorf("workspace path must be an existing directory: %s", wsPath)
+				return
+			}
+			projectRoot, absErr := filepath.Abs(targetDir)
+			if absErr != nil {
+				err = absErr
+				return
+			}
+			wsOpts = &install.Options{Target: target, Mode: install.ModeProject, TargetDir: wsPath,
+				DryRun: installDryRun, Force: installForce, Quiet: installJSON, Version: binaryVersion, ProjectRoot: projectRoot}
+			if target == install.TargetDeepSeek {
+				preflight := *wsOpts
+				preflight.DryRun, preflight.Quiet = true, true
+				if err = install.RegisterMCP(target, preflight); err != nil {
+					return
+				}
+			}
+		}
 		result, err = install.Run(opts)
+		if err != nil || wsOpts == nil {
+			return
+		}
+		if err = install.RegisterMCP(target, *wsOpts); err != nil {
+			return
+		}
+		if target == install.TargetDeepSeek {
+			var overlay string
+			overlay, err = install.DeepSeekOverlayPath(*wsOpts)
+			if err == nil {
+				result.Merged = append(result.Merged, overlay)
+			}
+		}
+		if !installJSON && !installDryRun {
+			fmt.Printf("Workspace MCP config written to %s (pointing at %s)\n", wsOpts.TargetDir, wsOpts.ProjectRoot)
+		}
 	}
 
 	if installJSON {
@@ -401,32 +443,6 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Workspace mode: write MCP config into the sub-folder
-	if installWorkspace != "" && mode == install.ModeProject {
-		wsPath := installWorkspace
-		if !filepath.IsAbs(wsPath) {
-			wsPath = filepath.Join(targetDir, wsPath)
-		}
-		if _, err := os.Stat(wsPath); os.IsNotExist(err) {
-			return fmt.Errorf("workspace path does not exist: %s", wsPath)
-		}
-
-		wsOpts := install.Options{
-			Target:      target,
-			Mode:        install.ModeProject,
-			TargetDir:   wsPath,
-			DryRun:      installDryRun,
-			Version:     binaryVersion,
-			ProjectRoot: targetDir,
-		}
-		if err := install.RegisterMCP(target, wsOpts); err != nil {
-			return fmt.Errorf("registering MCP in workspace: %w", err)
-		}
-		if !installDryRun {
-			fmt.Printf("Workspace MCP config written to %s (pointing at %s)\n", wsPath, targetDir)
-		}
-	}
-
 	return nil
 }
 
@@ -446,6 +462,9 @@ func printHandoffHint(target install.Target) {
 		fmt.Println("NEXT.md handoff: wired into Stop hook in .codex/hooks.json.")
 		fmt.Println("It refreshes automatically after every session — no further setup needed.")
 		printCodexTrustHint()
+	case install.TargetDeepSeek:
+		fmt.Println("NEXT.md handoff: no native lifecycle hooks. Run `hero hooks install`,")
+		fmt.Println("or load the command-handoff skill before switching tools.")
 	case install.TargetOpenCode:
 		fmt.Println()
 		fmt.Println("NEXT.md handoff: opencode's hook system needs a TS plugin (deferred).")

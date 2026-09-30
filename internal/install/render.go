@@ -8,6 +8,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // render.go — per-harness format rendering of canonical content.
@@ -207,6 +209,20 @@ func commandAsSkillRenderer(harnessLabel string) func(canonicalEntry) (string, [
 			desc = "Hero /" + entry.Name + " workflow — follow these steps to execute the command"
 		}
 
+		if harnessLabel == "DeepSeek" {
+			fields, err := deepseekFrontmatter(entry.Raw)
+			if err != nil {
+				return "", nil, err
+			}
+			if value, ok := fields["description"].(string); ok && value != "" {
+				desc = value
+			}
+			encoded, err := yaml.Marshal(desc)
+			if err != nil {
+				return "", nil, err
+			}
+			desc = strings.TrimSpace(string(encoded))
+		}
 		var out bytes.Buffer
 		fmt.Fprintf(&out, "---\nname: command-%s\ndescription: %s\nmetadata:\n  purpose: command-workflow\n---\n\n", entry.Name, desc)
 		fmt.Fprintf(&out, "> **This is a Hero workflow for %s.** Read each step below and execute it in sequence.\n", harnessLabel)
@@ -241,4 +257,64 @@ func renderCopilotPromptFile(entry canonicalEntry) (string, []byte, error) {
 		out.WriteString("\n")
 	}
 	return entry.Name + ".prompt.md", out.Bytes(), nil
+}
+
+const roleSkillPrefix = "role-"
+
+func deepseekFrontmatter(raw []byte) (map[string]interface{}, error) {
+	fields := map[string]interface{}{}
+	if !bytes.HasPrefix(raw, []byte("---\n")) {
+		return fields, nil
+	}
+	end := bytes.Index(raw[4:], []byte("\n---"))
+	if end < 0 {
+		return nil, fmt.Errorf("unclosed canonical frontmatter")
+	}
+	// Canonical commands permit plain descriptions containing colons. Quote
+	// that scalar before YAML decoding, retaining quoted and block YAML forms.
+	lines := strings.Split(string(raw[4:4+end]), "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(line, "description:") {
+			value := strings.TrimSpace(strings.TrimPrefix(line, "description:"))
+			if value != "" && !strings.ContainsAny(value[:1], "\"'|>") {
+				encoded, err := yaml.Marshal(value)
+				if err != nil {
+					return nil, err
+				}
+				lines[i] = "description: " + strings.TrimSpace(string(encoded))
+			}
+		}
+	}
+	if err := yaml.Unmarshal([]byte(strings.Join(lines, "\n")), &fields); err != nil {
+		return nil, err
+	}
+	return fields, nil
+}
+
+func renderDeepSeekRoleSkill(entry canonicalEntry) (string, []byte, error) {
+	source, err := deepseekFrontmatter(entry.Raw)
+	if err != nil {
+		return "", nil, err
+	}
+	desc, _ := source["description"].(string)
+	if desc == "" {
+		desc = "Hero role guidance for " + entry.Name
+	}
+	fields := map[string]interface{}{"name": roleSkillPrefix + entry.Name, "description": desc, "user-invocable": false}
+	delete(source, "name")
+	delete(source, "description")
+	if len(source) > 0 {
+		fields["metadata"] = map[string]interface{}{"source-role-constraints": source}
+	}
+	fm, err := yaml.Marshal(fields)
+	if err != nil {
+		return "", nil, err
+	}
+	var out bytes.Buffer
+	out.WriteString("---\n")
+	out.Write(fm)
+	out.WriteString("---\n\n")
+	out.WriteString("> Hero role guidance: load this skill when adopting this role, or pass these instructions to a supported native delegation tool. This does not register a named subagent or grant tools, permissions, models, or hooks. Source constraints are instructional metadata, not runtime enforcement. Adopting a role locally is not an independent review; stop at any required fresh-review or cold-audit gate if independent delegation is unavailable.\n\n")
+	out.Write(entry.Body)
+	return roleSkillPrefix + entry.Name + "/SKILL.md", out.Bytes(), nil
 }

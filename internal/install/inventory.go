@@ -45,13 +45,17 @@ type TargetInventory struct {
 	Agents   KindCount
 	Commands KindCount
 	Skills   KindCount
+	// Missing lists canonical generated artifacts absent from their native
+	// harness destinations. Counts alone are insufficient: one stale or user
+	// artifact can numerically mask a missing required workflow.
+	Missing []string
 }
 
 // inventoryTargets is the canonical target sweep order (matching
 // targetLayouts / PreviouslyInstalledTargets) used for on-disk detection so
 // detected rows come out deterministically.
 var inventoryTargets = []Target{
-	TargetClaude, TargetCodex, TargetOpenCode, TargetCursor, TargetCopilot, TargetGeneric, TargetGrok,
+	TargetClaude, TargetCodex, TargetOpenCode, TargetCursor, TargetCopilot, TargetGeneric, TargetGrok, TargetDeepSeek,
 }
 
 // Inventory returns one TargetInventory per installed harness target in the
@@ -74,6 +78,38 @@ func Inventory(projectRoot, domain string) ([]TargetInventory, error) {
 		return nil, fmt.Errorf("resolving domain %q content: %w", domain, err)
 	}
 	return inventoryFromFS(projectRoot, hero.OverlayFS(domainFS, hero.CoreFS()), domain)
+}
+
+// InventoryForTargets returns install inventory for the exact target set the
+// caller intends to reconcile. Upgrade uses this before its version no-op so a
+// missing generated artifact can trigger a same-version repair. Keeping the
+// content FS explicit ensures the check measures the same composed content the
+// subsequent install run will materialize.
+func InventoryForTargets(projectRoot string, contentFS fs.FS, domain string, targets []Target) ([]TargetInventory, error) {
+	if projectRoot == "" || len(targets) == 0 {
+		return nil, nil
+	}
+	manifest, err := EnumerateContent(contentFS, domain)
+	if err != nil {
+		return nil, fmt.Errorf("enumerating canonical install set: %w", err)
+	}
+	unique := UnionTargets(targets)
+	out := make([]TargetInventory, 0, len(unique))
+	for _, target := range unique {
+		out = append(out, buildTargetInventory(target, projectRoot, manifest))
+	}
+	return out, nil
+}
+
+// Incomplete reports whether any applicable generated content kind is short
+// of what the current content manifest would install. Extra files are not a
+// shortfall; normal install pruning handles obsolete generated artifacts.
+func (inv TargetInventory) Incomplete() bool {
+	return len(inv.Missing) > 0 || kindCountIncomplete(inv.Agents) || kindCountIncomplete(inv.Commands) || kindCountIncomplete(inv.Skills)
+}
+
+func kindCountIncomplete(count KindCount) bool {
+	return !count.NotApplicable && count.Actual < count.Expected
 }
 
 // inventoryFromFS is the testable core of Inventory: it takes the content FS
@@ -104,7 +140,7 @@ func buildTargetInventory(t Target, projectRoot string, m ContentManifest) Targe
 		RootFile: nativeInstructionFile(t),
 		Agents:   KindCount{Expected: len(m.Agents), Actual: countInstalled(agentsPath)},
 	}
-	if t == TargetCodex || t == TargetGrok {
+	if t == TargetCodex || t == TargetGrok || t == TargetDeepSeek {
 		// Codex and Grok have no Hero-owned command loader — commands install
 		// as command-* skills under their respective native skill roots.
 		// Commands are NotApplicable and skills rolls both sets together.
@@ -114,7 +150,83 @@ func buildTargetInventory(t Target, projectRoot string, m ContentManifest) Targe
 		inv.Commands = KindCount{Expected: len(m.Commands), Actual: countInstalled(commandsPath)}
 		inv.Skills = KindCount{Expected: len(m.Skills), Actual: countInstalled(skillsPath)}
 	}
+	if t == TargetDeepSeek {
+		inv.Agents.NotApplicable = true
+		inv.Skills.Expected += len(m.Agents)
+	}
+	inv.Missing = missingGeneratedArtifacts(t, projectRoot, m)
 	return inv
+}
+
+func missingGeneratedArtifacts(target Target, projectRoot string, manifest ContentManifest) []string {
+	var expected []string
+	addFlat := func(base string, names []string, suffix string) {
+		for _, name := range names {
+			expected = append(expected, filepath.Join(base, name+suffix))
+		}
+	}
+	addNested := func(base string, names []string, prefix string) {
+		for _, name := range names {
+			expected = append(expected, filepath.Join(base, prefix+name, "SKILL.md"))
+		}
+	}
+
+	switch target {
+	case TargetDeepSeek:
+		base := filepath.Join(projectRoot, ".dsh")
+		addNested(filepath.Join(base, "skills"), manifest.Skills, "")
+		addNested(filepath.Join(base, "skills"), manifest.Commands, commandSkillPrefix)
+		addNested(filepath.Join(base, "skills"), manifest.Agents, roleSkillPrefix)
+		expected = append(expected, filepath.Join(base, deepseekOverlayName))
+	case TargetClaude:
+		base := filepath.Join(projectRoot, ".claude")
+		addFlat(filepath.Join(base, "agents"), manifest.Agents, ".md")
+		addFlat(filepath.Join(base, "commands"), manifest.Commands, ".md")
+		addNested(filepath.Join(base, "skills"), manifest.Skills, "")
+	case TargetOpenCode:
+		base := filepath.Join(projectRoot, ".opencode")
+		addFlat(filepath.Join(base, "agents"), manifest.Agents, ".md")
+		addFlat(filepath.Join(base, "commands"), manifest.Commands, ".md")
+		addNested(filepath.Join(base, "skills"), manifest.Skills, "")
+	case TargetCursor:
+		base := filepath.Join(projectRoot, ".cursor", "rules")
+		addFlat(filepath.Join(base, "agents"), manifest.Agents, ".md")
+		addFlat(filepath.Join(base, "commands"), manifest.Commands, ".md")
+		addFlat(filepath.Join(base, "skills"), manifest.Skills, ".md")
+	case TargetCodex:
+		addFlat(filepath.Join(projectRoot, ".codex", "agents"), manifest.Agents, ".toml")
+		skillsBase := filepath.Join(projectRoot, ".agents", "skills")
+		addNested(skillsBase, manifest.Skills, "")
+		addNested(skillsBase, manifest.Commands, commandSkillPrefix)
+	case TargetCopilot:
+		prompts := filepath.Join(projectRoot, ".github", "prompts")
+		addFlat(filepath.Join(prompts, "agents"), manifest.Agents, ".prompt.md")
+		addFlat(filepath.Join(prompts, "commands"), manifest.Commands, ".prompt.md")
+		addNested(filepath.Join(projectRoot, ".github", "skills"), manifest.Skills, "")
+	case TargetGeneric:
+		base := filepath.Join(projectRoot, ".ai")
+		addFlat(filepath.Join(base, "agents"), manifest.Agents, ".md")
+		addFlat(filepath.Join(base, "commands"), manifest.Commands, ".md")
+		addNested(filepath.Join(base, "skills"), manifest.Skills, "")
+	case TargetGrok:
+		base := filepath.Join(projectRoot, ".grok")
+		addFlat(filepath.Join(base, "agents"), manifest.Agents, ".md")
+		addNested(filepath.Join(base, "skills"), manifest.Skills, "")
+		addNested(filepath.Join(base, "skills"), manifest.Commands, commandSkillPrefix)
+	}
+
+	missing := make([]string, 0)
+	for _, path := range expected {
+		info, err := os.Stat(path)
+		if err != nil || info.IsDir() {
+			rel, relErr := filepath.Rel(projectRoot, path)
+			if relErr != nil {
+				rel = path
+			}
+			missing = append(missing, filepath.ToSlash(rel))
+		}
+	}
+	return missing
 }
 
 // countMode names how a destination directory's installed content is counted.
@@ -140,6 +252,8 @@ type kindPath struct {
 // target_*.go. Keep these in lockstep with those functions.
 func targetInstallPaths(t Target, root string) (agents, commands, skills kindPath) {
 	switch t {
+	case TargetDeepSeek:
+		return kindPath{}, kindPath{}, kindPath{filepath.Join(root, ".dsh", "skills"), countNestedSkill}
 	case TargetClaude:
 		base := filepath.Join(root, ".claude")
 		return kindPath{filepath.Join(base, "agents"), countFlatMD},

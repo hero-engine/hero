@@ -408,6 +408,8 @@ func (h *installHarness) harnessDirFor(target Target, kind ContentKind) string {
 		destBase = filepath.Join(h.TargetDir, ".ai")
 	case TargetGrok:
 		destBase = filepath.Join(h.TargetDir, ".grok")
+	case TargetDeepSeek:
+		destBase = filepath.Join(h.TargetDir, ".dsh")
 	default:
 		h.t.Fatalf("harnessDirFor: unknown target %q", target)
 	}
