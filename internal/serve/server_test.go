@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -134,9 +135,13 @@ func TestServer_RunAndShutdown(t *testing.T) {
 		HeroDir:     heroDir,
 		ProjectRoot: projectRoot,
 		Version:     "test",
-		Port:        18437,
+		Port:        freeTCPPort(t),
 		AutoWatch:   false,
 	})
+	// No keep-alives: a pooled client can dial a spare connection that never
+	// sends a request, and http.Server.Shutdown waits up to 5s before closing
+	// such a new connection — which made this test time out under load.
+	client := &http.Client{Transport: &http.Transport{DisableKeepAlives: true}}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -149,7 +154,7 @@ func TestServer_RunAndShutdown(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	// Test health endpoint
-	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/health", srv.port))
+	resp, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/health", srv.port))
 	if err != nil {
 		t.Fatalf("GET /health: %v", err)
 	}
@@ -159,14 +164,13 @@ func TestServer_RunAndShutdown(t *testing.T) {
 	}
 
 	// Test projects endpoint
-	resp, err = http.Get(fmt.Sprintf("http://127.0.0.1:%d/api/projects", srv.port))
+	resp, err = client.Get(fmt.Sprintf("http://127.0.0.1:%d/api/projects", srv.port))
 	if err != nil {
 		t.Fatalf("GET /api/projects: %v", err)
 	}
-	defer resp.Body.Close()
-
 	var body map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&body)
+	resp.Body.Close()
 	count := body["count"].(float64)
 	if count < 1 {
 		t.Errorf("projects count = %v, want >= 1", count)
@@ -230,4 +234,16 @@ func TestServer_EventsIncludeProject(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for event")
 	}
+}
+
+// freeTCPPort returns a currently unused loopback port, so this test never
+// collides with a real `hero serve` or another package's test server.
+func freeTCPPort(t *testing.T) int {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	return ln.Addr().(*net.TCPAddr).Port
 }
