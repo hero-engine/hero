@@ -592,3 +592,9 @@
 {"ts":"2026-08-24T16:23:36.207609Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-public-visibility-launch-gate","message":"status -\u003e completed"}
 {"ts":"2026-08-24T16:23:37.70472Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-marketing","message":"\"Hero v0.34 Public Release Readiness\""}
 {"ts":"2026-08-24T16:23:37.70482Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-marketing","message":"status -\u003e completed"}
+{"ts":"2026-09-23T00:07:23.913095Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"codex-command-workflow-surface-split-brain","message":"\"Codex advertises Hero workflows that are absent from its native skill surface\""}
+{"ts":"2026-09-23T00:07:23.913205Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"codex-command-workflow-surface-split-brain","message":"status -\u003e completed"}
+{"ts":"2026-09-25T00:33:26.645154Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"stale-connect-provider-usage-expectation","message":"\"Connect non-terminal test omits Aha from expected usage\""}
+{"ts":"2026-09-25T00:33:26.645261Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"stale-connect-provider-usage-expectation","message":"status -\u003e completed"}
+{"ts":"2026-09-30T16:58:18.25168Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"deepseek-harness-install-target","message":"DeepSeek Harness Install Target"}
+{"ts":"2026-09-30T16:58:18.251781Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"deepseek-harness-install-target","message":"status -\u003e completed"}
