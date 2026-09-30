@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-09-30T17:32:32Z · 85 ready specs_
+_Generated: 2026-09-30T18:27:10Z · 84 ready specs_
 
 ## mail-thread-foreground-read-action — Mail Thread Foreground Read Action
 _feature · delivering · horizon: now_
@@ -51,20 +51,6 @@ _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/project
 _feature · delivering · horizon: next_
 
 _(no `## Kickoff` section — run `/design` or hand-edit /Users/bwheeler/projects/hero-engine/repository/hero/.hero/planning/features/agent-outposts/spec.md)_
-
----
-
-## sept-review-cleanup — "September delivery review cleanup — doctor missing paths, Aha gating, managed-block drift, DeepSeek launch guidance"
-_bug · planning · horizon: now_
-
-Fix five review findings on branch `chore/sept-local-deliveries`:
-1. `hero doctor` flags and lists `Missing` paths only for DeepSeek (`internal/cli/doctor.go:221`, `:233`). Use `inv.Incomplete()` and print missing paths for every target.
-2. The `aha` connection has no tracker adapter (`internal/tracker/tracker.go:232`). Make it broker-only and return a clear error.
-3. Move the Mail vs Peering paragraphs into the `agents_md.go` managed block, then regenerate `CLAUDE.md` and `AGENTS.md`.
-4. Change `DeepSeekLaunchCommand` to an interactive `dsh --patch`.
-5. Stop building the DeepSeek file set three times per install.
-
-Verify with `go test ./internal/cli ./internal/install ./internal/tracker`.
 
 ---
 

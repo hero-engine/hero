@@ -598,3 +598,5 @@
 {"ts":"2026-09-25T00:33:26.645261Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"stale-connect-provider-usage-expectation","message":"status -\u003e completed"}
 {"ts":"2026-09-30T16:58:18.25168Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"deepseek-harness-install-target","message":"DeepSeek Harness Install Target"}
 {"ts":"2026-09-30T16:58:18.251781Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"deepseek-harness-install-target","message":"status -\u003e completed"}
+{"ts":"2026-09-30T18:27:02.4688Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"sept-review-cleanup","message":"\"September delivery review cleanup — doctor missing paths, Aha gating, managed-block drift, DeepSeek launch guidance\""}
+{"ts":"2026-09-30T18:27:02.469061Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"sept-review-cleanup","message":"status -\u003e completed"}

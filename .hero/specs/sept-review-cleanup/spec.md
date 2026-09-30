@@ -2,7 +2,7 @@
 title: "September delivery review cleanup — doctor missing paths, Aha gating, managed-block drift, DeepSeek launch guidance"
 slug: sept-review-cleanup
 type: bug
-status: delivering
+status: completed
 priority: P2
 severity: moderate
 root_cause_class: code
@@ -18,6 +18,7 @@ relations:
   - target: stale-connect-provider-usage-expectation
     kind: related
 delivery_method: manual
+completed_at: 2026-09-30T18:27:00Z
 ---
 
 # September delivery review cleanup
@@ -38,9 +39,9 @@ Five review findings from the September deliveries, all fixed on branch `chore/s
 - DeepSeek launches with `dsh --profile web --patch`
 - the DeepSeek file set is built once per install
 
-**Status:** implementation, full suite, docs build and native DeepSeek checks are green. Closing gates: cold audit, then `hero spec verify sept-review-cleanup`.
+**Status:** completed on 2026-09-30. The full suite, docs and native DeepSeek checks are green. The cold audit gave HOLD, the fix got SHIP, and `hero spec verify` passed.
 
-**Pick up at:** if verify has not passed, run the audit against `git diff 9ee65dac...HEAD -- ':!.hero'`, then verify.
+**Pick up at:** no remaining work. Follow-ups outside this spec: an Aha issue adapter needs its own feature spec, and the flaky `internal/serve` shutdown test is tracked as a separate task.
 
 **Files:** `internal/cli/doctor.go`, `internal/tracker/tracker.go`, `internal/cli/connect.go`, `internal/install/{agents_md,mcp_deepseek,target_deepseek,install}.go`, `domains/engineering/routing.md`
 

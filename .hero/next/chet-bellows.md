@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-09-30T17:29:39Z
+updated: 2026-09-30T18:24:33Z
 repo: hero-engine/hero
 ---
 
@@ -10,7 +10,7 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 93 commit(s) since, last set 47d 1h ago_
+_possibly stale — 97 commit(s) since, last set 47d 2h ago_
 
 ## Last user ask
 
@@ -18,7 +18,11 @@ _possibly stale — 93 commit(s) since, last set 47d 1h ago_
 
 ## Suggested next prompt
 
-> let's cut the Hero release and update Candy with the fixed binary so Codex repairs its missing workflows
+> let's tackle E2E Onboarding Suite — Fresh Repo to Productive Workspace
+
+_Rationale: highest-priority ready work: E2E Onboarding Suite — Fresh Repo to Productive Workspace (`e2e-onboarding`)_
+
+_Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
 ## Recent reflections
 
