@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-<!-- hero:managed-start v=v0.34.2-12-g3a8c3ba1 -->
+<!-- hero:managed-start v=v0.34.2-20-gfce09e8d -->
 ## Hero — Spec-Driven AI Engineering
 
 This project uses **Hero** for spec-driven engineering workflows. Hero manages specs, integrates with work trackers (Jira, GitHub, Linear), and provides structured workflows via slash commands.
@@ -175,7 +175,7 @@ DeepSeek (dsh) loads Hero workflows as command-* skills, and role guidance as ro
 
 A role skill grants no tools, permissions, models, or hooks. Pass its guidance to compatible native delegation when available; otherwise adopt the role in the current agent. Local role adoption is not independent review: if a workflow requires a fresh reviewer or cold audit and the profile cannot provide one, stop at that named gate and report the unavailable capability. Never self-grade or mark delivery verified.
 
-Hero's MCP overlay is generated but activation is required. Launch an interactive session from the intended workspace with dsh --profile web --patch /absolute/path/to/.dsh/hero.cordis.patch.yml (or the global DSH_HOME overlay). The MCP child binds to that launch workspace; use one process per workspace. An explicitly bound --workspace overlay retains its declared root. The portable hero command resolves through the launching process PATH. No profile, allowlist, credentials, or shared Cordis configuration is changed.
+Hero's MCP server is registered per project in the DeepSeek home patch ($DSH_HOME/cordis.patch.yml, default ~/.dsh/cordis.patch.yml), which every profile loads, including the desktop app. Each installed project gets its own server named hero-<project>-<hash>, so Hero tools appear as mcp__hero-<project>-<hash>__<tool>. Other projects' Hero servers may be loaded too: call that server's hero_status and use only the server whose project root is this repository. If no Hero tools appear, restart the DeepSeek app and run hero doctor. Hero changes only its own marked entries in that file.
 
 DeepSeek also discovers CLAUDE.md and .agents/skills; installing other harnesses may expose duplicate instructions and skills. Hero does not delete or suppress those files. Within a Git tree, DeepSeek discovers skills from the first ancestor with .git; separately rooted or non-Git satellites use their own skills links.
 
