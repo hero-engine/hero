@@ -1,72 +1,60 @@
-# Delivery audit: deepseek-project-mcp-registration (round 2)
+# Delivery audit: deepseek-project-mcp-registration (round 3)
 
-**Audited:** `git diff 3859755d...b15cd0a9` (commits `1ceaef1c` and `b15cd0a9`), `.hero` projection files excluded
-**Verdict:** HOLD
+**Audited:** `git diff 3859755d...3deea556` (commits `1ceaef1c`, `b15cd0a9`, `3deea556`), `.hero` projection files excluded
+**Verdict:** SHIP
 **Surface:** noteworthy
 
-The round-1 blocker is fixed: every file Hero writes on install now parses in the harness. Round 2 found a new defect, introduced by the round-1 trailing-newline fix. When a later block follows a block flagged `(added-newline)`, uninstall can orphan another project's entry or produce a home patch the harness cannot parse. See the blocker in Audit notes.
+The round-1 blocker (install could write YAML the harness rejects) and the round-2 blocker (uninstalling a newline-flagged block that was not last) are both fixed, and both have regression tests. In the auditor's multi-project, multi-order probe, every file Hero writes parses in the pinned harness's js-yaml. One cosmetic byte-exactness gap remains (see Audit notes).
 
 ## Acceptance criteria
-- [✓] AC-1: one entry per project, with an id, a valid serverName (at most 20 name characters plus a 6-hex hash, 32 total), an absolute command and a pinned root. Evidence: `internal/install/deepseek_home.go:58-81,161-177`. Tests: `TestDeepSeekHomeEntryCreateAndNoop`, `TestDeepSeekServerNameShapeAndCase`. On darwin and windows the root is case-folded for the hash (`rootIdentity`).
-- [~] AC-2: foreign bytes preserved and repeat install is a no-op. The round-1 gaps are fixed and tested:
-  - Markers now match only as whole lines, with CRLF tolerated (`cutDeepSeekHomeBlock`, `:198-232`).
-  - A separator newline Hero adds is flagged on the start marker and removed on uninstall.
-  - A CRLF-converted block is no longer duplicated.
-
-  Auditor probes restored the original file exactly for these inputs: no trailing newline, a trailing comment, CRLF, CRLF with no trailing newline, a `---` start, a block scalar at end of file (with and without a trailing newline), anchors and aliases, and a two-project install removed in reverse order.
-
-  One regression: when the flagged block is not the last thing in the file, removing it glues the next line onto the foreign line. See the blocker.
-- [✓] AC-3: two projects keep distinct, independent entries (`TestDeepSeekHomeEntryTwoProjects`). The one exception is the removal-order case in the blocker.
-- [✓] AC-4: unsafe or unextendable home patches are refused before any mutation, and dry-run writes nothing.
-  - `PreflightDeepSeekHome` is now a dry-run of the same upsert (`:291-294`), run by `planDeepSeek` at the top of `install.Run`.
-  - The re-parse guard (`:335-344`) requires the result to be a list with exactly one more element containing Hero's id.
-  - Tests: `TestDeepSeekHomePatchUnextendableLayoutsRefused` (flow `[]`, indented list and `...` end, each left byte-identical), `TestDeepSeekHomePatchRefusedBeforeMutation`, `TestDeepSeekWorkspaceCollisionFailsBeforeRootInstall`.
-  - Auditor probe: the three round-1 layouts are refused and the files are unchanged. A tab-indented comment, which js-yaml accepts, is also refused because yaml.v3 rejects it. That is conservative and safe.
-- [✓] AC-5: PATH `hero` and `os.Executable()` both go through `transientExecutable`, which also checks the resolved path against `/tmp/`, `/private/tmp/`, `/var/folders/`, `/private/var/folders/` and `os.TempDir()` in both raw and resolved form (`:85-132`). The env pin must be absolute and is an explicit override by design. Test: `TestDeepSeekHeroCommandResolution`.
-- [✓] AC-6: legacy overlay behavior is unchanged from round 1: pruned when unmodified, kept with a warning when modified (`TestDeepSeekLegacyOverlayPruning`, `TestDeepSeekLegacyOverlayPreservedAndRemovable`).
-- [✓] AC-7: install output, AGENTS.md pattern and docs are unchanged from round 1. The doc examples are updated to 6-hex names (`MCP-SETUP.md`, `web/docs/src/configuration/mcp-setup.md`).
-- [✓] AC-8: doctor reports registration status. Roots are now compared through `rootIdentity` (`:426`). Tests: `TestDeepSeekRegistrationProblems`, `TestDoctorDeepSeekRegistrationProblemNeedsRepair`.
-- [~] AC-9: uninstall now removes the home entry before any project file (`internal/cli/uninstall.go:353-372`; test `TestDeepSeekUninstallFailsBeforeRemovingFilesOnBadHomePatch`). Dry-run does not write, and the Hero-created file is removed only when empty. However, `RemoveDeepSeekHomeEntry` does not re-validate its output, and the added-newline strip is unconditional. See the blocker.
-- [✓] AC-10: `native-compatibility-{engineering,pm,qa}.log` pass against harness `477b4f42`, with 6-hex server names, 86 tools, desktop-path composition with no overlays, and `hero_status` executed.
-- [✓] AC-11: the round-2 changes touch only `deepseek_home.go`, `cli/uninstall.go` (DeepSeek function), tests and DeepSeek docs. `go-tests.log` has 0 failures. The auditor re-ran `go test ./internal/install ./internal/cli -count=1` on `b15cd0a9`, and both pass.
+- [✓] AC-1: one entry per project, with id `hero-<name≤20>-<hash6>-mcp`, an absolute command and a pinned root. Evidence: `internal/install/deepseek_home.go:55-81,161-177`. Tests: `TestDeepSeekHomeEntryCreateAndNoop`, `TestDeepSeekServerNameShapeAndCase`.
+- [~] AC-2: foreign bytes preserved, repeat install a no-op.
+  - Markers match only as whole lines, with CRLF tolerated.
+  - An added newline is flagged. On removal it is stripped only when the block is at end of file, handed to the next Hero block, or kept when foreign content follows (`:223-245`).
+  - Tests: `TestDeepSeekHomeEntryPreservesForeignContent`, `TestDeepSeekHomeEntryRestoresMissingTrailingNewline`, `TestDeepSeekHomeMarkersAreWholeLines`, `TestDeepSeekHomeAddedNewlineRemovalKeepsFileValid`.
+  - The auditor probe restored the exact original in every clean scenario except one. When an earlier project is reinstalled with a different binary while a later block exists, and the file had no trailing newline, one extra trailing `\n` is left behind. The file stays valid. See Audit notes.
+- [✓] AC-3: projects stay independent in every probed order (`TestDeepSeekHomeEntryTwoProjects`, `TestDeepSeekHomeAddedNewlineRemovalKeepsFileValid`). After every step, `InspectDeepSeekRegistration` reported every still-installed project as registered.
+- [✓] AC-4: refusal before any mutation, and dry-run is safe. `PreflightDeepSeekHome` is a dry-run of the upsert, run from `planDeepSeek` at the top of `install.Run`. The upsert re-parses and requires exactly +1 element carrying Hero's id. Flow `[]`, an indented list and a `...` end are refused with the file unchanged. Tests: `TestDeepSeekHomePatchUnextendableLayoutsRefused`, `TestDeepSeekHomePatchRefusedBeforeMutation`, `TestDeepSeekWorkspaceCollisionFailsBeforeRootInstall`.
+- [✓] AC-5: the PATH binary and `os.Executable()` are both checked by `transientExecutable` (go-build, `os.TempDir()`, and the macOS `/tmp` and `/var/folders` aliases, raw and resolved). The env pin is an explicit absolute override. Test: `TestDeepSeekHeroCommandResolution`.
+- [✓] AC-6: the legacy overlay is pruned when unmodified and kept with a warning when modified (`TestDeepSeekLegacyOverlayPruning`, `TestDeepSeekLegacyOverlayPreservedAndRemovable`).
+- [✓] AC-7: install output names the server and path, the AGENTS.md section describes the naming pattern and the `hero_status` check, there is no `--patch`, and the docs use 6-hex examples.
+- [✓] AC-8: doctor reports registered, missing, malformed, stale-command or wrong-root. Roots are compared via `rootIdentity`. Tests: `TestDeepSeekRegistrationProblems`, `TestDoctorDeepSeekRegistrationProblemNeedsRepair`.
+- [✓] AC-9: uninstall removes the home entry first (`internal/cli/uninstall.go:353-372`). `RemoveDeepSeekHomeEntry` re-parses and requires -1 element with no remaining id for this server, refusing otherwise; dry-run gets the same check (`deepseek_home.go:383-396`). The file is removed only when Hero created it and it is empty. Tests: `TestDeepSeekUninstallFailsBeforeRemovingFilesOnBadHomePatch`, `TestDeepSeekUninstallOwnershipAndDryRun`, `TestDeepSeekHomeAddedNewlineRemovalKeepsFileValid`.
+- [✓] AC-10: `native-compatibility-{engineering,pm,qa}.log` pass against harness `477b4f42`: web and headless composition plus the desktop-path `readProfilePatches` with no overlays, one Hero client, 86 tools, `hero_status` executed.
+- [✓] AC-11: across all three commits, the non-DeepSeek code is untouched outside DeepSeek branches. `go-tests.log` has 0 failures. The auditor re-ran `go test ./internal/install ./internal/cli -count=1` on `3deea556`, and both pass. The 23 DeepSeek install tests pass individually.
 
 ## Changes
-- [~] 1. Home-patch upsert and removal, naming, binary resolution. The upsert is now validated. Removal is not, and has the defect below.
-- [✓] 2. State, target and legacy prune: ownership via the created-header line (deviation disclosed in the ledger).
+- [✓] 1. Home-patch upsert and removal (both validated by re-parsing), naming, binary resolution.
+- [✓] 2. Ownership via the created-header line (deviation disclosed in the ledger); legacy prune.
 - [✓] 3. `agents_md.go` DeepSeek section.
-- [✓] 4. `doctor.go` and `uninstall.go`, with tests. Uninstall ordering is fixed.
+- [✓] 4. `doctor.go` and `uninstall.go`, with tests.
 - [✓] 5. `scripts/deepseek-compatibility.mjs`.
-- [✓] 6. Docs. `docs-tests.log` and `docs-build.log` pass.
+- [✓] 6. Docs (`docs-tests.log` and `docs-build.log` pass; no docs changed in round 3).
 - [✓] 7. Supersede note on `deepseek-harness-install-target`.
 
 ## Open items
 - None. The ledger has no PARTIAL, SKIPPED or BLOCKED rows.
 
-## Harness parse check (js-yaml from the pinned harness)
-The auditor copied `deepseek-home.go` at `b15cd0a9` into a scratch program and ran install, second project, optional edit, and uninstall over 17 starting layouts. Each resulting file was loaded with the harness's `js-yaml` using the `parsePatchList` rules (a top-level array of mappings).
+## Harness parse check (auditor probe)
+`deepseek_home.go` at `3deea556` was copied into a scratch program.
 
-- **Every file Hero wrote on install or second install parses as a list with the expected Hero entry count.**
-- Every refusal left the file unchanged.
-- Uninstalls parse, with two exceptions:
-  - An empty or comment-only file that was already there is restored to its original bytes, which the harness already rejected before Hero touched it. This is correct.
-  - The two cases below.
+**Coverage.** 17 starting layouts × 11 scenarios. The scenarios cover:
+- two projects removed in either order;
+- three projects removed middle-first and first-first;
+- reinstall with a changed binary, for the first and for the later project;
+- remove then re-add;
+- user appends after Hero's block, with one and two projects.
+
+That produced 738 intermediate files. Each was loaded with the pinned harness's `js-yaml` using the `parsePatchList` rule (a top-level array of mappings).
+
+**Results:**
+- 722 files parse as valid patch lists.
+- The other 16 are exact restorations of originals that the harness already rejected before Hero touched them: an empty file, or a comments-only file.
+- 0 invalid outputs.
+- No project that was still installed was ever reported unregistered.
+- Unextendable layouts were refused with the file unchanged.
 
 ## Audit notes
-- **BLOCKER: removing a block flagged `(added-newline)` joins whatever follows it onto the foreign last line.** Cause: `cutDeepSeekHomeBlock` strips the flagged newline unconditionally (`deepseek_home.go:224-226`), even when content follows the block. `RemoveDeepSeekHomeEntry` (`:356-377`) writes without re-parsing. Reproduced:
-  1. **Two projects, remove the first.** Start with a home patch `- insert: []` that has no trailing newline. Install project A, then B, then uninstall A. The result is `- insert: []# hero:managed deepseek-mcp hero-b…`. B's start marker is no longer a whole line, so:
-     - doctor reports B as "no Hero MCP entry";
-     - reinstalling B is refused (a duplicate id makes the count 2);
-     - uninstalling B cannot find it.
-
-     B's live entry is orphaned permanently in the home patch. js-yaml happens to still load it.
-  2. **User appends after Hero's block.** Same starting file. Install A, then the user appends `- remove: [y]`, then uninstall A. The result is `- insert: []- remove: [y]`, and js-yaml throws `bad indentation of a mapping entry`. Every DeepSeek profile, desktop included, then fails to boot: the same failure class as the round-1 blocker, now on the uninstall path.
-
-  Suggested fix:
-  - Strip the flagged newline only when the block ends at end of file (`lineEnd == len(rest)`). Otherwise leave it, since the newline now separates real content.
-  - Give `RemoveDeepSeekHomeEntry` the same guard as upsert: re-parse and require exactly one fewer element with zero Hero ids for this server, or refuse.
-  - Add both cases to `TestDeepSeekHomeEntryRestoresMissingTrailingNewline`.
-- Non-blocking:
-  - The `DeepSeekServerName` doc comment still says `<hash4>` (`deepseek_home.go:55`).
-  - Case-folding on darwin means two projects on a case-sensitive APFS volume whose paths differ only in case would share one server name. This is extremely rare and accepted.
-  - The `HERO_DEEPSEEK_MCP_COMMAND` pin is not checked for temporary paths, by design.
-  - The evidence logs were produced on the `1ceaef1c-dirty` working tree. The auditor re-ran the install and CLI packages on `b15cd0a9`, and both pass.
+- **Cosmetic, non-blocking.** Take a home patch with no trailing newline and two installed projects. Reinstall the first with a different `hero` binary path; the newline flag has already moved to the second block. Then uninstall both. The file ends with one extra `\n` (for example `- insert: []` becomes `- insert: []\n`). It stays valid, and all entries are preserved. Only the missing-trailing-newline byte is not restored. Reproduced for 4 of the 17 layouts, in the `+A,+B,+A',-B,-A` order only.
+- The evidence logs report `v0.34.2-17-gb15cd0a9-dirty`, meaning they were produced on the working tree before commit `3deea556`. The auditor re-ran the install and CLI package tests on the committed `3deea556`, and they pass. `gofmt -l` is clean for the touched files.
+- The `HERO_DEEPSEEK_MCP_COMMAND` pin is not checked for temporary paths, by design (developer override).
