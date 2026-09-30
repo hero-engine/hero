@@ -359,7 +359,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		}
 		if target == install.TargetDeepSeek {
 			var overlay string
-			overlay, err = install.DeepSeekOverlayPath(*wsOpts)
+			overlay, err = install.DeepSeekMCPConfigPath(*wsOpts)
 			if err == nil {
 				result.Merged = append(result.Merged, overlay)
 			}

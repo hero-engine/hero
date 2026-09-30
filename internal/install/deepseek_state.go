@@ -147,6 +147,11 @@ func pruneDeepSeek(opts Options, base string, files map[string]deepseekFile, pri
 		}
 		path := filepath.Join(base, filepath.FromSlash(key))
 		if deepseekHasSymlinkAncestor(path, base) || !deepseekUnchanged(path, sum) {
+			if key == deepseekOverlayName && !opts.Quiet {
+				if _, err := os.Lstat(path); err == nil {
+					fmt.Printf("  warning: kept modified %s; Hero MCP is now registered in the DeepSeek home patch, so passing this file with --patch adds a second Hero server\n", path)
+				}
+			}
 			continue
 		}
 		if !opts.DryRun {

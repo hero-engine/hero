@@ -75,7 +75,7 @@ surfaces and root instructions. Install with:
     hero install project . --target deepseek
     ```
 
-    Activate the generated Cordis overlay explicitly; see [MCP setup](../configuration/mcp-setup.md#deepseek-harness-dsh).
+    Restart the DeepSeek desktop app (or start `dsh --profile web`); Hero's MCP server is registered in `~/.dsh/cordis.patch.yml`. See [MCP setup](../configuration/mcp-setup.md#deepseek-harness-dsh).
 
 === "Generic MCP"
 

@@ -409,7 +409,7 @@ func perTargetMarker(rootAbs, satAbs, scope string, targets []Target, symlinks b
 	extra := ""
 	for _, t := range targets {
 		if t == TargetDeepSeek {
-			extra = "\nDeepSeek: launch from this satellite directory using " + DeepSeekLaunchCommand(filepath.Join(rootAbs, ".dsh", deepseekOverlayName)) + ". The MCP child keeps its launch workspace; an explicitly bound --workspace overlay retains its declared root. Skills come from the Git root when in the same Git tree; these links support separate Git roots and non-Git satellites.\n"
+			extra = "\nDeepSeek: Hero MCP for this satellite is the parent project's server, registered in the DeepSeek home patch by `hero install project` at the root. Skills come from the Git root when in the same Git tree; these links support separate Git roots and non-Git satellites.\n"
 		}
 	}
 	return extra + fmt.Sprintf(`<!-- hero:satellite -->

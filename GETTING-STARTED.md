@@ -77,8 +77,9 @@ Grok, and DeepSeek receive `command-*` workflow skills. Other targets receive th
 instructions and integration files they support. Natural-language requests
 work across Hero-aware harnesses; slash-command syntax is not universal.
 
-For DeepSeek (`dsh`), installation generates `.dsh/skills/` and an MCP overlay.
-Activate the overlay explicitly following [DeepSeek setup](MCP-SETUP.md#deepseek-harness-dsh).
+For DeepSeek, installation generates `.dsh/skills/` and registers this project's
+Hero MCP server in `~/.dsh/cordis.patch.yml`; restart the desktop app or start
+`dsh --profile web`. See [DeepSeek setup](MCP-SETUP.md#deepseek-harness-dsh).
 
 The default project uses Core plus Engineering, including lightweight PM and QA
 help for engineering work. Focused PM, QA, and Sales setups are optional:

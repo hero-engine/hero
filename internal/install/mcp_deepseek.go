@@ -2,18 +2,20 @@ package install
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/hero-engine/hero/internal/version"
-	"gopkg.in/yaml.v3"
 )
 
 const deepseekOverlayName = "hero.cordis.patch.yml"
 
-// DeepSeekOverlayPath identifies the explicitly activated Cordis overlay.
-func DeepSeekOverlayPath(opts Options) (string, error) {
+// DeepSeekMCPConfigPath is where install registers Hero's MCP server: the
+// home patch for project installs, the --patch overlay for global installs.
+func DeepSeekMCPConfigPath(opts Options) (string, error) {
+	if opts.Mode == ModeProject {
+		return DeepSeekHomePatchPath()
+	}
 	base, err := deepseekBase(opts)
 	if err != nil {
 		return "", err
@@ -28,32 +30,39 @@ func DeepSeekLaunchCommand(path string) string {
 	return "dsh --profile web --patch '" + strings.ReplaceAll(path, "'", "'\"'\"'") + "'"
 }
 
+// deepseekOverlay is the global-mode overlay, activated with `dsh --patch`.
+// It keeps the portable command because it is not bound to one project.
 func deepseekOverlay(opts Options) ([]byte, error) {
-	args := []string{"mcp"}
+	var entry deepseekMCPEntry
+	entry.ID, entry.Name = "hero-mcp", deepseekMCPPluginName
+	entry.Config.ServerName, entry.Config.Transport = "hero", "stdio"
+	entry.Config.Command = heroCommand
+	entry.Config.Args = []string{"mcp"}
 	if opts.ProjectRoot != "" {
-		args = append(args, "--project-root", opts.ProjectRoot)
+		entry.Config.Args = append(entry.Config.Args, "--project-root", opts.ProjectRoot)
 	}
-	type plugin struct {
-		ID     string `yaml:"id"`
-		Name   string `yaml:"name"`
-		Config struct {
-			ServerName string   `yaml:"serverName"`
-			Transport  string   `yaml:"transport"`
-			Command    string   `yaml:"command"`
-			Args       []string `yaml:"args"`
-		} `yaml:"config"`
-	}
-	p := plugin{ID: "hero-mcp", Name: "@deepseek-ai/dsh-mcp-client"}
-	p.Config.ServerName = "hero"
-	p.Config.Transport = "stdio"
-	p.Config.Command = heroCommand
-	p.Config.Args = args
-	return yaml.Marshal([]struct {
-		Insert []plugin `yaml:"insert"`
-	}{{Insert: []plugin{p}}})
+	return deepseekMCPPatch(entry)
 }
 
 func registerMCPDeepSeek(opts Options) error {
+	if opts.Mode == ModeProject {
+		root := opts.ProjectRoot
+		if root == "" {
+			root = opts.TargetDir
+		}
+		path, server, changed, err := UpsertDeepSeekHomeEntry(root, opts.DryRun)
+		if err != nil {
+			return err
+		}
+		if !opts.Quiet && changed {
+			verb := "registered"
+			if opts.DryRun {
+				verb = "would register"
+			}
+			fmt.Printf("  DeepSeek MCP server %s %s in %s\n", server, verb, path)
+		}
+		return nil
+	}
 	base, err := deepseekBase(opts)
 	if err != nil {
 		return err
@@ -82,21 +91,6 @@ func registerMCPDeepSeek(opts Options) error {
 		if err = os.WriteFile(path, data, 0644); err != nil {
 			return err
 		}
-	}
-	if opts.Mode == ModeProject && opts.ProjectRoot != "" && InstallStatePath(opts.ProjectRoot) != "" {
-		root, err := filepath.Abs(opts.ProjectRoot)
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
-		}
-		sum, err := version.FileChecksum(path)
-		if err != nil {
-			return err
-		}
-		return version.StampInstall(filepath.Join(opts.ProjectRoot, ".hero"), opts.Version, string(TargetDeepSeek), string(ModeProject), map[string]string{filepath.ToSlash(rel): sum})
 	}
 	return nil
 }

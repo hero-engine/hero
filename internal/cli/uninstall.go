@@ -355,6 +355,18 @@ func uninstallDeepSeek(projectRoot string, versionInfo *version.Info) (int, int,
 	if err != nil {
 		return removed, preserved, err
 	}
+	if cleaned, err := install.RemoveDeepSeekHomeEntry(projectRoot, uninstallDryRun); err != nil {
+		return removed, preserved, err
+	} else if cleaned {
+		path, _ := install.DeepSeekHomePatchPath()
+		if uninstallDryRun {
+			fmt.Printf("  Would remove this project's Hero MCP entry from %s\n", path)
+		} else {
+			fmt.Printf("  Removed this project's Hero MCP entry from %s\n", path)
+			removed++
+		}
+	}
+	// Legacy (pre-home-patch) project overlay, removed only when unmodified.
 	if cleaned, err := install.RemoveDeepSeekOverlay(projectRoot, uninstallDryRun, false); err != nil {
 		return removed, preserved, err
 	} else if cleaned {

@@ -15,8 +15,14 @@ func TestDeepSeekNativeLayoutAndInventory(t *testing.T) {
 	h := newInstallHarness(t)
 	mkHeroDir(t, h.TargetDir)
 	h.Run(TargetDeepSeek, nil)
-	for _, path := range []string{".dsh/skills/role-engineer/SKILL.md", ".dsh/skills/command-design/SKILL.md", ".dsh/skills/spec-format/SKILL.md", ".dsh/hero.cordis.patch.yml", "AGENTS.md"} {
+	for _, path := range []string{".dsh/skills/role-engineer/SKILL.md", ".dsh/skills/command-design/SKILL.md", ".dsh/skills/spec-format/SKILL.md", "AGENTS.md"} {
 		h.mustBeRegularFile(path)
+	}
+	// deepseek-project-mcp-registration AC-1/AC-6: MCP is registered in the
+	// DeepSeek home patch, not a project overlay nothing loads.
+	h.mustNotExist(".dsh/hero.cordis.patch.yml")
+	if reg := InspectDeepSeekRegistration(h.TargetDir); reg.Problem != "" {
+		t.Fatalf("project not registered: %+v", reg)
 	}
 	for _, path := range []string{".dsh/agents", ".dsh/commands", ".claude", ".agents", ".mcp.json"} {
 		h.mustNotExist(path)
@@ -108,8 +114,10 @@ func TestDeepSeekGlobalOwnershipAndHome(t *testing.T) {
 	}
 }
 
-// deepseek-harness-install-target AC-3 AC-5 AC-8.
-func TestDeepSeekOverlayCollisionDryRunAndRemoval(t *testing.T) {
+// deepseek-project-mcp-registration AC-6: a user file at the old overlay
+// path neither blocks a project install nor is touched by it, and legacy
+// overlay removal still honors ownership.
+func TestDeepSeekLegacyOverlayPreservedAndRemovable(t *testing.T) {
 	h := newInstallHarness(t)
 	mkHeroDir(t, h.TargetDir)
 	base := filepath.Join(h.TargetDir, ".dsh")
@@ -121,57 +129,34 @@ func TestDeepSeekOverlayCollisionDryRunAndRemoval(t *testing.T) {
 		t.Fatal(err)
 	}
 	opts := Options{SourceDir: h.SourceDir, Target: TargetDeepSeek, Mode: ModeProject, TargetDir: h.TargetDir, Quiet: true}
-	for _, dry := range []bool{false, true} {
-		opts.DryRun = dry
-		if _, err := Run(opts); err == nil {
-			t.Fatal("overlay collision accepted")
-		}
-		h.mustNotExist("AGENTS.md")
-		h.mustNotExist(".dsh/skills")
-	}
-	opts.Force = true
-	opts.DryRun = true
 	if _, err := Run(opts); err != nil {
 		t.Fatal(err)
 	}
-	h.mustNotExist("AGENTS.md")
-	h.mustNotExist(".dsh/skills")
-	opts.DryRun = false
-	opts.ProjectRoot = "/workspace with spaces"
-	if _, err := Run(opts); err != nil {
-		t.Fatal(err)
-	}
-	data, _ := os.ReadFile(path)
-	var patch []struct {
-		Insert []struct {
-			Config struct {
-				Command string   `yaml:"command"`
-				Args    []string `yaml:"args"`
-			} `yaml:"config"`
-		} `yaml:"insert"`
-	}
-	if err := yaml.Unmarshal(data, &patch); err != nil {
-		t.Fatal(err)
-	}
-	if len(patch) != 1 || len(patch[0].Insert) != 1 || patch[0].Insert[0].Config.Command != "hero" || strings.Join(patch[0].Insert[0].Config.Args, "|") != "mcp|--project-root|/workspace with spaces" {
-		t.Fatalf("invalid overlay %s", data)
-	}
-	if ok, err := RemoveDeepSeekOverlay(h.TargetDir, true, false); err != nil || !ok {
-		t.Fatalf("dry removal: %v %v", ok, err)
-	}
-	h.mustBeRegularFile(".dsh/hero.cordis.patch.yml")
-	if err := os.WriteFile(path, []byte("modified"), 0644); err != nil {
-		t.Fatal(err)
+	if data, _ := os.ReadFile(path); string(data) != "user overlay" {
+		t.Fatalf("user overlay changed: %q", data)
 	}
 	if removed, err := RemoveDeepSeekOverlay(h.TargetDir, false, false); err != nil || removed {
-		t.Fatal("removed modified overlay")
+		t.Fatal("removed unowned overlay")
 	}
 	if ok, err := RemoveDeepSeekOverlay(h.TargetDir, false, true); err != nil || !ok {
 		t.Fatalf("force removal: %v %v", ok, err)
 	}
-	// sept-review-cleanup AC-7: generated AGENTS.md guidance names the profile dsh requires.
-	if section := renderDeepSeekWorkflowSection(); !strings.Contains(section, "with dsh --profile web --patch /absolute/") {
-		t.Fatalf("DeepSeek AGENTS.md guidance lacks the interactive launch:\n%s", section)
+	// Global installs still ship a portable --patch overlay.
+	gopts := Options{SourceDir: h.SourceDir, Target: TargetDeepSeek, Mode: ModeGlobal, Quiet: true}
+	if _, err := Run(gopts); err != nil {
+		t.Fatal(err)
+	}
+	home, _ := DeepSeekHome()
+	data, _ := os.ReadFile(filepath.Join(home, deepseekOverlayName))
+	var patch []struct {
+		Insert []deepseekMCPEntry `yaml:"insert"`
+	}
+	if err := yaml.Unmarshal(data, &patch); err != nil || len(patch) != 1 || patch[0].Insert[0].Config.Command != "hero" {
+		t.Fatalf("invalid global overlay %s %v", data, err)
+	}
+	// deepseek-project-mcp-registration AC-7: guidance describes home-patch registration.
+	if section := renderDeepSeekWorkflowSection(); !strings.Contains(section, "mcp__hero-<project>-<hash>__<tool>") || !strings.Contains(section, "hero_status") {
+		t.Fatalf("DeepSeek AGENTS.md guidance lacks server naming:\n%s", section)
 	}
 	// sept-review-cleanup AC-7: interactive launch, no headless profile or prompt.
 	if got := DeepSeekLaunchCommand("/a'b c"); got != "dsh --profile web --patch '/a'\"'\"'b c'" {
@@ -267,8 +252,8 @@ func TestDeepSeekSatelliteLayout(t *testing.T) {
 		}
 	}
 	data, _ := os.ReadFile(filepath.Join(sat, "AGENTS.md"))
-	if !strings.Contains(string(data), DeepSeekLaunchCommand(filepath.Join(h.TargetDir, ".dsh", deepseekOverlayName))) {
-		t.Fatal("missing parent activation")
+	if !strings.Contains(string(data), "parent project's server") {
+		t.Fatal("missing parent MCP guidance")
 	}
 	if err := RemoveSatellite(sat, []Target{TargetDeepSeek}); err != nil {
 		t.Fatal(err)
@@ -329,8 +314,9 @@ func TestDeepSeekGlobalRefreshPruneAndDryRun(t *testing.T) {
 	}
 }
 
-// deepseek-harness-install-target AC-3 AC-5: workspace overlay ownership follows its root.
-func TestDeepSeekWorkspaceOverlayRefresh(t *testing.T) {
+// deepseek-project-mcp-registration AC-1: a --workspace registration binds
+// the parent project root and is idempotent.
+func TestDeepSeekWorkspaceRegistersProjectRoot(t *testing.T) {
 	h := newInstallHarness(t)
 	mkHeroDir(t, h.TargetDir)
 	ws := filepath.Join(h.TargetDir, "workspace space")
@@ -338,19 +324,24 @@ func TestDeepSeekWorkspaceOverlayRefresh(t *testing.T) {
 		t.Fatal(err)
 	}
 	opts := Options{Target: TargetDeepSeek, Mode: ModeProject, TargetDir: ws, ProjectRoot: h.TargetDir, Quiet: true}
-	if err := RegisterMCP(TargetDeepSeek, opts); err != nil {
-		t.Fatal(err)
+	for i := 0; i < 2; i++ {
+		if err := RegisterMCP(TargetDeepSeek, opts); err != nil {
+			t.Fatal(err)
+		}
 	}
-	base, _ := deepseekBase(opts)
-	sums, err := deepseekChecksums(opts, base)
-	if err != nil || sums[deepseekOverlayName] == "" {
-		t.Fatalf("workspace ownership missing: %v %v", sums, err)
+	if reg := InspectDeepSeekRegistration(h.TargetDir); reg.Problem != "" {
+		t.Fatalf("root not registered: %+v", reg)
 	}
-	if err := RegisterMCP(TargetDeepSeek, opts); err != nil {
-		t.Fatal(err)
+	path, _ := DeepSeekHomePatchPath()
+	data, _ := os.ReadFile(path)
+	server, _ := DeepSeekServerName(h.TargetDir)
+	if n := strings.Count(string(data), "serverName: "+server); n != 1 {
+		t.Fatalf("expected one entry, got %d:\n%s", n, data)
 	}
-	if _, err := os.Stat(filepath.Join(ws, ".hero")); !os.IsNotExist(err) {
-		t.Fatal("workspace overlay made shadow .hero")
+	for _, rel := range []string{".hero", ".dsh"} {
+		if _, err := os.Stat(filepath.Join(ws, rel)); !os.IsNotExist(err) {
+			t.Fatalf("workspace registration wrote %s", rel)
+		}
 	}
 }
 
@@ -389,8 +380,10 @@ func TestDeepSeekInstallAcceptsRelativeTargetDir(t *testing.T) {
 	h := newInstallHarness(t)
 	t.Chdir(h.TargetDir)
 	h.Run(TargetDeepSeek, func(o *Options) { o.TargetDir = "."; o.ProjectRoot = "." })
-	h.mustExist(".dsh/hero.cordis.patch.yml")
 	h.mustExist(".dsh/skills/command-design/SKILL.md")
+	if reg := InspectDeepSeekRegistration(h.TargetDir); reg.Problem != "" {
+		t.Fatalf("relative install not registered: %+v", reg)
+	}
 	// Repeat install exercises the prior-checksum path with the relative root.
 	h.Run(TargetDeepSeek, func(o *Options) { o.TargetDir = "."; o.ProjectRoot = "." })
 }

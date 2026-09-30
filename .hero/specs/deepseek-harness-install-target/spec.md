@@ -140,6 +140,7 @@ Project uninstall removes owned generated skills, the owned overlay, and target 
 - No DeepSeek model provider, credentials, binary installation, shell/PATH edits, or default application selection.
 - No native preset/plugin authoring for Hero roles, new delegation runtime, custom slash commands, lifecycle hooks, or changes to the DeepSeek repository.
 - No silent global Cordis activation or edits to user profiles; no claim that a generated overlay is automatically active.
+  - **Superseded 2026-09-30 for project installs** by `deepseek-project-mcp-registration`. The DeepSeek desktop app never passes `--patch`, so project installs now register a Hero-owned, marker-delimited entry in `$DSH_HOME/cordis.patch.yml`. App-managed profile patches are still never edited.
 - No redesign of all harness registries, global uninstall, or fixes to unrelated lifecycle defects. Existing targets change only for shared instructions, enumeration, and regression coverage necessary for the eighth target.
 - One medium feature: a bounded adapter and its existing lifecycle joins. No independent platform deliverables warrant an initiative.
 

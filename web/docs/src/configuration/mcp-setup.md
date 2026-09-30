@@ -30,29 +30,70 @@ Hero-managed MCP blocks/config.
 
 ## DeepSeek Harness (`dsh`)
 
-The install target is `deepseek`; the harness executable is `dsh`. This is
-harness integration, not model-provider configuration. Compatibility is based on
-DeepSeek Harness commit `477b4f420553e8a52c2fbccc464d7561b239c443`.
+The install target is `deepseek`. It works with the DeepSeek Harness desktop
+app and the `dsh` CLI. This is harness integration, not model-provider
+configuration. Compatibility is based on DeepSeek Harness commit
+`477b4f420553e8a52c2fbccc464d7561b239c443`.
 
 ```bash
 hero install project . --target deepseek
-dsh --profile web --patch '/absolute/project/.dsh/hero.cordis.patch.yml'
 ```
 
-Run `dsh` from the intended workspace; `--profile web` starts an interactive
-session. `--profile headless` with a prompt argument is a one-shot model run for scripts. Installation reports **overlay generated; activation
-required**. Neither a file on disk nor `hero doctor` proves a live connection.
-The patch inserts `@deepseek-ai/dsh-mcp-client` with `serverName: hero`,
-`transport: stdio`, `command: hero`, and `args: [mcp]`. Hero never edits your
-shared `cordis.patch.yml`, profiles, models, or allowlists.
+That's the whole setup: restart the DeepSeek desktop app, or start
+`dsh --profile web`. No `--patch` flag is needed.
+
+**How MCP is registered.** Every DeepSeek profile, including the desktop
+app's, loads the home patch `$DSH_HOME/cordis.patch.yml` (default
+`~/.dsh/cordis.patch.yml`). A project install adds one Hero entry per project
+to that file, between `# hero:managed deepseek-mcp <server>` markers:
+
+- **Server name:** `hero-<project>-<hash>`, e.g. `hero-api-3f2a`. Hero tools
+  appear as `mcp__hero-api-3f2a__hero_status` and so on.
+- **Command:** the absolute `hero` path found on your `PATH` at install time.
+  GUI apps don't inherit your shell `PATH`. If you reinstall Hero somewhere
+  else, rerun the install. To pin a specific build, set
+  `HERO_DEEPSEEK_MCP_COMMAND=/abs/path/to/hero` while installing.
+- **Project binding:** `cwd` and `--project-root` are pinned to the project,
+  so Hero serves the right project wherever DeepSeek was launched from.
+
+Hero never touches anything outside its own markers. It refuses (before
+writing any file) to edit a home patch that isn't a YAML list, isn't a
+regular file, or is a symlink. It never edits the app-managed
+`~/.dsh/profiles/*/cordis.patch.yml`, models, or allowlists.
+
+DeepSeek starts MCP servers once per profile, not per session, so every
+installed project's Hero server is loaded in every session. `AGENTS.md` tells
+the model to use the server whose `hero_status` reports this repository.
+`hero doctor` shows the project's server name and whether its entry is present,
+points at an executable `hero`, and serves this project root. If not, it gives
+the verdict `NEEDS REPAIR` with the install command that fixes it.
 
 Project instructions live in the managed region of `AGENTS.md`; canonical,
-`command-*`, and `role-*` skills live under `.dsh/skills/`. Roles are guidance,
-not registered native agents. A profile without independent delegation cannot
-complete a required fresh review or cold audit by adopting the reviewer role
-locally. DeepSeek also reads `CLAUDE.md` and `.agents/skills`; mixed installs can
-expose duplicates. At the pinned baseline, project skills beat global skills,
-`.dsh/skills` beats `.agents/skills`, and provider registration/local ordering break remaining ties. Hero preserves other harnesses' files.
+`command-*`, and `role-*` skills live under `.dsh/skills/`:
+
+- **Roles** are guidance, not registered native agents. A profile without
+  independent delegation cannot complete a required fresh review or cold audit
+  by adopting the reviewer role locally.
+- **Discovery:** DeepSeek also reads `CLAUDE.md` and `.agents/skills`, so mixed
+  installs can expose duplicates. At the pinned baseline, project skills beat
+  global skills, `.dsh/skills` beats `.agents/skills`, and provider
+  registration/local ordering break remaining ties. Hero preserves other
+  harnesses' files.
+
+`hero install project . --target deepseek --workspace services/api` registers
+the same project-root entry, so there is still one server per project.
+Satellites link only `.dsh/skills` and use the parent project's server. Within
+a Git tree, DeepSeek finds the first `.git` ancestor and loads its root skills;
+nested links are useful for separately rooted or non-Git satellites.
+
+Earlier Hero versions generated `.dsh/hero.cordis.patch.yml` for use with
+`--patch`. Reinstalling removes it if unmodified. A modified copy is kept with
+a warning, because passing it with `--patch` now adds a second Hero server.
+
+Project removal uses `hero uninstall --target deepseek`. It removes this
+project's home-patch entry, and deletes the file only if Hero created it and
+nothing else remains. Other targets, foreign entries, and modified skills are
+preserved. `--dry-run` previews without writing.
 
 For global installation:
 
@@ -60,45 +101,26 @@ For global installation:
 hero install global --target deepseek
 ```
 
-Global files use `$DSH_HOME/AGENTS.md`, `$DSH_HOME/skills/`, and
-`$DSH_HOME/hero.cordis.patch.yml`. Nonblank `DSH_HOME` values retain their whitespace; unset/whitespace-only means
-`~/.dsh`, `~/` expands to your home, and relative values resolve against the
-installation working directory. It does not redirect project installs. Global
-installation neither creates a project nor pins the current repository. Pass
-the absolute global overlay path with `--patch` each time you launch.
+Global files use `$DSH_HOME/AGENTS.md`, `$DSH_HOME/skills/`, and a
+`$DSH_HOME/hero.cordis.patch.yml` overlay:
 
-The MCP child binds once to its launch workspace. One global overlay is reusable
-configuration, not a router for multiple repositories in a shared GUI/server
-process. Launch one process per intended workspace. `hero install project .
---target deepseek --workspace services/api` writes a subfolder overlay explicitly
-bound to the parent project root using `--project-root`.
-
-Satellites link only `.dsh/skills` and retain the shared instruction marker.
-Within a Git tree, DeepSeek finds the first `.git` ancestor and loads its root
-skills; nested links are useful for separately rooted/non-Git satellites. Launch
-from the satellite directory with the absolute **parent** overlay path, keeping
-that working directory. An overlay created with `--workspace` keeps its explicit
-project-root binding.
-
-Generated patches keep the portable executable name `hero`. The harness's
-`PATH` chooses the binary; GUI launches need not inherit shell startup files.
-Use `hero doctor` to inspect binary drift. For a specific development/release
-binary, keep a separate user-owned overlay with an absolute `command` path and
-activate that copy. Restart the process after changing the binary/configuration.
-The installer does not install executables or change `PATH`.
-
-Project removal uses `hero uninstall --target deepseek`; other targets and
-foreign files remain. Modified DeepSeek skills/patches are preserved. Unknown
-existing overlays block install before mutation; use `--force` only when you
-intend replacement. `--dry-run` previews without writing.
-
-Global install/reinstall records relative paths and SHA-256 checksums in
-`$DSH_HOME/hero-install-manifest.json`. There is no global-uninstall command.
-For manual global cleanup, remove only files whose current SHA-256 matches their
-manifest entry, preserve modified/unlisted files, and remove only the
-`hero:managed-start` through `hero:managed-end` region from `AGENTS.md`. Never
-remove the whole home or shared Cordis configuration. Remove the manifest after
-finishing that inventory review; reinstall uses it to protect user changes.
+- **Activation:** the global overlay is not pinned to a project and is not
+  loaded automatically. Pass it with `dsh --profile web --patch
+  '<absolute path>'` from the intended workspace. Prefer project installs for
+  the desktop app.
+- **`DSH_HOME`:** nonblank values retain their whitespace. Unset or
+  whitespace-only means `~/.dsh`, `~/` expands to your home, and relative
+  values resolve against the installation working directory.
+- **Cleanup:** global install/reinstall records relative paths and SHA-256
+  checksums in `$DSH_HOME/hero-install-manifest.json`. There is no
+  global-uninstall command. For manual cleanup:
+  - Remove only files whose current SHA-256 matches their manifest entry, and
+    preserve modified or unlisted files.
+  - From `AGENTS.md`, remove only the `hero:managed-start` through
+    `hero:managed-end` region.
+  - Never remove the whole home or shared Cordis configuration.
+  - Remove the manifest after that review; reinstall uses it to protect your
+    changes.
 
 ## Manual Config
 

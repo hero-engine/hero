@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"gopkg.in/yaml.v3"
 )
 
 // TestRegisterMCP_CommandIsPortable_AllTargets is the cross-target guard:
@@ -46,26 +45,9 @@ func TestRegisterMCP_CommandIsPortable_AllTargets(t *testing.T) {
 			// The codex block lands in the PROJECT config, not ~/.codex.
 			return codexHeroCommand(t, filepath.Join(targetDir, ".codex", "config.toml"))
 		}},
-		{TargetDeepSeek, func(t *testing.T, targetDir string) string {
-			data, err := os.ReadFile(filepath.Join(targetDir, ".dsh", "hero.cordis.patch.yml"))
-			if err != nil {
-				t.Fatal(err)
-			}
-			var patches []struct {
-				Insert []struct {
-					Config struct {
-						Command string `yaml:"command"`
-					} `yaml:"config"`
-				} `yaml:"insert"`
-			}
-			if err := yaml.Unmarshal(data, &patches); err != nil {
-				t.Fatal(err)
-			}
-			if len(patches) != 1 || len(patches[0].Insert) != 1 {
-				t.Fatalf("unexpected MCP patch: %s", data)
-			}
-			return patches[0].Insert[0].Config.Command
-		}},
+		// DeepSeek is deliberately absent: its project MCP entry lives in the
+		// machine-local DeepSeek home patch (never committed), where GUI apps
+		// need an absolute command. See deepseek_home_test.go.
 		{TargetGrok, func(t *testing.T, targetDir string) string {
 			return codexHeroCommand(t, filepath.Join(targetDir, ".grok", "config.toml"))
 		}},

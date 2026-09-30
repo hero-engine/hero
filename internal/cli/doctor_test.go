@@ -358,10 +358,11 @@ func verdictLine(report string) string {
 }
 
 func TestDoctorDeepSeekNamesMissingArtifactsDespiteFullCounts(t *testing.T) {
-	for _, path := range []string{".dsh/skills/role-engineer/SKILL.md", ".dsh/hero.cordis.patch.yml"} {
+	for _, path := range []string{".dsh/skills/role-engineer/SKILL.md", ".dsh/skills/command-design/SKILL.md"} {
 		t.Run(path, func(t *testing.T) {
 			info := doctorInfo{
 				binaryVersion: "1.0.0", workspaceVersion: "1.0.0", binarySchema: "4", graphSchema: "4", heroDir: "/repo/.hero",
+				deepseekMCP: &install.DeepSeekRegistration{Path: "/home/.dsh/cordis.patch.yml", ServerName: "hero-repo-ab12", Command: "/usr/local/bin/hero"},
 				inventory: []install.TargetInventory{{
 					Target: install.TargetDeepSeek, RootFile: "AGENTS.md",
 					Agents: install.KindCount{NotApplicable: true}, Commands: install.KindCount{NotApplicable: true},
@@ -369,9 +370,10 @@ func TestDoctorDeepSeekNamesMissingArtifactsDespiteFullCounts(t *testing.T) {
 				}},
 			}
 			report := buildDoctorReport(info)
-			for _, want := range []string{"! deepseek missing: " + path, "1 installed target is incomplete", "hero upgrade", "Verdict: NEEDS REPAIR", "activation unverified",
-				// sept-review-cleanup AC-7: doctor shows the same interactive launch as install.
-				"Launch from the intended workspace: dsh --profile web --patch '/repo/.dsh/hero.cordis.patch.yml'"} {
+			for _, want := range []string{"! deepseek missing: " + path, "1 installed target is incomplete", "hero upgrade", "Verdict: NEEDS REPAIR",
+				// deepseek-project-mcp-registration AC-8: doctor reports the home-patch entry.
+				"MCP: registered as hero-repo-ab12 in /home/.dsh/cordis.patch.yml (command /usr/local/bin/hero)",
+				"`dsh --profile web`"} {
 				if !strings.Contains(report, want) {
 					t.Errorf("missing %q:\n%s", want, report)
 				}
@@ -423,5 +425,24 @@ func TestDoctorCapsMissingArtifactListing(t *testing.T) {
 	}
 	if !strings.Contains(report, "! codex missing: … and 3 more") {
 		t.Errorf("missing remainder line:\n%s", report)
+	}
+}
+
+// deepseek-project-mcp-registration AC-8: a broken registration is named and
+// makes the verdict actionable even when every file is present.
+func TestDoctorDeepSeekRegistrationProblemNeedsRepair(t *testing.T) {
+	info := doctorInfo{
+		binaryVersion: "1.0.0", workspaceVersion: "1.0.0", binarySchema: "4", graphSchema: "4", heroDir: "/repo/.hero",
+		deepseekMCP: &install.DeepSeekRegistration{Path: "/home/.dsh/cordis.patch.yml", ServerName: "hero-repo-ab12", Problem: "no Hero MCP entry for this project"},
+		inventory: []install.TargetInventory{{
+			Target: install.TargetDeepSeek, RootFile: "AGENTS.md",
+			Agents: install.KindCount{NotApplicable: true}, Commands: install.KindCount{NotApplicable: true}, Skills: kc(121, 121),
+		}},
+	}
+	report := buildDoctorReport(info)
+	for _, want := range []string{"! deepseek MCP (hero-repo-ab12 in /home/.dsh/cordis.patch.yml): no Hero MCP entry for this project", "Verdict: NEEDS REPAIR — DeepSeek MCP is not usable for this project. Run `hero install project . --target deepseek`."} {
+		if !strings.Contains(report, want) {
+			t.Errorf("missing %q:\n%s", want, report)
+		}
 	}
 }

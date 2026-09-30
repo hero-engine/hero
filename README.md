@@ -64,8 +64,8 @@ native surfaces. Claude receives command files; Codex, Grok, and DeepSeek receiv
 `command-*` workflow skills; other targets receive their supported native
 surfaces and root instructions. Do not assume slash commands exist everywhere.
 
-DeepSeek uses the `dsh` executable. Its MCP overlay requires explicit `--patch`
-activation; see [DeepSeek setup](MCP-SETUP.md#deepseek-harness-dsh).
+DeepSeek (desktop app or `dsh`) loads Hero's MCP server from its home patch after a
+project install; restart the app. See [DeepSeek setup](MCP-SETUP.md#deepseek-harness-dsh).
 
 The default setup combines Core with Engineering, including lightweight PM and
 QA assistance used inside engineering workflows. Focused PM, QA, and Sales

@@ -107,11 +107,15 @@ func deepseekFiles(opts Options) (map[string]deepseekFile, []string, error) {
 			}
 		}
 	}
-	overlay, err := deepseekOverlay(opts)
-	if err != nil {
-		return nil, nil, err
+	// Project installs register MCP in the DeepSeek home patch instead
+	// (deepseek_home.go); only global installs ship a --patch overlay.
+	if opts.Mode == ModeGlobal {
+		overlay, err := deepseekOverlay(opts)
+		if err != nil {
+			return nil, nil, err
+		}
+		files[deepseekOverlayName] = deepseekFile{overlay, "Hero MCP overlay"}
 	}
-	files[deepseekOverlayName] = deepseekFile{overlay, "Hero MCP overlay"}
 	dirs := make([]string, 0, len(names))
 	for name := range names {
 		dirs = append(dirs, name)
@@ -145,6 +149,15 @@ func planDeepSeek(opts Options) (*deepseekPlan, error) {
 	}
 	if err = preflightDeepSeek(opts, base, files, prior); err != nil {
 		return nil, err
+	}
+	if opts.Mode == ModeProject {
+		root := opts.ProjectRoot
+		if root == "" {
+			root = opts.TargetDir
+		}
+		if err = PreflightDeepSeekHome(root); err != nil {
+			return nil, err
+		}
 	}
 	return &deepseekPlan{base: base, files: files, dirs: dirs, prior: prior}, nil
 }
@@ -189,7 +202,11 @@ func runDeepSeek(opts Options, plan *deepseekPlan) (*Result, error) {
 		}
 	}
 	if !opts.Quiet {
-		fmt.Printf("  DeepSeek overlay generated; activation required. Launch from the intended workspace:\n  %s\n", DeepSeekLaunchCommand(filepath.Join(base, deepseekOverlayName)))
+		if opts.Mode == ModeGlobal {
+			fmt.Printf("  DeepSeek overlay generated; activation required. Launch from the intended workspace:\n  %s\n", DeepSeekLaunchCommand(filepath.Join(base, deepseekOverlayName)))
+		} else {
+			fmt.Println("  DeepSeek loads Hero MCP from its home patch: restart the DeepSeek desktop app, or start `dsh --profile web` (no --patch needed).")
+		}
 	}
 	return result, nil
 }

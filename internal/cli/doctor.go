@@ -52,6 +52,9 @@ type doctorInfo struct {
 	graphSchema      string // "" when not in a workspace / no graph
 	heroDir          string // "" when not in a workspace
 	workspaceVersion string // last Hero version that wrote the workspace
+	// deepseekMCP is this project's DeepSeek home-patch registration; nil
+	// unless DeepSeek is installed here.
+	deepseekMCP *install.DeepSeekRegistration
 
 	// inventory is the per-target install introspection rendered as the
 	// "Installed harness targets" section. inventoryErr records a non-fatal
@@ -108,6 +111,12 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 			info.inventoryErr = err.Error()
 		} else {
 			info.inventory = inv
+			for _, row := range inv {
+				if row.Target == install.TargetDeepSeek {
+					reg := install.InspectDeepSeekRegistration(projectRoot)
+					info.deepseekMCP = &reg
+				}
+			}
 		}
 	}
 
@@ -156,7 +165,7 @@ func buildDoctorReport(info doctorInfo) string {
 		fmt.Fprintf(&b, "  workspace:       %s\n", info.heroDir)
 		b.WriteString("  graph schema:    none (graph not yet created)\n\n")
 		b.WriteString(buildInventorySection(info))
-		if incompleteInventoryCount(info.inventory) > 0 {
+		if incompleteInventoryCount(info.inventory) > 0 || deepseekMCPBroken(info) {
 			b.WriteString(doctorVerdict(info))
 		} else {
 			b.WriteString("Verdict: cannot compare — no graph database in this workspace yet.\n")
@@ -293,12 +302,14 @@ func buildInventorySection(info doctorInfo) string {
 	if installed[install.TargetDeepSeek] {
 		b.WriteString("\n  deepseek loads canonical, command-*, and role-* skills under .dsh/skills/.\n")
 		b.WriteString("  Roles are guidance, not registered native subagents.\n")
-		b.WriteString("  MCP overlay: .dsh/hero.cordis.patch.yml; activation unverified.\n")
-		overlay := "/absolute/path/to/.dsh/hero.cordis.patch.yml"
-		if info.heroDir != "" {
-			overlay = filepath.Join(filepath.Dir(info.heroDir), ".dsh", "hero.cordis.patch.yml")
+		if reg := info.deepseekMCP; reg != nil {
+			if reg.Problem == "" {
+				fmt.Fprintf(&b, "  MCP: registered as %s in %s (command %s).\n", reg.ServerName, reg.Path, reg.Command)
+				b.WriteString("  Restart the DeepSeek desktop app, or start `dsh --profile web`, to load it.\n")
+			} else {
+				fmt.Fprintf(&b, "  ! deepseek MCP (%s in %s): %s\n", reg.ServerName, reg.Path, reg.Problem)
+			}
 		}
-		fmt.Fprintf(&b, "  Launch from the intended workspace: %s\n", install.DeepSeekLaunchCommand(overlay))
 	}
 
 	b.WriteString("\n")
@@ -383,6 +394,12 @@ func doctorVerdict(info doctorInfo) string {
 		return fmt.Sprintf("Verdict: NEEDS NEWER HERO — %d installed %s %s incomplete, but this binary cannot safely repair a workspace written by %s. Install or select Hero %s or newer, then run `hero upgrade`.\n", incomplete, noun, verb, displayVersion(info.workspaceVersion), displayVersion(info.workspaceVersion))
 	}
 
+	// Upgrade cannot fix a missing home-patch entry (a same-version upgrade
+	// is a no-op), so name the command that re-registers it.
+	if deepseekMCPBroken(info) {
+		return "Verdict: NEEDS REPAIR — DeepSeek MCP is not usable for this project. Run `hero install project . --target deepseek`.\n"
+	}
+
 	switch version.CompareVersions(info.binarySchema, info.graphSchema) {
 	case 0:
 		return fmt.Sprintf("Verdict: OK — binary and graph agree on schema %s.\n", info.binarySchema)
@@ -403,6 +420,10 @@ func doctorVerdict(info doctorInfo) string {
 				"  Fix: re-run your command with this binary, or check the PATH warning above.\n",
 			info.binarySchema, info.graphSchema)
 	}
+}
+
+func deepseekMCPBroken(info doctorInfo) bool {
+	return info.deepseekMCP != nil && info.deepseekMCP.Problem != ""
 }
 
 func incompleteInventoryCount(inventory []install.TargetInventory) int {

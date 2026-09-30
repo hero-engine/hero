@@ -24,11 +24,9 @@ receives command files, while Codex, Grok, and DeepSeek receive command skills. 
 `hero install --help` and `hero doctor` for the current registry and installed
 target inventory.
 
-DeepSeek's `.dsh/hero.cordis.patch.yml` is a generated overlay, not an active
-connection. Launch `dsh` from the intended workspace with `--patch` and the
-absolute overlay path. Its MCP child stays bound to that launch workspace;
-changing session directories does not rebind it. Use one process per workspace,
-including when reusing a global overlay. See [DeepSeek setup](../configuration/mcp-setup.md#deepseek-harness-dsh).
+DeepSeek project installs register one Hero MCP server per project in the
+DeepSeek home patch (`~/.dsh/cordis.patch.yml`), which the desktop app and
+every `dsh` profile load. No `--patch` flag is needed. See [DeepSeek setup](../configuration/mcp-setup.md#deepseek-harness-dsh).
 
 ### Runtime tool registry
 

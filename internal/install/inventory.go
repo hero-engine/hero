@@ -177,7 +177,8 @@ func missingGeneratedArtifacts(target Target, projectRoot string, manifest Conte
 		addNested(filepath.Join(base, "skills"), manifest.Skills, "")
 		addNested(filepath.Join(base, "skills"), manifest.Commands, commandSkillPrefix)
 		addNested(filepath.Join(base, "skills"), manifest.Agents, roleSkillPrefix)
-		expected = append(expected, filepath.Join(base, deepseekOverlayName))
+		// MCP lives in the DeepSeek home patch, outside the project; doctor
+		// reports that registration separately.
 	case TargetClaude:
 		base := filepath.Join(projectRoot, ".claude")
 		addFlat(filepath.Join(base, "agents"), manifest.Agents, ".md")

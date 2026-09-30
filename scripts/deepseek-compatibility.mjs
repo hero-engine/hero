@@ -3,7 +3,7 @@
 // Requires the pinned harness checkout with `pnpm install --frozen-lockfile` completed.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -104,20 +104,36 @@ try {
 
   const { loadProfile, composeEntries } = await source('packages/boot/app-boot/src/profile.ts');
   const { loadOverlayPatches } = await source('packages/boot/app-boot/src/index.ts');
-  const overlayPath = join(workspace, '.dsh/hero.cordis.patch.yml');
-  const patches = loadOverlayPatches('hero-compatibility', overlayPath);
+  // Desktop and CLI profiles both load $DSH_HOME/cordis.patch.yml; the desktop
+  // app never passes --patch, so compose with the home patch and no overlays.
+  const homePatchPath = join(dshHome, 'cordis.patch.yml');
+  const homePatches = loadOverlayPatches('hero-compatibility', homePatchPath);
   const flatten = rows => rows.flatMap(row => [row, ...(row.group && Array.isArray(row.config) ? flatten(row.config) : [])]);
-  // web is the shipped interactive profile Hero's launch guidance names; headless is the scripted path.
+  const heroClients = entries => flatten(entries).filter(row => row.name === '@deepseek-ai/dsh-mcp-client' && row.config?.serverName?.startsWith('hero-'));
   let clients;
   for (const name of ['web', 'headless']) {
     const profile = loadProfile('dsh', name, join(harness, 'apps/cli/package.json'), dshHome);
     const warnings = [];
-    const entries = composeEntries([...profile.layers.map(layer => layer.patches), profile.patches, patches], warning => warnings.push(warning));
+    const entries = composeEntries([...profile.layers.map(layer => layer.patches), profile.patches, homePatches], warning => warnings.push(warning));
     assert.deepEqual(warnings, [], `Cordis composition skipped a patch (${name})`);
-    clients = flatten(entries).filter(row => row.name === '@deepseek-ai/dsh-mcp-client' && row.config?.serverName === 'hero');
+    clients = heroClients(entries);
     assert.equal(clients.length, 1, `Composed ${name} profile must contain exactly one Hero MCP client`);
-    console.log(`PASS Cordis composition: ${name} profile (${profile.layers.length} bundle layers) plus generated overlay`);
+    console.log(`PASS Cordis composition: ${name} profile (${profile.layers.length} bundle layers) plus home patch, no --patch`);
   }
+  // Same composition the desktop host runs (runProfile → readProfilePatches):
+  // patchFiles: [] means no overlays, so only the home patch can add Hero.
+  const { readProfilePatches } = await source('packages/boot/app-boot/src/profile-context.ts');
+  const { resolveProfileDir } = await source('packages/boot/app-boot/src/profile.ts');
+  const installAnchor = join(harness, 'apps/cli/package.json');
+  const webDir = resolveProfileDir('web', dshHome);
+  const desktopPatches = readProfilePatches('dsh', {
+    name: 'web', dir: webDir, patchPath: join(webDir, 'cordis.patch.yml'), installAnchor,
+    cwd: scratch, home: dshHome, startedBundles: [], overlays: [], telemetryDisabledEnv: undefined,
+  });
+  assert.equal(heroClients(composeEntries([desktopPatches])).length, 1, 'Desktop-path composition (no overlays) must load exactly one Hero MCP client');
+  console.log('PASS desktop-path composition: readProfilePatches with no overlays loads Hero from the home patch');
+  const serverName = clients[0].config.serverName;
+  assert.equal(realpathSync(clients[0].config.cwd), realpathSync(workspace), 'Hero MCP entry must be pinned to the project');
 
   // Exercise only the real MCP service dependencies: no agent loop, provider, or paid model request.
   const { default: SystemPrompt } = await source('packages/core/system-prompt/src/index.ts');
@@ -125,40 +141,32 @@ try {
   const McpClient = await source('packages/mcp/mcp-client/src/index.ts');
   await ctx.plugin(SystemPrompt);
   await ctx.plugin(Tools);
-  process.chdir(nested);
-  const config = McpClient.Config(clients[0].config);
-  const fiber = await ctx.plugin(McpClient, config);
-  const names = ctx.tools.schemas().map(tool => tool.name).filter(name => name.startsWith('mcp__hero__'));
+  // A GUI app starts outside any project: the pinned entry must still serve it.
+  process.chdir(scratch);
+  const fiber = await ctx.plugin(McpClient, McpClient.Config(clients[0].config));
+  const prefix = `mcp__${serverName}__`;
+  const names = ctx.tools.schemas().map(tool => tool.name).filter(name => name.startsWith(prefix));
   assert(names.length > 0, `Hero initialization/tool listing failed; MCP plugin state: ${fiber.state}`);
   assert(names.some(name => name.includes('hero_status')), 'Hero status tool missing from native MCP registry');
-  console.log(`PASS native MCP client: initialize + tools/list, ${names.length} Hero tools registered`);
+  console.log(`PASS native MCP client: initialize + tools/list, ${names.length} Hero tools registered as ${serverName}`);
   const { ToolCallId } = await source('packages/llm/llm/src/index.ts');
   const status = await ctx.tools.execute({
-    name: 'mcp__hero__hero_status', arguments: {},
+    name: `${prefix}hero_status`, arguments: {},
     callId: ToolCallId('hero-compatibility-status'), signal: AbortSignal.timeout(15_000),
   });
   assert.equal(status.isError, false, 'Hero status failed through native MCP tool execution');
-  console.log('PASS native MCP tool execution: hero_status from nested workspace cwd');
+  console.log('PASS native MCP tool execution: hero_status from outside the project (pinned root)');
   await fiber.dispose();
+  // A --workspace install re-registers the same project entry, never a second one.
   execFileSync(hero, [
     'install', 'project', workspace, '--domain', domain, '--target', 'deepseek', '--only-target',
     '--no-hooks', '--json', '--workspace', nested,
   ], { cwd: workspace, encoding: 'utf8', timeout: 30_000 });
-  const boundPatches = loadOverlayPatches('hero-compatibility', join(nested, '.dsh/hero.cordis.patch.yml'));
-  const boundEntries = composeEntries([boundPatches], warning => { throw new Error(warning); });
-  const boundClient = flatten(boundEntries).find(row => row.name === '@deepseek-ai/dsh-mcp-client');
-  assert(boundClient, 'Workspace overlay must include the MCP client');
-  assert.deepEqual(boundClient.config.args, ['mcp', '--project-root', workspace]);
-  // A launch outside either workspace must still connect to the explicitly bound project.
-  process.chdir(scratch);
-  await ctx.plugin(McpClient, McpClient.Config(boundClient.config));
-  const boundStatus = await ctx.tools.execute({
-    name: 'mcp__hero__hero_status', arguments: {},
-    callId: ToolCallId('hero-compatibility-bound-status'), signal: AbortSignal.timeout(15_000),
-  });
-  assert.equal(boundStatus.isError, false, 'Workspace-bound overlay failed outside the project');
-  console.log('PASS native MCP workspace binding: generated subdirectory overlay resolves explicit project root');
-  console.log(JSON.stringify({ harnessRevision: revision, heroVersion: execFileSync(hero, ['--version'], { encoding: 'utf8' }).trim(), domain, skills: candidates.length, tools: names.length, modelCalls: 0 }));
+  const again = heroClients(composeEntries([loadOverlayPatches('hero-compatibility', homePatchPath)], warning => { throw new Error(warning); }));
+  assert.equal(again.length, 1, 'Workspace install must not add a second Hero entry');
+  assert.equal(again[0].config.serverName, serverName, 'Workspace install must keep the project server name');
+  console.log('PASS workspace install: same project entry, no duplicate');
+  console.log(JSON.stringify({ harnessRevision: revision, heroVersion: execFileSync(hero, ['--version'], { encoding: 'utf8' }).trim(), domain, skills: candidates.length, tools: names.length, serverName, modelCalls: 0 }));
 } finally {
   await provider?.dispose();
   await ctx?.fiber.dispose();

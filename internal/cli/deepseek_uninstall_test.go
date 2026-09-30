@@ -52,7 +52,11 @@ func TestDeepSeekUninstallOwnershipAndDryRun(t *testing.T) {
 					t.Errorf("preserved %s = %q,%v", path, got, err)
 				}
 			}
-			for _, rel := range []string{".dsh/hero.cordis.patch.yml", ".dsh/skills/command-deliver/SKILL.md", "AGENTS.md"} {
+			registered := install.InspectDeepSeekRegistration(root).Problem == ""
+			if registered != dryRun {
+				t.Errorf("home-patch entry registered=%v after uninstall (dry-run=%v)", registered, dryRun)
+			}
+			for _, rel := range []string{".dsh/skills/command-deliver/SKILL.md", "AGENTS.md"} {
 				_, err := os.Stat(filepath.Join(root, rel))
 				if dryRun && err != nil {
 					t.Errorf("dry-run changed %s: %v", rel, err)
@@ -117,24 +121,25 @@ func TestDeepSeekInstallJSONWorkspace(t *testing.T) {
 	if err := json.Unmarshal([]byte(output), &out); err != nil {
 		t.Fatalf("JSON: %v\n%s", err, output)
 	}
-	path := filepath.Join(root, "service with spaces", ".dsh", "hero.cordis.patch.yml")
-	data, err := os.ReadFile(path)
-	if err != nil || !strings.Contains(string(data), "--project-root") || !strings.Contains(string(data), root) {
+	// The workspace registers the parent project's entry in the DeepSeek
+	// home patch; no per-workspace overlay is written.
+	reg := install.InspectDeepSeekRegistration(root)
+	if reg.Problem != "" {
+		t.Fatalf("workspace install did not register the project root: %+v", reg)
+	}
+	data, err := os.ReadFile(reg.Path)
+	if err != nil || !strings.Contains(string(data), "--project-root") || !strings.Contains(string(data), reg.ServerName) {
 		t.Fatalf("workspace binding: %s %v", data, err)
 	}
-	if !strings.Contains(output, "hero.cordis.patch.yml") {
-		t.Fatal("JSON missing generated overlay")
+	if !strings.Contains(output, reg.Path) {
+		t.Fatalf("JSON missing MCP config path %s:\n%s", reg.Path, output)
+	}
+	if _, err := os.Stat(filepath.Join(root, "service with spaces", ".dsh", "hero.cordis.patch.yml")); !os.IsNotExist(err) {
+		t.Fatalf("legacy workspace overlay written: %v", err)
 	}
 	info, err := version.Read(filepath.Join(root, ".hero"))
 	if err != nil {
 		t.Fatal(err)
-	}
-	rel, err := filepath.Rel(root, path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if version.IsFileModified(info, rel, path) {
-		t.Fatal("workspace overlay checksum not recorded")
 	}
 	oldDry := uninstallDryRun
 	t.Cleanup(func() { uninstallDryRun = oldDry })
@@ -142,8 +147,8 @@ func TestDeepSeekInstallJSONWorkspace(t *testing.T) {
 	if _, _, err := uninstallDeepSeek(root, info); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		t.Fatalf("workspace overlay survived uninstall: %v", err)
+	if install.InspectDeepSeekRegistration(root).Problem == "" {
+		t.Fatal("home-patch entry survived uninstall")
 	}
 }
 
@@ -155,8 +160,9 @@ func TestDeepSeekUpgradeSelectionAndDoctor(t *testing.T) {
 			t.Fatalf("selection: %v,%v", targets, err)
 		}
 	}
-	report := buildInventorySection(doctorInfo{inventory: []install.TargetInventory{{Target: install.TargetDeepSeek, Agents: install.KindCount{NotApplicable: true}, Commands: install.KindCount{NotApplicable: true}, Skills: install.KindCount{Expected: 3, Actual: 3}, RootFile: "AGENTS.md"}}})
-	for _, want := range []string{"activation unverified", "role-*", "--patch", ".dsh/hero.cordis.patch.yml"} {
+	reg := install.InspectDeepSeekRegistration(root)
+	report := buildInventorySection(doctorInfo{deepseekMCP: &reg, inventory: []install.TargetInventory{{Target: install.TargetDeepSeek, Agents: install.KindCount{NotApplicable: true}, Commands: install.KindCount{NotApplicable: true}, Skills: install.KindCount{Expected: 3, Actual: 3}, RootFile: "AGENTS.md"}}})
+	for _, want := range []string{"role-*", "MCP: registered as " + reg.ServerName, reg.Path, "dsh --profile web"} {
 		if !strings.Contains(report, want) {
 			t.Errorf("doctor missing %q: %s", want, report)
 		}
@@ -171,11 +177,16 @@ func TestDeepSeekWorkspaceCollisionFailsBeforeRootInstall(t *testing.T) {
 	})
 	t.Setenv("HOME", t.TempDir())
 	root := t.TempDir()
-	overlay := filepath.Join(root, "service", ".dsh", "hero.cordis.patch.yml")
-	if err := os.MkdirAll(filepath.Dir(overlay), 0755); err != nil {
+	os.MkdirAll(filepath.Join(root, "service"), 0755)
+	// A home patch that is not a YAML list cannot be safely edited.
+	homePatch, err := install.DeepSeekHomePatchPath()
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(overlay, []byte("user overlay"), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Dir(homePatch), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(homePatch, []byte("user: mapping\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	output, err := runCmd("install", "project", root, "--target", "deepseek", "--workspace", "service", "--json", "--root")
@@ -186,14 +197,14 @@ func TestDeepSeekWorkspaceCollisionFailsBeforeRootInstall(t *testing.T) {
 	if err := json.Unmarshal([]byte(output), &out); err != nil || out.Error == nil {
 		t.Fatalf("expected JSON error: %s %v", output, err)
 	}
-	for _, rel := range []string{"AGENTS.md", ".dsh", ".hero"} {
+	for _, rel := range []string{"AGENTS.md", ".dsh", ".hero", "service/.dsh"} {
 		if _, err := os.Stat(filepath.Join(root, rel)); !os.IsNotExist(err) {
 			t.Errorf("root mutated before collision: %s %v", rel, err)
 		}
 	}
-	data, err := os.ReadFile(overlay)
-	if err != nil || string(data) != "user overlay" {
-		t.Fatalf("foreign overlay changed: %q %v", data, err)
+	data, err := os.ReadFile(homePatch)
+	if err != nil || string(data) != "user: mapping\n" {
+		t.Fatalf("foreign home patch changed: %q %v", data, err)
 	}
 }
 
