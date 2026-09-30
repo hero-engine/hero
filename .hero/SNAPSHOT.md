@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-09-30T18:24:33Z · projected from 680 source nodes_
+_Last refreshed: 2026-09-30T18:27:35Z · projected from 680 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | building | cmd/, internal/ | <1m ago | sept-review-cleanup |
+| core | maturing | cmd/, internal/ | <1m ago | hero-runner |
 | docs | maturing | web/docs/ | 79d ago | — |
 | domains/chat | maturing | domains/chat/ | 27d ago | — |
-| domains/engineering | maturing | domains/engineering/ | 1h ago | — |
+| domains/engineering | maturing | domains/engineering/ | <1m ago | — |
 | domains/pm | maturing | domains/pm/ | 27d ago | — |
 | domains/qa | concept | domains/qa/ | — | — |
 | domains/sales | maturing | domains/sales/ | 40d ago | — |
 | landing | building | web/landing/ | 38d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 2m ago | agent-outposts |
+| serve | building | internal/serve/ | <1m ago | agent-outposts |
 | (unassigned) | — | — | — | 258 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -52,7 +52,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — next-projection-accuracy-and-freshness
-- **core** — stale-connect-provider-usage-expectation
+- **core** — sept-review-cleanup, stale-connect-provider-usage-expectation
 - **domains/engineering** — deepseek-harness-install-target
 - **serve** — codex-command-workflow-surface-split-brain
 

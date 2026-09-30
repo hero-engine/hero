@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-09-30T18:24:33Z
+updated: 2026-09-30T18:27:49Z
 repo: hero-engine/hero
 ---
 
@@ -10,19 +10,17 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 97 commit(s) since, last set 47d 2h ago_
+_possibly stale — 101 commit(s) since, last set 47d 2h ago_
 
 ## Last user ask
 
 > can you inspect all the work that has gone on over the last 2 weeks or so - see if its good - good quality - correctly done etc - nothing missed etc.
 
+_possibly stale — 2 commit(s) since, last set 3m ago_
+
 ## Suggested next prompt
 
-> let's tackle E2E Onboarding Suite — Fresh Repo to Productive Workspace
-
-_Rationale: highest-priority ready work: E2E Onboarding Suite — Fresh Repo to Productive Workspace (`e2e-onboarding`)_
-
-_Source: auto-derived from open feature — `hero next suggest "..."` to override._
+> Decide hero-team-server status (uncommitted planning→delivering flip), then fix flaky internal/serve shutdown test
 
 ## Recent reflections
 
