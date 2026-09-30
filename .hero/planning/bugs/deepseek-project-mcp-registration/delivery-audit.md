@@ -1,65 +1,72 @@
-# Delivery audit: deepseek-project-mcp-registration
+# Delivery audit: deepseek-project-mcp-registration (round 2)
 
-**Audited:** `git diff 3859755d...1ceaef1c` (commit `1ceaef1c`), `.hero` projection files excluded
+**Audited:** `git diff 3859755d...b15cd0a9` (commits `1ceaef1c` and `b15cd0a9`), `.hero` projection files excluded
 **Verdict:** HOLD
 **Surface:** noteworthy
 
+The round-1 blocker is fixed: every file Hero writes on install now parses in the harness. Round 2 found a new defect, introduced by the round-1 trailing-newline fix. When a later block follows a block flagged `(added-newline)`, uninstall can orphan another project's entry or produce a home patch the harness cannot parse. See the blocker in Audit notes.
+
 ## Acceptance criteria
-- [✓] AC-1: one entry per project, with id `hero-<key>-mcp`, a valid serverName, an absolute command and a pinned root. Evidence: `internal/install/deepseek_home.go:57-71,123-144`, called from `mcp_deepseek.go` `registerMCPDeepSeek` in project mode. `TestDeepSeekHomeEntryCreateAndNoop` asserts id, name, serverName charset and length, command, cwd and `--project-root`. Auditor probe: odd folder names (`é漢字`, `---`, a 58-character name with spaces and uppercase, `.hidden`, `under_score`) all produced valid names of 32 characters or fewer, and the name was the same with and without a trailing slash.
-- [~] AC-2: foreign bytes preserved, and a repeat install is a no-op. The repeat no-op and the golden round-trip (`TestDeepSeekHomeEntryPreservesForeignContent`) hold, and a CRLF foreign file is restored exactly. Two exceptions:
-  - A foreign file with no trailing newline gets a `\n` appended (`deepseek_home.go:247-248`). Uninstall does not remove it, so the file is not restored byte-for-byte.
-  - The splice can produce YAML that the harness rejects. See the blocker in Audit notes.
-- [✓] AC-3: two projects keep distinct, independent entries. Evidence: `TestDeepSeekHomeEntryTwoProjects`.
-- [✓] AC-4: a home patch that is not a list, is a symlink, is not a regular file, or has an unterminated block is refused before any mutation, and dry-run writes nothing.
-  - `planDeepSeek` → `PreflightDeepSeekHome` (`target_deepseek.go:153-161`) runs at the top of `install.Run` (`install.go:160-165`), before the legacy migration and before any renderer.
-  - The CLI `--workspace` path preflights through `RegisterMCP` with DryRun forced (`cli/install.go:345-351`) before `install.Run`.
-  - Upsert returns before `MkdirAll` when running dry (`deepseek_home.go:252`).
-  - Tests: `TestDeepSeekHomePatchRefusedBeforeMutation` (3 cases, each with and without dry-run), `TestDeepSeekWorkspaceCollisionFailsBeforeRootInstall`.
-- [✓] AC-5: binary resolution. Order is the env pin (absolute only), then `exec.LookPath` made absolute without following links, then `os.Executable()` unless transient, else an error naming `make install` (`deepseek_home.go:75-99`). Test: `TestDeepSeekHeroCommandResolution`. See the notes on the limits of the transient-path check.
-- [✓] AC-6: project installs no longer write the overlay (`target_deepseek.go:110-118`, global mode only). An unmodified legacy overlay is pruned; a modified one is kept with a warning (`deepseek_state.go:150-154`). Tests: `TestDeepSeekLegacyOverlayPruning`, `TestDeepSeekLegacyOverlayPreservedAndRemovable`.
-- [✓] AC-7: install prints the server name and home-patch path (`mcp_deepseek.go` `registerMCPDeepSeek`). The project message has no `--patch` (`target_deepseek.go:205-209`). The AGENTS.md DeepSeek section describes the `hero-<project>-<hash>` pattern and the `hero_status` check (`agents_md.go:743`). Docs were updated.
-- [✓] AC-8: doctor reports "registered", or names the missing, malformed, stale-command or wrong-root problem, with a NEEDS REPAIR verdict (`deepseek_home.go:296-337`, `cli/doctor.go`). Tests: `TestDeepSeekRegistrationProblems`, `TestDoctorDeepSeekRegistrationProblemNeedsRepair`.
-- [✓] AC-9: uninstall removes only this project's block. The file is removed only when it starts with Hero's created-header and nothing but whitespace remains (`deepseek_home.go:263-284`). Dry-run does not write. Tests: `TestDeepSeekUninstallOwnershipAndDryRun`, `TestDeepSeekHomeEntryTwoProjects`, `TestDeepSeekHomeEntryPreservesForeignContent`.
-- [✓] AC-10: `native-compatibility-{engineering,pm,qa}.log` all pass against harness `477b4f42`. The runs compose `web` and `headless` with the home patch and no `--patch`, run the desktop-path `readProfilePatches` with `overlays: []`, get one Hero client, list 86 tools and execute `hero_status` from outside the project. Premises confirmed in the harness source:
-  - `apps/desktop-host/src/index.ts:29` has `patchFiles: []`.
-  - `profile-context.ts:63-75` composes `join(context.home, PROFILE_PATCH_FILENAME)`.
-  - `mcp-client/src/index.ts:40` has `SERVER_NAME_PATTERN = /^[A-Za-z0-9_-]{1,32}$/`.
-- [✓] AC-11: the non-DeepSeek code paths are untouched. Doctor, inventory and satellite changes are all inside `TargetDeepSeek` branches, and the AGENTS.md edit is DeepSeek-only. `go-tests.log` has 0 FAIL, and the auditor re-ran `go test ./internal/install ./internal/cli -count=1`, which passed. DeepSeek was deliberately removed from `TestRegisterMCP_CommandIsPortable_AllTargets`, and the other 6 MCP targets remain covered there.
+- [✓] AC-1: one entry per project, with an id, a valid serverName (at most 20 name characters plus a 6-hex hash, 32 total), an absolute command and a pinned root. Evidence: `internal/install/deepseek_home.go:58-81,161-177`. Tests: `TestDeepSeekHomeEntryCreateAndNoop`, `TestDeepSeekServerNameShapeAndCase`. On darwin and windows the root is case-folded for the hash (`rootIdentity`).
+- [~] AC-2: foreign bytes preserved and repeat install is a no-op. The round-1 gaps are fixed and tested:
+  - Markers now match only as whole lines, with CRLF tolerated (`cutDeepSeekHomeBlock`, `:198-232`).
+  - A separator newline Hero adds is flagged on the start marker and removed on uninstall.
+  - A CRLF-converted block is no longer duplicated.
+
+  Auditor probes restored the original file exactly for these inputs: no trailing newline, a trailing comment, CRLF, CRLF with no trailing newline, a `---` start, a block scalar at end of file (with and without a trailing newline), anchors and aliases, and a two-project install removed in reverse order.
+
+  One regression: when the flagged block is not the last thing in the file, removing it glues the next line onto the foreign line. See the blocker.
+- [✓] AC-3: two projects keep distinct, independent entries (`TestDeepSeekHomeEntryTwoProjects`). The one exception is the removal-order case in the blocker.
+- [✓] AC-4: unsafe or unextendable home patches are refused before any mutation, and dry-run writes nothing.
+  - `PreflightDeepSeekHome` is now a dry-run of the same upsert (`:291-294`), run by `planDeepSeek` at the top of `install.Run`.
+  - The re-parse guard (`:335-344`) requires the result to be a list with exactly one more element containing Hero's id.
+  - Tests: `TestDeepSeekHomePatchUnextendableLayoutsRefused` (flow `[]`, indented list and `...` end, each left byte-identical), `TestDeepSeekHomePatchRefusedBeforeMutation`, `TestDeepSeekWorkspaceCollisionFailsBeforeRootInstall`.
+  - Auditor probe: the three round-1 layouts are refused and the files are unchanged. A tab-indented comment, which js-yaml accepts, is also refused because yaml.v3 rejects it. That is conservative and safe.
+- [✓] AC-5: PATH `hero` and `os.Executable()` both go through `transientExecutable`, which also checks the resolved path against `/tmp/`, `/private/tmp/`, `/var/folders/`, `/private/var/folders/` and `os.TempDir()` in both raw and resolved form (`:85-132`). The env pin must be absolute and is an explicit override by design. Test: `TestDeepSeekHeroCommandResolution`.
+- [✓] AC-6: legacy overlay behavior is unchanged from round 1: pruned when unmodified, kept with a warning when modified (`TestDeepSeekLegacyOverlayPruning`, `TestDeepSeekLegacyOverlayPreservedAndRemovable`).
+- [✓] AC-7: install output, AGENTS.md pattern and docs are unchanged from round 1. The doc examples are updated to 6-hex names (`MCP-SETUP.md`, `web/docs/src/configuration/mcp-setup.md`).
+- [✓] AC-8: doctor reports registration status. Roots are now compared through `rootIdentity` (`:426`). Tests: `TestDeepSeekRegistrationProblems`, `TestDoctorDeepSeekRegistrationProblemNeedsRepair`.
+- [~] AC-9: uninstall now removes the home entry before any project file (`internal/cli/uninstall.go:353-372`; test `TestDeepSeekUninstallFailsBeforeRemovingFilesOnBadHomePatch`). Dry-run does not write, and the Hero-created file is removed only when empty. However, `RemoveDeepSeekHomeEntry` does not re-validate its output, and the added-newline strip is unconditional. See the blocker.
+- [✓] AC-10: `native-compatibility-{engineering,pm,qa}.log` pass against harness `477b4f42`, with 6-hex server names, 86 tools, desktop-path composition with no overlays, and `hero_status` executed.
+- [✓] AC-11: the round-2 changes touch only `deepseek_home.go`, `cli/uninstall.go` (DeepSeek function), tests and DeepSeek docs. `go-tests.log` has 0 failures. The auditor re-ran `go test ./internal/install ./internal/cli -count=1` on `b15cd0a9`, and both pass.
 
 ## Changes
-- [~] 1. Home-patch upsert and removal, naming, binary resolution. Implemented, in the new `deepseek_home.go` (text splice instead of a yaml Node; the spec's Risks section allowed this fallback). The splice does not check that the result is still a list the harness can load. See the blocker below.
-- [✓] 2. State, target and legacy prune. Ownership is recorded as a created-header line rather than in install state. The deviation is stated in the ledger and the behavior is sound.
+- [~] 1. Home-patch upsert and removal, naming, binary resolution. The upsert is now validated. Removal is not, and has the defect below.
+- [✓] 2. State, target and legacy prune: ownership via the created-header line (deviation disclosed in the ledger).
 - [✓] 3. `agents_md.go` DeepSeek section.
-- [✓] 4. `doctor.go`, `uninstall.go`, with tests.
-- [✓] 5. `scripts/deepseek-compatibility.mjs`: home patch, desktop-path composition, start from outside the project, no duplicate on workspace reinstall.
-- [✓] 6. Docs: `MCP-SETUP.md`, `web/docs/src/configuration/mcp-setup.md`, `GETTING-STARTED.md`, `README.md`, `project-setup.md`, `server-and-mcp.md`. `docs-tests.log` and `docs-build.log` pass.
-- [✓] 7. Dated supersede note in `.hero/specs/deepseek-harness-install-target/spec.md`.
+- [✓] 4. `doctor.go` and `uninstall.go`, with tests. Uninstall ordering is fixed.
+- [✓] 5. `scripts/deepseek-compatibility.mjs`.
+- [✓] 6. Docs. `docs-tests.log` and `docs-build.log` pass.
+- [✓] 7. Supersede note on `deepseek-harness-install-target`.
 
 ## Open items
 - None. The ledger has no PARTIAL, SKIPPED or BLOCKED rows.
 
+## Harness parse check (js-yaml from the pinned harness)
+The auditor copied `deepseek-home.go` at `b15cd0a9` into a scratch program and ran install, second project, optional edit, and uninstall over 17 starting layouts. Each resulting file was loaded with the harness's `js-yaml` using the `parsePatchList` rules (a top-level array of mappings).
+
+- **Every file Hero wrote on install or second install parses as a list with the expected Hero entry count.**
+- Every refusal left the file unchanged.
+- Uninstalls parse, with two exceptions:
+  - An empty or comment-only file that was already there is restored to its original bytes, which the harness already rejected before Hero touched it. This is correct.
+  - The two cases below.
+
 ## Audit notes
-- **BLOCKER: the append splice can turn a valid, harness-accepted home patch into one that makes every DeepSeek profile fail to boot.** `readDeepSeekHomePatch` accepts any YAML list. `UpsertDeepSeekHomeEntry` then appends a column-0 block sequence (`deepseek_home.go:244-250`), but nothing checks that the combined text still parses. Auditor probe using the copied Go logic plus the harness's own `js-yaml`:
+- **BLOCKER: removing a block flagged `(added-newline)` joins whatever follows it onto the foreign last line.** Cause: `cutDeepSeekHomeBlock` strips the flagged newline unconditionally (`deepseek_home.go:224-226`), even when content follows the block. `RemoveDeepSeekHomeEntry` (`:356-377`) writes without re-parsing. Reproduced:
+  1. **Two projects, remove the first.** Start with a home patch `- insert: []` that has no trailing newline. Install project A, then B, then uninstall A. The result is `- insert: []# hero:managed deepseek-mcp hero-b…`. B's start marker is no longer a whole line, so:
+     - doctor reports B as "no Hero MCP entry";
+     - reinstalling B is refused (a duplicate id makes the count 2);
+     - uninstalling B cannot find it.
 
-  | Home patch before install | Harness before | Harness after Hero install |
-  |---|---|---|
-  | `[]` (flow-style empty list) | loads `[]` | throws "end of the stream or a document separator is expected" |
-  | `  - insert: []` (indented block list) | loads OK | throws, same error |
-  | `- insert: []` followed by `...` (explicit document end) | loads OK | throws "expected a single document" |
+     B's live entry is orphaned permanently in the home patch. js-yaml happens to still load it.
+  2. **User appends after Hero's block.** Same starting file. Install A, then the user appends `- remove: [y]`, then uninstall A. The result is `- insert: []- remove: [y]`, and js-yaml throws `bad indentation of a mapping entry`. Every DeepSeek profile, desktop included, then fails to boot: the same failure class as the round-1 blocker, now on the uninstall path.
 
-  The harness's `loadOptionalPatches` → `parsePatchList` throws on a parse error, so every profile is affected, including the desktop app. That is the opposite of this spec's goal. yaml.v3 does not catch these cases the same way: it parsed some of the results silently with Hero's entry dropped.
-
-  Suggested fix, one function: after composing `next`, unmarshal it and require a list with exactly one more element than before, containing Hero's entry. Otherwise refuse before writing. This also covers the marker-anchoring case below. Add these three inputs to `TestDeepSeekHomePatchRefusedBeforeMutation` or to the upsert tests.
-- Markers are matched as substrings, not anchored to the start of a line (`cutDeepSeekHomeBlock`, `deepseek_home.go:150-154`). In a contrived case, a foreign comment containing the start and end marker text causes foreign lines to be cut, and the result was invalid YAML. A Hero block converted to CRLF by an editor is not found (the search is for `start+"\n"`). Reinstall then appends a duplicate block with the same serverName, and doctor reports "missing". Both are low-probability. Anchoring to the start of a line and accepting `\r\n` would close them.
-- A foreign file with no trailing newline gains a newline, and uninstall does not remove it (AC-2, 1 byte).
-- Binary resolution:
-  - The `exec.LookPath` result is not filtered for temporary or go-build paths. The spec intends this ("as found"), so a `hero` that is on PATH inside a temp directory would be written.
-  - `transientExecutable` compares against `os.TempDir()` only. On macOS it does not catch the `/tmp` or `/private/var/folders` aliases. The `/go-build` check does catch `go run` and `go test` binaries.
-  - The `HERO_DEEPSEEK_MCP_COMMAND` pin is not checked for temp paths. That is deliberate as a developer override, but it is undocumented in the spec.
-- Uninstall is not atomic. If the home patch is invalid, `RemoveDeepSeekHomeEntry` errors after `.dsh/skills` has already been removed (`cli/uninstall.go:353-368`).
-- serverName stability:
-  - It depends on the exact path casing. On case-insensitive macOS volumes, `~/Projects/Hero` and `~/projects/hero` hash differently, and `EvalSymlinks` does not normalize case, so that produces a second entry.
-  - The 4-hex suffix (16 bits) makes collisions between same-named folders unlikely but possible. A collision would make two projects overwrite each other's entry.
-- `DeepSeekLaunchCommand` still emits `--patch`, but it is now used only on the global-mode path. The project path prints `dsh --profile web` without it, so the intent of Design 7 is met.
-- `internal/install/mcp_test.go` has a stray blank line in its import block (`gofmt -l` flags it). This is cosmetic, and the repo has many other unformatted files.
-- The evidence logs report `heroVersion ... g3757f58e-dirty`, meaning they were run on the pre-commit working tree. The auditor re-ran the install and CLI package tests on `1ceaef1c`, and they pass.
+  Suggested fix:
+  - Strip the flagged newline only when the block ends at end of file (`lineEnd == len(rest)`). Otherwise leave it, since the newline now separates real content.
+  - Give `RemoveDeepSeekHomeEntry` the same guard as upsert: re-parse and require exactly one fewer element with zero Hero ids for this server, or refuse.
+  - Add both cases to `TestDeepSeekHomeEntryRestoresMissingTrailingNewline`.
+- Non-blocking:
+  - The `DeepSeekServerName` doc comment still says `<hash4>` (`deepseek_home.go:55`).
+  - Case-folding on darwin means two projects on a case-sensitive APFS volume whose paths differ only in case would share one server name. This is extremely rare and accepted.
+  - The `HERO_DEEPSEEK_MCP_COMMAND` pin is not checked for temporary paths, by design.
+  - The evidence logs were produced on the `1ceaef1c-dirty` working tree. The auditor re-ran the install and CLI packages on `b15cd0a9`, and both pass.

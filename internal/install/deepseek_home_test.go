@@ -335,3 +335,52 @@ func TestDeepSeekServerNameShapeAndCase(t *testing.T) {
 		}
 	}
 }
+
+// Audit round 2: removing a newline-flagged block that is not last must never
+// join the following line onto the user's last line.
+func TestDeepSeekHomeAddedNewlineRemovalKeepsFileValid(t *testing.T) {
+	const original = "- insert: []"
+	setup := func(t *testing.T) (*installHarness, string) {
+		h := newInstallHarness(t)
+		mkHeroDir(t, h.TargetDir)
+		path := homePatch(t)
+		os.MkdirAll(filepath.Dir(path), 0o755)
+		os.WriteFile(path, []byte(original), 0o644)
+		return h, path
+	}
+	t.Run("second project survives and restores exactly", func(t *testing.T) {
+		h, _ := setup(t)
+		other := t.TempDir()
+		mkHeroDir(t, other)
+		h.Run(TargetDeepSeek, nil)
+		h.Run(TargetDeepSeek, func(o *Options) { o.TargetDir = other })
+		if _, err := RemoveDeepSeekHomeEntry(h.TargetDir, false); err != nil {
+			t.Fatal(err)
+		}
+		if reg := InspectDeepSeekRegistration(other); reg.Problem != "" {
+			t.Fatalf("second project orphaned: %+v\n%s", reg, readHomePatch(t))
+		}
+		if _, _, changed, err := UpsertDeepSeekHomeEntry(other, false); err != nil || changed {
+			t.Fatalf("second project reinstall: changed=%v err=%v", changed, err)
+		}
+		if _, err := RemoveDeepSeekHomeEntry(other, false); err != nil {
+			t.Fatal(err)
+		}
+		if got := readHomePatch(t); got != original {
+			t.Fatalf("not restored exactly: %q", got)
+		}
+	})
+	t.Run("user entry appended after Hero's block", func(t *testing.T) {
+		h, path := setup(t)
+		h.Run(TargetDeepSeek, nil)
+		os.WriteFile(path, []byte(readHomePatch(t)+"- remove: [y]\n"), 0o644)
+		if _, err := RemoveDeepSeekHomeEntry(h.TargetDir, false); err != nil {
+			t.Fatal(err)
+		}
+		got := readHomePatch(t)
+		list, err := deepseekPatchList(got)
+		if err != nil || len(list) != 2 || !strings.Contains(got, "- insert: []\n- remove: [y]") {
+			t.Fatalf("user entries not kept as two valid items (%v): %q", err, got)
+		}
+	})
+}

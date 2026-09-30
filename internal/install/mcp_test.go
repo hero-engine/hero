@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
 )
 
 // TestRegisterMCP_CommandIsPortable_AllTargets is the cross-target guard:

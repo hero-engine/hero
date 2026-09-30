@@ -1,1 +1,1 @@
-go build -ldflags "-s -w -X main.version=v0.34.2-16-g1ceaef1c-dirty" -o hero ./cmd/hero/
+go build -ldflags "-s -w -X main.version=v0.34.2-17-gb15cd0a9-dirty" -o hero ./cmd/hero/

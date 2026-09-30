@@ -52,7 +52,7 @@ func canonicalProjectRoot(root string) (string, error) {
 	return abs, nil
 }
 
-// DeepSeekServerName is the per-project MCP serverName: "hero-<name>-<hash4>".
+// DeepSeekServerName is the per-project MCP serverName: "hero-<name>-<hash6>".
 // DeepSeek requires unique names of [A-Za-z0-9_-]{1,32}, and the name prefixes
 // every tool (mcp__<serverName>__*), so it must never change for a project.
 func DeepSeekServerName(root string) (string, error) {
@@ -149,8 +149,10 @@ func deepseekMCPPatch(entry deepseekMCPEntry) ([]byte, error) {
 	}{{Insert: []deepseekMCPEntry{entry}}})
 }
 
+const deepseekHomeMarkerPrefix = "# hero:managed deepseek-mcp "
+
 func deepseekHomeMarkers(server string) (string, string) {
-	return "# hero:managed deepseek-mcp " + server, "# end:hero:managed deepseek-mcp " + server
+	return deepseekHomeMarkerPrefix + server, "# end:hero:managed deepseek-mcp " + server
 }
 
 // deepseekAddedNewline flags a start marker whose block needed a separating
@@ -221,13 +223,25 @@ func cutDeepSeekHomeBlock(content, server string) (rest, block string, pos int, 
 		if lineEnd == 0 {
 			return "", "", 0, false, fmt.Errorf("unterminated Hero block %q in DeepSeek home patch", server)
 		}
+		after := rest[lineEnd:]
 		if added && i > 0 && rest[i-1] == '\n' {
-			i--
+			if lineEnd == len(rest) {
+				// Last in the file: drop the newline Hero added.
+				i--
+			} else if next, ok := strings.CutPrefix(after, deepseekHomeMarkerPrefix); ok {
+				// Another Hero block follows and now owns that newline;
+				// hand it the flag so its removal restores the original.
+				if eol := strings.IndexByte(next, '\n'); eol >= 0 && !strings.HasSuffix(strings.TrimRight(next[:eol], "\r"), deepseekAddedNewline) {
+					after = deepseekHomeMarkerPrefix + strings.TrimRight(next[:eol], "\r") + deepseekAddedNewline + next[eol:]
+				}
+			}
+			// Otherwise foreign content follows: keep the newline so it is
+			// never joined onto the previous line.
 		}
 		if !found {
 			block, pos, found = rest[i:lineEnd], i, true
 		}
-		rest = rest[:i] + rest[lineEnd:]
+		rest = rest[:i] + after
 	}
 }
 
@@ -367,8 +381,18 @@ func RemoveDeepSeekHomeEntry(root string, dryRun bool) (bool, error) {
 		return false, err
 	}
 	rest, _, _, found, err := cutDeepSeekHomeBlock(content, server)
-	if err != nil || !found || dryRun {
+	if err != nil || !found {
 		return found, err
+	}
+	// Same guard as upsert: the result must still be a list DeepSeek can
+	// load, with exactly this project's entry gone.
+	before, berr := deepseekPatchList(content)
+	after, aerr := deepseekPatchList(rest)
+	if berr != nil || aerr != nil || len(after) != len(before)-1 || countDeepSeekEntry(after, server+"-mcp") != 0 {
+		return false, fmt.Errorf("cannot safely remove Hero's entry from DeepSeek home patch %s; remove the block between its hero:managed markers by hand", path)
+	}
+	if dryRun {
+		return true, nil
 	}
 	if strings.HasPrefix(content, deepseekHomeCreatedLine) && strings.TrimSpace(strings.TrimPrefix(rest, deepseekHomeCreatedLine)) == "" {
 		return true, os.Remove(path)
