@@ -2,7 +2,7 @@
 title: "September delivery review cleanup — doctor missing paths, Aha gating, managed-block drift, DeepSeek launch guidance"
 slug: sept-review-cleanup
 type: bug
-status: planning
+status: delivering
 priority: P2
 severity: moderate
 root_cause_class: code
@@ -17,6 +17,7 @@ relations:
     kind: related
   - target: stale-connect-provider-usage-expectation
     kind: related
+delivery_method: manual
 ---
 
 # September delivery review cleanup
@@ -30,14 +31,18 @@ behaves consistently across all eight install targets.
 
 ## Kickoff
 
-Fix five review findings on branch `chore/sept-local-deliveries`:
-1. `hero doctor` flags and lists `Missing` paths only for DeepSeek (`internal/cli/doctor.go:221`, `:233`). Use `inv.Incomplete()` and print missing paths for every target.
-2. The `aha` connection has no tracker adapter (`internal/tracker/tracker.go:232`). Make it broker-only and return a clear error.
-3. Move the Mail vs Peering paragraphs into the `agents_md.go` managed block, then regenerate `CLAUDE.md` and `AGENTS.md`.
-4. Change `DeepSeekLaunchCommand` to an interactive `dsh --patch`.
-5. Stop building the DeepSeek file set three times per install.
+Five review findings from the September deliveries, all fixed on branch `chore/sept-local-deliveries`:
+- doctor flags and lists missing paths for all targets
+- Aha is broker-only
+- the Mail/Peering paragraphs are in the managed block
+- DeepSeek launches with `dsh --profile web --patch`
+- the DeepSeek file set is built once per install
 
-Verify with `go test ./internal/cli ./internal/install ./internal/tracker`.
+**Status:** implementation, full suite, docs build and native DeepSeek checks are green. Closing gates: cold audit, then `hero spec verify sept-review-cleanup`.
+
+**Pick up at:** if verify has not passed, run the audit against `git diff 9ee65dac...HEAD -- ':!.hero'`, then verify.
+
+**Files:** `internal/cli/doctor.go`, `internal/tracker/tracker.go`, `internal/cli/connect.go`, `internal/install/{agents_md,mcp_deepseek,target_deepseek,install}.go`, `domains/engineering/routing.md`
 
 ## Problem
 
@@ -98,10 +103,13 @@ The review ran build, vet and the full uncached suite, and all of them pass. Rea
    (`go run ./cmd/hero upgrade`) and commit them. `domains/engineering/AGENTS.md`
    parity tests must stay green.
 4. **DeepSeek launch.** Make `DeepSeekLaunchCommand` return
-   `dsh --patch '<path>'`, keeping the POSIX quoting. Update the README,
-   `MCP-SETUP.md`, `web/docs/src/configuration/mcp-setup.md`, and the doctor
-   footnote to show the interactive form first. Keep the headless form only
-   as a clearly labelled scripting example, if at all.
+   `dsh --profile web --patch '<path>'`, keeping the POSIX quoting. The
+   pinned `dsh` rejects a missing `--profile`, and `web` is its shipped
+   interactive profile. Update `MCP-SETUP.md` and
+   `web/docs/src/configuration/mcp-setup.md` to show the interactive form
+   first, and describe headless only as the scripted one-shot path. Extend
+   `scripts/deepseek-compatibility.mjs` to compose both the web and headless
+   profiles with the generated overlay.
 5. **Dedupe.** Compute `deepseekFiles` and prior checksums once. `install.Run`
    runs preflight, then passes the computed set to `runDeepSeek`, for example
    through an unexported field on `Options` or a small struct.
@@ -116,7 +124,7 @@ The review ran build, vet and the full uncached suite, and all of them pass. Rea
 - **AC-4:** WHEN `hero connect aha` succeeds THE SYSTEM SHALL state that the connection supports raw tracker requests only; broker requests against Aha SHALL keep working.
 - **AC-5:** WHEN `hero install` or `hero upgrade` renders the managed block for any target THE SYSTEM SHALL include the Project Mail vs Peering paragraphs, identically in `CLAUDE.md` and `AGENTS.md`.
 - **AC-6:** The repo's checked-in `CLAUDE.md` and `AGENTS.md` SHALL match what the branch binary generates, including the DeepSeek roster line.
-- **AC-7:** WHEN a DeepSeek install completes, or doctor shows DeepSeek activation guidance, THE SYSTEM SHALL present an interactive `dsh --patch '<absolute path>'` launch command with no prompt argument and no headless profile.
+- **AC-7:** WHEN a DeepSeek install completes, or doctor shows DeepSeek activation guidance, THE SYSTEM SHALL present an interactive `dsh --profile web --patch '<absolute path>'` launch command, with no prompt argument and not the headless profile. (dsh requires `--profile`. At the pinned harness commit the shipped profiles are acp, web, headless and sdk; web is the interactive one.)
 - **AC-8:** WHEN `hero install --target deepseek` runs THE SYSTEM SHALL render the DeepSeek file set once per invocation, and all existing DeepSeek ownership, collision, dry-run and pruning tests SHALL pass unchanged.
 
 ## Boundaries
@@ -141,3 +149,45 @@ The review ran build, vet and the full uncached suite, and all of them pass. Rea
 3. `internal/install/agents_md.go` (+ parity tests), regenerate `CLAUDE.md` / `AGENTS.md` (AC-5, AC-6).
 4. `internal/install/mcp_deepseek.go`, doctor footnote, `README.md`, `MCP-SETUP.md`, `web/docs/src/configuration/mcp-setup.md` (AC-7).
 5. `internal/install/install.go`, `target_deepseek.go`, `mcp_deepseek.go` — single computation of the DeepSeek file set (AC-8).
+
+## Completion Ledger
+
+Implemented inline with the implementation-principles, go-stack and testing-and-validation skills. Evidence logs are in this spec directory. Base is `e7d31917`.
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | AC-1: every target flags its row and lists missing paths (capped) despite full counts | DONE | `doctor.go` `buildInventorySection` uses `inv.Incomplete()` for all targets, `doctorMissingPathLimit`=10; `TestDoctorNamesMissingArtifactsForEveryTargetDespiteFullCounts` (8 subtests), `TestDoctorCapsMissingArtifactListing`; real CLI repro `doctor-equal-count-repro.log` (codex 86/86, `codex !`, path named) |
+| 2 | AC-2: a NEEDS REPAIR / NEEDS NEWER HERO verdict always has a flagged row | DONE | Row flag and WARNING count use the same `Incomplete()` predicate as `doctorVerdict`; the same tests assert WARNING, row marker and verdict together |
+| 3 | AC-3: adapter-backed ops on aha fail naming the broker-only limit | DONE | `tracker.go` `ErrAhaAdapterNotImplemented`, `case "aha"` in `New` (and via `NewWithJiraConfig`); `TestNew_AhaIsBrokerOnly` |
+| 4 | AC-4: connect aha states the limit; broker keeps working | DONE | `connect.go` prints the notice after the text-mode success line; `TestNonInteractiveConnectAhaStatesBrokerOnlyLimit`; `TestBrokerAhaRequestInjectsCredentialAndReturnsOnlySafeHeaders` still passes |
+| 5 | AC-5: Mail vs Peering paragraphs render identically into CLAUDE.md and AGENTS.md | DONE | `agents_md.go` (after the peer bullets) and `domains/engineering/routing.md` (before the Attention table), with concrete `hero_mail_*` tool names so `TestCanonicalRoutingReferencesResolveAgainstRealSurfaces` passes; `TestRoutingGuidanceReachesAllHarnessNativeRoots` asserts both markers across all 8 targets |
+| 6 | AC-6: checked-in CLAUDE.md/AGENTS.md match the branch binary | DONE | Regenerated with `./hero upgrade` (v0.34.2-6-ge7d31917); a second upgrade was a no-op and `CLAUDE.md` byte-identical; pack parity `TestEngineeringPackBodyMatchesGoFallback` passes |
+| 7 | AC-7: interactive `dsh --profile web --patch '<path>'`, no prompt, not headless | DONE | `mcp_deepseek.go` `DeepSeekLaunchCommand`; exact-string assertion in `deepseek_test.go`; install-output and satellite guidance use the same function; docs updated; native `web` + `headless` composition PASS for engineering/pm/qa (`native-compatibility-*.log`) |
+| 8 | AC-8: DeepSeek file set rendered once per install; ownership tests unchanged | DONE | `planDeepSeek` in `target_deepseek.go`, computed once in `install.Run` and passed to `runDeepSeek`; `TestDeepSeekInstallRendersFileSetOnce` (falsified: old code 4 reads vs 2 for one pass); all existing `TestDeepSeek*` pass |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | doctor.go + tests | DONE | See AC-1/2 |
+| 2 | tracker.go, connect.go + tests | DONE | See AC-3/4 |
+| 3 | agents_md.go + parity tests; regenerate root files | DONE | Also `domains/engineering/routing.md` and the regenerated `domains/engineering/AGENTS.md` pack file |
+| 4 | DeepSeek launch command + docs | DONE | `mcp_deepseek.go`, `MCP-SETUP.md`, `web/docs/src/configuration/mcp-setup.md`, `scripts/deepseek-compatibility.mjs` (now composes web + headless); README has no launch command; doctor footnote already says "--patch" generically |
+| 5 | Single computation of DeepSeek file set | DONE | `install.go`, `target_deepseek.go`; `registerMCPDeepSeek` keeps its cheap overlay-only preflight for standalone MCP registration |
+
+### Exercise-the-feature check
+
+- [x] Real CLI runs:
+  - `hero doctor` on a temp Codex install with `command-decide` deleted, plus a stray `command-stray`: shows `codex !` at 86/86 and names the missing path.
+  - `./hero upgrade` regenerates the root files, and a second run is a no-op.
+  - `node scripts/deepseek-compatibility.mjs` against pinned harness `477b4f42` passes for engineering, pm and qa: web and headless composition, MCP initialize/list (86 tools), `hero_status`, zero model calls.
+
+### Excellence Bar self-check
+
+- [x] Yes. Each finding has a regression test that fails on the old behavior. The launch-command change was checked against the real harness source, which exposed and corrected two wrong assumptions (a bare `--patch` fails without `--profile`, and `tui` is not a shipped profile).
+
+## Final validation
+
+`go test ./... -count=1` exit 0 (`go-tests.log`); `go vet ./...` clean (`vet.log`); `make build` (`build.log`); docs unit tests (`docs-tests.log`) and `mkdocs build --strict` (`docs-build.log`) pass; `git diff --check` clean.

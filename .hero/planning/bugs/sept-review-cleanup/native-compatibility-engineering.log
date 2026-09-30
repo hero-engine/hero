@@ -1,0 +1,8 @@
+PASS native loaders (engineering): 121 skills (canonical, workflows, roles), AGENTS.md
+PASS native registry precedence and Git-root discovery from nested cwd
+PASS Cordis composition: web profile (2 bundle layers) plus generated overlay
+PASS Cordis composition: headless profile (2 bundle layers) plus generated overlay
+PASS native MCP client: initialize + tools/list, 86 Hero tools registered
+PASS native MCP tool execution: hero_status from nested workspace cwd
+PASS native MCP workspace binding: generated subdirectory overlay resolves explicit project root
+{"harnessRevision":"477b4f420553e8a52c2fbccc464d7561b239c443","heroVersion":"hero version v0.34.2-6-ge7d31917-dirty","domain":"engineering","skills":121,"tools":86,"modelCalls":0}

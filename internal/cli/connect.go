@@ -13,6 +13,7 @@ import (
 
 	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/tracker"
 	"github.com/spf13/cobra"
 )
 
@@ -405,6 +406,9 @@ func writeConnection(cmd *cobra.Command, root string, creds config.Credentials, 
 		fmt.Fprintln(cmd.OutOrStdout(), string(b))
 	} else {
 		fmt.Fprintf(cmd.OutOrStdout(), "Connected integration %s (%s). Inspect with 'hero connect --list'.\n", in.id, in.provider)
+		if in.provider == "aha" {
+			fmt.Fprintf(cmd.OutOrStdout(), "Note: %v\n", tracker.ErrAhaAdapterNotImplemented)
+		}
 	}
 	return nil
 }

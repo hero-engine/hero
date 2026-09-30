@@ -21,9 +21,11 @@ func DeepSeekOverlayPath(opts Options) (string, error) {
 	return filepath.Join(base, deepseekOverlayName), nil
 }
 
-// DeepSeekLaunchCommand quotes the patch path for a POSIX shell.
+// DeepSeekLaunchCommand is the interactive (web profile) session launch, with the patch
+// path quoted for a POSIX shell. It carries no prompt so it never starts a
+// one-shot model run.
 func DeepSeekLaunchCommand(path string) string {
-	return "dsh --profile headless --patch '" + strings.ReplaceAll(path, "'", "'\"'\"'") + "' 'Resume this Hero workspace'"
+	return "dsh --profile web --patch '" + strings.ReplaceAll(path, "'", "'\"'\"'") + "'"
 }
 
 func deepseekOverlay(opts Options) ([]byte, error) {

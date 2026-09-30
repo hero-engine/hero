@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -374,5 +375,51 @@ func TestDoctorDeepSeekNamesMissingArtifactsDespiteFullCounts(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// AC-1/AC-2 (sept-review-cleanup): every target, not only DeepSeek, flags a
+// row and names its missing artifact when kind counts are full.
+func TestDoctorNamesMissingArtifactsForEveryTargetDespiteFullCounts(t *testing.T) {
+	for _, target := range inventoryTargetNames {
+		t.Run(string(target), func(t *testing.T) {
+			path := "generated/" + string(target) + "/missing.md"
+			info := doctorInfo{
+				binaryVersion: "1.0.0", workspaceVersion: "1.0.0", binarySchema: "4", graphSchema: "4", heroDir: "/repo/.hero",
+				inventory: []install.TargetInventory{{
+					Target: target, RootFile: "AGENTS.md",
+					Agents: kc(3, 3), Commands: install.KindCount{NotApplicable: true}, Skills: kc(10, 10),
+					Missing: []string{path},
+				}},
+			}
+			report := buildDoctorReport(info)
+			for _, want := range []string{string(target) + " !", "! " + string(target) + " missing: " + path, "WARNING: 1 installed target is incomplete", "Verdict: NEEDS REPAIR"} {
+				if !strings.Contains(report, want) {
+					t.Errorf("missing %q:\n%s", want, report)
+				}
+			}
+		})
+	}
+}
+
+func TestDoctorCapsMissingArtifactListing(t *testing.T) {
+	var missing []string
+	for i := 0; i < doctorMissingPathLimit+3; i++ {
+		missing = append(missing, fmt.Sprintf(".agents/skills/command-%02d/SKILL.md", i))
+	}
+	info := doctorInfo{
+		binaryVersion: "1.0.0", workspaceVersion: "1.0.0", binarySchema: "4", graphSchema: "4", heroDir: "/repo/.hero",
+		inventory: []install.TargetInventory{{
+			Target: install.TargetCodex, RootFile: "AGENTS.md",
+			Agents: kc(3, 3), Commands: install.KindCount{NotApplicable: true}, Skills: kc(10, 10),
+			Missing: missing,
+		}},
+	}
+	report := buildDoctorReport(info)
+	if got := strings.Count(report, "! codex missing: .agents/"); got != doctorMissingPathLimit {
+		t.Errorf("listed %d paths, want %d:\n%s", got, doctorMissingPathLimit, report)
+	}
+	if !strings.Contains(report, "! codex missing: … and 3 more") {
+		t.Errorf("missing remainder line:\n%s", report)
 	}
 }

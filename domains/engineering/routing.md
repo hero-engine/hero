@@ -49,6 +49,8 @@ Route ordinary Attention language to the typed operation below. Use the
 advertised MCP schema or row action as the executable contract; do not invent
 arguments or action IDs from prose.
 
+The Mail rows below use the generic transport (the `hero_mail_list` / `hero_mail_send` / `hero_mail_reply` MCP tools) for unstructured messages and raw inbox operations. The Peering rows use the semantic layer (`hero peer call` / `hero handoff` CLI) for structured cross-repo interactions that carry mode, provenance, and related-spec metadata. Peer calls *produce* Mail — they are not an alternative to it.
+
 | User intent | Example | Canonical operation |
 |---|---|---|
 | Read bounded Attention | "What needs my attention?" | Call `hero_attention_snapshot` once with `limit: 8` |

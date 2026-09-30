@@ -32,11 +32,11 @@ DeepSeek Harness commit `477b4f420553e8a52c2fbccc464d7561b239c443`.
 
 ```bash
 hero install project . --target deepseek
-dsh --profile headless --patch '/absolute/project/.dsh/hero.cordis.patch.yml' 'Resume this Hero workspace'
+dsh --profile web --patch '/absolute/project/.dsh/hero.cordis.patch.yml'
 ```
 
-Run `dsh` from the intended workspace. The interactive profile can use the same
-`--patch` argument. Installation reports **overlay generated; activation
+Run `dsh` from the intended workspace; `--profile web` starts an interactive
+session. `--profile headless` with a prompt argument is a one-shot model run for scripts. Installation reports **overlay generated; activation
 required**. Neither a file on disk nor `hero doctor` proves a live connection.
 The patch inserts `@deepseek-ai/dsh-mcp-client` with `serverName: hero`,
 `transport: stdio`, `command: hero`, and `args: [mcp]`. Hero never edits your

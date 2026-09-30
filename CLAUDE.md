@@ -55,8 +55,6 @@ These are run in the terminal, not as slash commands:
 - `hero sync pull <slug>` — sync spec status from tracker
 - `hero note <slug>` — quick note capture
 - `hero check` — health check
-**Project Mail** is the generic transport — durable envelopes, inbox/outbox, receipts, replies. **Peering** is the application layer on top of Mail — it adds semantic meaning (advisory questions, spec-out requests, work transfers) and structured metadata (mode, provenance, related spec, budget hints). Peering commands compose typed Mail messages; Mail knows nothing about peering semantics. Use `hero_mail_*` MCP tools for raw inbox operations; use `hero peer call` / `hero handoff` CLI commands for structured cross-repo interactions.
-
 - `hero peer list` — list registered sibling repos with reachability + manifest status
 - `hero peer show <alias>` — inspect one peer (manifest contents, in-flight handoffs)
 - `hero peer call <alias> --mode=advisory "..."` — send an asynchronous Project Mail question (no model launch or receiver-tree write)
@@ -65,6 +63,8 @@ These are run in the terminal, not as slash commands:
 - `hero handoff receive <message-id>` — receiver explicitly promotes Mail through Intake and replies with its artifact
 - `hero handoff status` / `hero handoff accept <spec>` — track handoffs across the boundary
 - `hero admin repos add <alias> <path>` — register a sibling repo as a peer (one-time setup)
+
+**Project Mail** is the generic transport — durable envelopes, inbox/outbox, receipts, replies. **Peering** is the application layer on top of Mail — it adds semantic meaning (advisory questions, spec-out requests, work transfers) and structured metadata (mode, provenance, related spec, budget hints). Peering commands compose typed Mail messages; Mail knows nothing about peering semantics. Use the `hero_mail_list` / `hero_mail_show` / `hero_mail_send` / `hero_mail_reply` MCP tools for raw inbox operations; use `hero peer call` / `hero handoff` CLI commands for structured cross-repo interactions.
 
 ### Project Structure
 
@@ -76,7 +76,7 @@ These are run in the terminal, not as slash commands:
 - `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)
 - `.hero/hero.json` — Project configuration
 
-`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex (Codex has no commands directory — its slash commands are a built-in enum, so Hero commands install there as skills). They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.
+`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex; and `.grok/agents/*.md` plus canonical and `command-*` skills under `.grok/skills/` for Grok Build. DeepSeek (`dsh`) receives canonical, `command-*`, and `role-*` skills under `.dsh/skills/` plus an explicitly activated `.dsh/hero.cordis.patch.yml` MCP overlay. Codex, Grok, and DeepSeek have no Hero-owned commands directory, so Hero commands install there as skills. DeepSeek roles are guidance, not registered subagents; use native delegation only when available and never substitute self-review for an independent audit. They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.
 
 ### Declaring Spec Relationships
 
@@ -140,6 +140,34 @@ Some harnesses defer MCP tool schemas behind a one-time lookup before the tool i
 - Specs use YAML frontmatter with fields: title, type, status, tracker_id, priority, severity
 - Imported specs include tracker-prefixed fields (e.g. jira_status, jira_priority, jira_assignee) under a # Jira/GitHub/Linear comment header
 
+### Running Hero Workflows in Codex
+
+Hero's workflow commands are **not slash commands in Codex** — they are skill files you read and follow step-by-step.
+
+**When the user asks you to deliver, diagnose, design, or run any Hero workflow:**
+
+1. Read the workflow skill file at `.agents/skills/command-<name>/SKILL.md`
+   (e.g. `.agents/skills/command-deliver/SKILL.md` when the user says "deliver")
+2. Follow each step in the file as your workflow. These are **instructions to execute**, not documentation.
+3. **Do NOT** skip steps, flip spec frontmatter as a shortcut, or treat the workflow as informational.
+
+**Workflow routing table for Codex:**
+
+| User intent | Skill file to read and follow |
+|---|---|
+| Deliver, implement, ship, execute | `.agents/skills/command-deliver/SKILL.md` |
+| Diagnose, investigate, debug, fix | `.agents/skills/command-diagnose/SKILL.md` |
+| Design, plan, spec, add feature | `.agents/skills/command-design/SKILL.md` |
+| Review, PR, pull request | `.agents/skills/command-review/SKILL.md` |
+| Check, health, validate workspace | `.agents/skills/command-check/SKILL.md` |
+| Note, capture, remember | `.agents/skills/command-note/SKILL.md` |
+| Compose, break down, epic | `.agents/skills/command-compose/SKILL.md` |
+| Discover, brainstorm, explore | `.agents/skills/command-discover/SKILL.md` |
+
+If the skill file doesn't exist, fall back to reading `.claude/commands/<name>.md` directly.
+
+**A Hero workflow is not finished until its closing gate runs.** For `/deliver`, that gate is `hero spec verify <slug>` passing — and verify requires the cold delivery audit to have run first. Do NOT yield back to the user with a spec still in `planning` or `delivering` and the audit unrun. The audit and verify run in the **same turn** as the implementation — they are not a follow-up step the user triggers later. If you find yourself about to say "the audit still needs to run" or "I did not mark the spec complete because the gate still needs to run" — **run it now instead.** Stopping one step short of the closing gate is an unfinished delivery, not a handoff. This holds in every delivery mode, including the default supervised mode: "pause at handoffs" does not include the closing gates.
+
 ## Natural Language Routing
 
 When the user describes what they want in natural language, route to the appropriate Hero workflow. **Run the workflow — don't just suggest it.**
@@ -191,7 +219,7 @@ Route ordinary Attention language to the typed operation below. Use the
 advertised MCP schema or row action as the executable contract; do not invent
 arguments or action IDs from prose.
 
-The Mail rows below use the generic transport (`hero_mail_*` MCP tools) for unstructured messages and raw inbox operations. The Peering rows use the semantic layer (`hero peer call` / `hero handoff` CLI) for structured cross-repo interactions that carry mode, provenance, and related-spec metadata. Peer calls *produce* Mail — they are not an alternative to it.
+The Mail rows below use the generic transport (the `hero_mail_list` / `hero_mail_send` / `hero_mail_reply` MCP tools) for unstructured messages and raw inbox operations. The Peering rows use the semantic layer (`hero peer call` / `hero handoff` CLI) for structured cross-repo interactions that carry mode, provenance, and related-spec metadata. Peer calls *produce* Mail — they are not an alternative to it.
 
 | User intent | Example | Canonical operation |
 |---|---|---|

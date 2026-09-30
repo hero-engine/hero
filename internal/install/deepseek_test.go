@@ -1,6 +1,7 @@
 package install
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -167,6 +168,10 @@ func TestDeepSeekOverlayCollisionDryRunAndRemoval(t *testing.T) {
 	}
 	if ok, err := RemoveDeepSeekOverlay(h.TargetDir, false, true); err != nil || !ok {
 		t.Fatalf("force removal: %v %v", ok, err)
+	}
+	// sept-review-cleanup AC-7: interactive launch, no headless profile or prompt.
+	if got := DeepSeekLaunchCommand("/a'b c"); got != "dsh --profile web --patch '/a'\"'\"'b c'" {
+		t.Fatalf("launch command = %q", got)
 	}
 	if !strings.Contains(DeepSeekLaunchCommand("/a'b c"), "'/a'\"'\"'b c'") {
 		t.Fatal("unsafe patch quoting")
@@ -342,5 +347,34 @@ func TestDeepSeekWorkspaceOverlayRefresh(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(ws, ".hero")); !os.IsNotExist(err) {
 		t.Fatal("workspace overlay made shadow .hero")
+	}
+}
+
+// countingFS counts opens of one path so tests can assert render passes.
+type countingFS struct {
+	fs.FS
+	path  string
+	opens int
+}
+
+func (c *countingFS) Open(name string) (fs.File, error) {
+	if name == c.path {
+		c.opens++
+	}
+	return c.FS.Open(name)
+}
+
+// sept-review-cleanup AC-8: one install renders the DeepSeek file set in a
+// single pass (selection plus render reads), not once per preflight.
+func TestDeepSeekInstallRendersFileSetOnce(t *testing.T) {
+	h := newInstallHarness(t)
+	onePass := &countingFS{FS: os.DirFS(h.SourceDir), path: "agents/engineer.md"}
+	if _, _, err := deepseekFiles(Options{ContentFS: onePass, Target: TargetDeepSeek, Mode: ModeProject, TargetDir: h.TargetDir}); err != nil {
+		t.Fatal(err)
+	}
+	install := &countingFS{FS: os.DirFS(h.SourceDir), path: "agents/engineer.md"}
+	h.Run(TargetDeepSeek, func(o *Options) { o.ContentFS = install })
+	if onePass.opens == 0 || install.opens != onePass.opens {
+		t.Fatalf("install opened agents/engineer.md %d times; one render pass opens it %d times", install.opens, onePass.opens)
 	}
 }

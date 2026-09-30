@@ -120,7 +120,17 @@ func deepseekFiles(opts Options) (map[string]deepseekFile, []string, error) {
 	return files, dirs, nil
 }
 
-func runDeepSeek(opts Options) (*Result, error) {
+// deepseekPlan is the rendered, collision-checked DeepSeek file set.
+type deepseekPlan struct {
+	base  string
+	files map[string]deepseekFile
+	dirs  []string
+	prior map[string]string
+}
+
+// planDeepSeek renders the owned file set and fails before any mutation when
+// a destination is unknown or modified.
+func planDeepSeek(opts Options) (*deepseekPlan, error) {
 	base, err := deepseekBase(opts)
 	if err != nil {
 		return nil, err
@@ -136,6 +146,12 @@ func runDeepSeek(opts Options) (*Result, error) {
 	if err = preflightDeepSeek(opts, base, files, prior); err != nil {
 		return nil, err
 	}
+	return &deepseekPlan{base: base, files: files, dirs: dirs, prior: prior}, nil
+}
+
+func runDeepSeek(opts Options, plan *deepseekPlan) (*Result, error) {
+	base, files, dirs, prior := plan.base, plan.files, plan.dirs, plan.prior
+	var err error
 	result := &Result{skillDirs: dirs}
 	keys := make([]string, 0, len(files))
 	for key := range files {

@@ -107,6 +107,23 @@ func TestNew_GitHub(t *testing.T) {
 	}
 }
 
+// AC-3 (sept-review-cleanup): an aha connection fails adapter construction
+// with a message naming the broker-only limit, not "unknown tracker type".
+func TestNew_AhaIsBrokerOnly(t *testing.T) {
+	t.Setenv("TEST_AHA_TOKEN", "aha_test123")
+	cfg := &config.TrackerConfig{Type: "aha", Project: "PRODUCT", BaseURL: "https://acme.aha.io", TokenEnv: "TEST_AHA_TOKEN"}
+	for name, build := range map[string]func() (Tracker, error){
+		"New":               func() (Tracker, error) { return New(cfg) },
+		"NewWithJiraConfig": func() (Tracker, error) { return NewWithJiraConfig(cfg, nil, t.TempDir()) },
+	} {
+		if _, err := build(); !errors.Is(err, ErrAhaAdapterNotImplemented) {
+			t.Errorf("%s: err = %v, want ErrAhaAdapterNotImplemented", name, err)
+		} else if strings.Contains(err.Error(), "unknown tracker type") || !strings.Contains(err.Error(), "hero_tracker_request") {
+			t.Errorf("%s: unhelpful error %q", name, err)
+		}
+	}
+}
+
 func TestNew_Jira(t *testing.T) {
 	t.Setenv("TEST_JIRA_TOKEN", "jira_test")
 	cfg := &config.TrackerConfig{

@@ -187,6 +187,9 @@ var inventoryTargetNames = []install.Target{
 // an installed target is short on content (with a version-compatible repair
 // path), and a codex footnote when codex is present. Pure so tests can drive it
 // directly.
+// doctorMissingPathLimit caps the per-target missing-path listing.
+const doctorMissingPathLimit = 10
+
 func buildInventorySection(info doctorInfo) string {
 	var b strings.Builder
 	b.WriteString("Installed harness targets\n")
@@ -218,11 +221,17 @@ func buildInventorySection(info doctorInfo) string {
 			hasGrok = true
 			grok = inv
 		}
-		if kindShort(inv.Agents) || kindShort(inv.Commands) || kindShort(inv.Skills) || (inv.Target == install.TargetDeepSeek && inv.Incomplete()) {
+		name := string(inv.Target)
+		if inv.Incomplete() {
 			incomplete++
+			// Full counts can still hide a missing artifact (a stale extra
+			// keeps the total equal); flag the row so it agrees with the verdict.
+			if !kindShort(inv.Agents) && !kindShort(inv.Commands) && !kindShort(inv.Skills) {
+				name += " !"
+			}
 		}
 		rows = append(rows, []string{
-			string(inv.Target),
+			name,
 			kindCell(inv.Agents),
 			kindCell(inv.Commands),
 			kindCell(inv.Skills),
@@ -231,10 +240,12 @@ func buildInventorySection(info doctorInfo) string {
 	}
 	b.WriteString(renderInventoryTable(rows))
 	for _, inv := range info.inventory {
-		if inv.Target == install.TargetDeepSeek {
-			for _, path := range inv.Missing {
-				fmt.Fprintf(&b, "  ! deepseek missing: %s\n", path)
+		for i, path := range inv.Missing {
+			if i == doctorMissingPathLimit {
+				fmt.Fprintf(&b, "  ! %s missing: … and %d more\n", inv.Target, len(inv.Missing)-i)
+				break
 			}
+			fmt.Fprintf(&b, "  ! %s missing: %s\n", inv.Target, path)
 		}
 	}
 

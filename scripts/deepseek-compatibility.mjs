@@ -104,16 +104,20 @@ try {
 
   const { loadProfile, composeEntries } = await source('packages/boot/app-boot/src/profile.ts');
   const { loadOverlayPatches } = await source('packages/boot/app-boot/src/index.ts');
-  const profile = loadProfile('dsh', 'headless', join(harness, 'apps/cli/package.json'), dshHome);
   const overlayPath = join(workspace, '.dsh/hero.cordis.patch.yml');
   const patches = loadOverlayPatches('hero-compatibility', overlayPath);
-  const warnings = [];
-  const entries = composeEntries([...profile.layers.map(layer => layer.patches), profile.patches, patches], warning => warnings.push(warning));
-  assert.deepEqual(warnings, [], 'Cordis composition skipped a patch');
   const flatten = rows => rows.flatMap(row => [row, ...(row.group && Array.isArray(row.config) ? flatten(row.config) : [])]);
-  const clients = flatten(entries).filter(row => row.name === '@deepseek-ai/dsh-mcp-client' && row.config?.serverName === 'hero');
-  assert.equal(clients.length, 1, 'Composed headless profile must contain exactly one Hero MCP client');
-  console.log(`PASS Cordis composition: headless profile (${profile.layers.length} bundle layers) plus generated overlay`);
+  // web is the shipped interactive profile Hero's launch guidance names; headless is the scripted path.
+  let clients;
+  for (const name of ['web', 'headless']) {
+    const profile = loadProfile('dsh', name, join(harness, 'apps/cli/package.json'), dshHome);
+    const warnings = [];
+    const entries = composeEntries([...profile.layers.map(layer => layer.patches), profile.patches, patches], warning => warnings.push(warning));
+    assert.deepEqual(warnings, [], `Cordis composition skipped a patch (${name})`);
+    clients = flatten(entries).filter(row => row.name === '@deepseek-ai/dsh-mcp-client' && row.config?.serverName === 'hero');
+    assert.equal(clients.length, 1, `Composed ${name} profile must contain exactly one Hero MCP client`);
+    console.log(`PASS Cordis composition: ${name} profile (${profile.layers.length} bundle layers) plus generated overlay`);
+  }
 
   // Exercise only the real MCP service dependencies: no agent loop, provider, or paid model request.
   const { default: SystemPrompt } = await source('packages/core/system-prompt/src/index.ts');

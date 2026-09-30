@@ -61,6 +61,8 @@ These are run in the terminal, not as slash commands:
 - `hero handoff status` / `hero handoff accept <spec>` — track handoffs across the boundary
 - `hero admin repos add <alias> <path>` — register a sibling repo as a peer (one-time setup)
 
+**Project Mail** is the generic transport — durable envelopes, inbox/outbox, receipts, replies. **Peering** is the application layer on top of Mail — it adds semantic meaning (advisory questions, spec-out requests, work transfers) and structured metadata (mode, provenance, related spec, budget hints). Peering commands compose typed Mail messages; Mail knows nothing about peering semantics. Use the `hero_mail_list` / `hero_mail_show` / `hero_mail_send` / `hero_mail_reply` MCP tools for raw inbox operations; use `hero peer call` / `hero handoff` CLI commands for structured cross-repo interactions.
+
 ### Project Structure
 
 - `<harness>/commands/` — Slash command definitions (workflows like /design, /deliver, /diagnose)

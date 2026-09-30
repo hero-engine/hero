@@ -169,6 +169,33 @@ func TestNonInteractiveConnectAllProvidersLocalOnly(t *testing.T) {
 	}
 }
 
+// AC-4 (sept-review-cleanup): connecting aha states the broker-only limit.
+func TestNonInteractiveConnectAhaStatesBrokerOnlyLimit(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(filepath.Join(root, ".hero"), 0755)
+	connectIntegrationID = "aha-roadmap"
+	connectProject = "PRODUCT"
+	connectBaseURL = "https://acme.aha.io"
+	connectUserEmail = ""
+	connectRole = "delivery"
+	connectTokenStdin = true
+	connectLocalOnly = true
+	connectGlobal = false
+	connectJSON = false
+	connectNoVerify = true
+	defer func() { connectJSON = false }()
+	var out bytes.Buffer
+	cmd := &cobra.Command{}
+	cmd.SetIn(strings.NewReader("provider-canary\n"))
+	cmd.SetOut(&out)
+	if err := runConnectNonInteractive(cmd, root, config.Credentials{}, "aha"); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), "raw tracker requests (hero_tracker_request) only") {
+		t.Fatalf("missing broker-only notice:\n%s", out.String())
+	}
+}
+
 // TestInteractivePromptsShareOneReader pins that consecutive prompts against
 // the same stream each get their own line.
 //

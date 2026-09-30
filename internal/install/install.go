@@ -154,20 +154,12 @@ type CopyAction struct {
 // canonical dirs and harness-dir symlinks pointing at them are removed
 // when their content is detectably Hero-authored.
 func Run(opts Options) (*Result, error) {
+	// DeepSeek collisions must fail before the legacy migration below mutates
+	// anything; the checked plan is then reused so the file set renders once.
+	var deepseek *deepseekPlan
 	if opts.Target == TargetDeepSeek {
-		base, err := deepseekBase(opts)
-		if err != nil {
-			return nil, err
-		}
-		files, _, err := deepseekFiles(opts)
-		if err != nil {
-			return nil, err
-		}
-		prior, err := deepseekChecksums(opts, base)
-		if err != nil {
-			return nil, err
-		}
-		if err := preflightDeepSeek(opts, base, files, prior); err != nil {
+		var err error
+		if deepseek, err = planDeepSeek(opts); err != nil {
 			return nil, err
 		}
 	}
@@ -199,7 +191,7 @@ func Run(opts Options) (*Result, error) {
 	case TargetGrok:
 		result, err = runGrok(opts)
 	case TargetDeepSeek:
-		result, err = runDeepSeek(opts)
+		result, err = runDeepSeek(opts, deepseek)
 	default:
 		return nil, fmt.Errorf("unknown target %q; supported targets: opencode, cursor, claude, copilot, codex, generic, grok, deepseek", opts.Target)
 	}
