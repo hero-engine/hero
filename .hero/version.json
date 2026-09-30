@@ -1,11 +1,11 @@
 {
-  "hero_version": "v0.34.2-7-g167d0268-dirty",
+  "hero_version": "v0.34.2-12-g3a8c3ba1",
   "initialized_at": "0001-01-01T00:00:00Z",
   "last_install": {
-    "version": "dev",
-    "target": "claude",
+    "version": "v0.34.2-12-g3a8c3ba1",
+    "target": "codex",
     "mode": "project",
-    "timestamp": "2026-07-16T10:52:17.920131-06:00"
+    "timestamp": "2026-09-30T13:16:53.371578-06:00"
   },
   "installed_files": {
     ".agents/skills/agent-reliability/SKILL.md": "sha256:c27e3d6d8a25884a56ea0ac4bf1e8a7d7a1654505cab33c8c08e299f6814a694",

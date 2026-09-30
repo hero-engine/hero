@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- hero:managed-start v=dev -->
+<!-- hero:managed-start v=v0.34.2-12-g3a8c3ba1 -->
 ## Hero — Spec-Driven AI Engineering
 
 This project uses **Hero** for spec-driven engineering workflows. Hero manages specs, integrates with work trackers (Jira, GitHub, Linear), and provides structured workflows via slash commands.
@@ -167,6 +167,17 @@ Hero's workflow commands are **not slash commands in Codex** — they are skill 
 If the skill file doesn't exist, fall back to reading `.claude/commands/<name>.md` directly.
 
 **A Hero workflow is not finished until its closing gate runs.** For `/deliver`, that gate is `hero spec verify <slug>` passing — and verify requires the cold delivery audit to have run first. Do NOT yield back to the user with a spec still in `planning` or `delivering` and the audit unrun. The audit and verify run in the **same turn** as the implementation — they are not a follow-up step the user triggers later. If you find yourself about to say "the audit still needs to run" or "I did not mark the spec complete because the gate still needs to run" — **run it now instead.** Stopping one step short of the closing gate is an unfinished delivery, not a handoff. This holds in every delivery mode, including the default supervised mode: "pause at handoffs" does not include the closing gates.
+
+
+### Running Hero Workflows in DeepSeek
+
+DeepSeek (dsh) loads Hero workflows as command-* skills, and role guidance as role-* skills under .dsh/skills. These are not built-in slash commands or registered named subagents. Route natural-language requests to the matching workflow: deliver/implement to command-deliver, design/plan to command-design, diagnose/fix to command-diagnose, and review to command-review. Use the native skill tool with {name: "command-design"} or {name: "role-engineer"} when available; otherwise read .dsh/skills/<name>/SKILL.md and execute its instructions. For global installation use $DSH_HOME/skills (default ~/.dsh/skills).
+
+A role skill grants no tools, permissions, models, or hooks. Pass its guidance to compatible native delegation when available; otherwise adopt the role in the current agent. Local role adoption is not independent review: if a workflow requires a fresh reviewer or cold audit and the profile cannot provide one, stop at that named gate and report the unavailable capability. Never self-grade or mark delivery verified.
+
+Hero's MCP overlay is generated but activation is required. Launch an interactive session from the intended workspace with dsh --profile web --patch /absolute/path/to/.dsh/hero.cordis.patch.yml (or the global DSH_HOME overlay). The MCP child binds to that launch workspace; use one process per workspace. An explicitly bound --workspace overlay retains its declared root. The portable hero command resolves through the launching process PATH. No profile, allowlist, credentials, or shared Cordis configuration is changed.
+
+DeepSeek also discovers CLAUDE.md and .agents/skills; installing other harnesses may expose duplicate instructions and skills. Hero does not delete or suppress those files. Within a Git tree, DeepSeek discovers skills from the first ancestor with .git; separately rooted or non-Git satellites use their own skills links.
 
 ## Natural Language Routing
 
