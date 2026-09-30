@@ -52,6 +52,12 @@ func deepseekChecksums(opts Options, base string) (map[string]string, error) {
 	if opts.ProjectRoot != "" {
 		root = opts.ProjectRoot
 	}
+	// base is absolute (deepseekBase); a relative root such as "." from
+	// `hero install project .` must be made absolute before relating them.
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
 	prefix, err := filepath.Rel(root, base)
 	if err != nil {
 		return nil, err

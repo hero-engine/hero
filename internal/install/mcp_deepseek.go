@@ -84,7 +84,11 @@ func registerMCPDeepSeek(opts Options) error {
 		}
 	}
 	if opts.Mode == ModeProject && opts.ProjectRoot != "" && InstallStatePath(opts.ProjectRoot) != "" {
-		rel, err := filepath.Rel(opts.ProjectRoot, path)
+		root, err := filepath.Abs(opts.ProjectRoot)
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(root, path)
 		if err != nil {
 			return err
 		}

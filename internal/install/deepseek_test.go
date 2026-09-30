@@ -382,3 +382,15 @@ func TestDeepSeekInstallRendersFileSetOnce(t *testing.T) {
 		t.Fatalf("install opened agents/engineer.md %d times; one render pass opens it %d times", install.opens, onePass.opens)
 	}
 }
+
+// `hero install project . --target deepseek` passes a relative TargetDir;
+// ownership lookup must not fail relating it to the absolute .dsh base.
+func TestDeepSeekInstallAcceptsRelativeTargetDir(t *testing.T) {
+	h := newInstallHarness(t)
+	t.Chdir(h.TargetDir)
+	h.Run(TargetDeepSeek, func(o *Options) { o.TargetDir = "."; o.ProjectRoot = "." })
+	h.mustExist(".dsh/hero.cordis.patch.yml")
+	h.mustExist(".dsh/skills/command-design/SKILL.md")
+	// Repeat install exercises the prior-checksum path with the relative root.
+	h.Run(TargetDeepSeek, func(o *Options) { o.TargetDir = "."; o.ProjectRoot = "." })
+}
