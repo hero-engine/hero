@@ -2,7 +2,7 @@
 title: "DeepSeek project install leaves MCP inactive — register Hero in the DeepSeek home patch"
 slug: deepseek-project-mcp-registration
 type: bug
-status: delivering
+status: completed
 priority: P1
 severity: high
 root_cause_class: design
@@ -16,6 +16,7 @@ relations:
   - target: sept-review-cleanup
     kind: related
 delivery_method: manual
+completed_at: 2026-09-30T23:33:04Z
 ---
 
 # DeepSeek project install leaves MCP inactive
@@ -33,9 +34,9 @@ DeepSeek project installs now register Hero MCP in `$DSH_HOME/cordis.patch.yml`,
 - one marker-delimited entry per project, serverName `hero-<project>-<hash>`, absolute `hero` command, pinned `cwd`/`--project-root`
 - doctor reports the registration; uninstall removes only that project's entry
 
-**Status:** implemented; full suite, docs, and native desktop-path checks green. Closing gates: cold audit, then `hero spec verify deepseek-project-mcp-registration`.
+**Status:** completed 2026-09-30. Cold audit: HOLD, HOLD, then SHIP. Final probe: 738 file states across 17 layouts, 0 invalid for DeepSeek's parser. `hero spec verify` passed.
 
-**Pick up at:** run the audit on `git diff 3757f58e...HEAD -- ':!.hero'` if verify has not passed.
+**Pick up at:** nothing left in this spec. One cosmetic follow-up: a specific five-step reinstall order can leave one extra trailing newline; the file stays valid. The native DeepSeek plugin is deferred (see "Later" below).
 
 **Files:** `internal/install/deepseek_home.go`, `mcp_deepseek.go`, `target_deepseek.go`, `internal/cli/doctor.go`, `internal/cli/uninstall.go`, `scripts/deepseek-compatibility.mjs`
 

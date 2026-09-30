@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-09-30T19:17:20Z · projected from 680 source nodes_
+_Last refreshed: 2026-09-30T23:22:32Z · projected from 681 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | 49m ago | hero-runner |
+| core | building | cmd/, internal/ | <1m ago | deepseek-project-mcp-registration |
 | docs | maturing | web/docs/ | 79d ago | — |
 | domains/chat | maturing | domains/chat/ | 27d ago | — |
-| domains/engineering | maturing | domains/engineering/ | 49m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 13m ago | — |
 | domains/pm | maturing | domains/pm/ | 27d ago | — |
 | domains/qa | concept | domains/qa/ | — | — |
 | domains/sales | maturing | domains/sales/ | 40d ago | — |
 | landing | building | web/landing/ | 38d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 3m ago | agent-outposts |
+| serve | building | internal/serve/ | 4h ago | agent-outposts |
 | (unassigned) | — | — | — | 258 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -60,20 +60,20 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **hero-core** — `mail-b7ca19966ac5041e6ff604dd` (critical, delivering)
-3. **hero-core** — `mail-thread-foreground-read-action` (high, delivering)
-4. **serve** — `agent-outposts` (medium, delivering)
-5. **serve** — `retrieval-contradiction-detection` (—, delivering)
+3. **core** — `deepseek-project-mcp-registration` (P1, delivering)
+4. **hero-core** — `mail-thread-foreground-read-action` (high, delivering)
+5. **serve** — `agent-outposts` (medium, delivering)
 
 ## Open risks & blockers
 
 - **Blocked specs (11):** `core-vertical-layering` (waits on project-charter); `e2e-area-suites` (waits on project-charter); `hero-community-edition` (waits on hero-governance); `hero-content-engine` (waits on hero-docs-site); `hero-landing-page` (waits on hero-distribution, hero-demo-content); `hero-launch-playbook` (waits on hero-landing-page, hero-distribution, hero-demo-content); `hero-team-server` (waits on hero-runner); `hihcp-agent-loop-error-recovery` (waits on hihcp-mcp-first-turn-readiness, hihcp-mcp-auto-reconnect); `hihcp-agents-md-harness-agnostic` (waits on hihcp-skill-run-tool); `timely-briefs` (waits on retrieval-contradiction-detection); `wire-checks-to-boundaries` (waits on spec-contract-enums-unified).
-- **Stale-in-flight (6):** `retrieval-contradiction-detection` (82d), `agent-outposts` (80d), `team-connect` (80d), `hero-landing-page` (38d), `mail-b7ca19966ac5041e6ff604dd` (27d), `mail-thread-foreground-read-action` (27d).
+- **Stale-in-flight (6):** `retrieval-contradiction-detection` (82d), `agent-outposts` (81d), `team-connect` (81d), `hero-landing-page` (38d), `mail-b7ca19966ac5041e6ff604dd` (27d), `mail-thread-foreground-read-action` (27d).
 - **Aged open bugs (16):** `install-target-emits-both-claude-and-agents-md` (open 138d), `next-project-file-conflict-not-regenerated` (open 119d), `desktop-sidebar-mcp-not-running` (open 118d), `hihcp-agents-md-harness-agnostic` (open 113d), `hihcp-mcp-auto-reconnect` (open 113d), `hihcp-mcp-first-turn-readiness` (open 113d), `hihcp-permission-bridge-validation` (open 113d), `hihcp-agent-loop-error-recovery` (open 113d), `hihcp-rgignore` (open 113d), `jira-connection-onboarding-misleads-agents` (open 78d), `resume-emits-dead-recall-command` (open 78d), `tracker-backed-diagnosis-publication-contract-broken` (open 73d), `tracker-semantic-priority-field-mapping` (open 72d), `jira-import-classification-obscures-work-items` (open 72d), `ledger-signoff-substring-match-fails-open` (open 67d), `graph-unpartitioned-writers-duplicate-nodes` (open 67d).
 - **Unassigned specs (258) — no `surface:` declared.** Run `hero snapshot assign` to bucket them.
 
 ## Snapshot health
 
 - Surfaces detected: 10 (inferred: 10 · overrides applied: 0)
-- Specs covered: 223/481 (46%)
-- Projection generation: 1ms · Source nodes: 680
+- Specs covered: 224/482 (46%)
+- Projection generation: 1ms · Source nodes: 681
 
