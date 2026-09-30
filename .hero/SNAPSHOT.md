@@ -2,22 +2,22 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-09-30T18:27:35Z · projected from 680 source nodes_
+_Last refreshed: 2026-09-30T19:17:20Z · projected from 680 source nodes_
 
 ## Surfaces
 
 | Surface | Stage | Path(s) | Last touched | Driver spec |
 |---|---|---|---|---|
-| core | maturing | cmd/, internal/ | <1m ago | hero-runner |
+| core | maturing | cmd/, internal/ | 49m ago | hero-runner |
 | docs | maturing | web/docs/ | 79d ago | — |
 | domains/chat | maturing | domains/chat/ | 27d ago | — |
-| domains/engineering | maturing | domains/engineering/ | <1m ago | — |
+| domains/engineering | maturing | domains/engineering/ | 49m ago | — |
 | domains/pm | maturing | domains/pm/ | 27d ago | — |
 | domains/qa | concept | domains/qa/ | — | — |
 | domains/sales | maturing | domains/sales/ | 40d ago | — |
 | landing | building | web/landing/ | 38d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | <1m ago | agent-outposts |
+| serve | building | internal/serve/ | 3m ago | agent-outposts |
 | (unassigned) | — | — | — | 258 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -35,7 +35,7 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 16/20 specs done
 - **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
-- **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 3/8 specs done; in flight: hero-team-server
+- **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 3/8 specs done
 - **"Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"** (surface: core) — 0/5 specs done
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
@@ -60,9 +60,9 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **hero-core** — `mail-b7ca19966ac5041e6ff604dd` (critical, delivering)
-3. **serve** — `hero-team-server` (P1, delivering)
-4. **hero-core** — `mail-thread-foreground-read-action` (high, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+3. **hero-core** — `mail-thread-foreground-read-action` (high, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
