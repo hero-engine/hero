@@ -30,7 +30,7 @@ to determine which files were installed by Hero.
 
 For Claude Code, also removes the hero-managed section from CLAUDE.md.
 
-Supported targets: opencode, cursor, claude, copilot, codex, generic, grok.`,
+Supported targets: opencode, cursor, claude, copilot, codex, generic, grok, deepseek.`,
 	RunE: runUninstall,
 }
 
@@ -89,6 +89,8 @@ func runUninstall(cmd *cobra.Command, args []string) error {
 		removed, preserved, err = uninstallCodex(projectRoot, versionInfo)
 	case "generic":
 		removed, preserved, err = uninstallGeneric(projectRoot, versionInfo)
+	case "deepseek":
+		removed, preserved, err = uninstallDeepSeek(projectRoot, versionInfo)
 	case "grok":
 		removed, preserved, err = uninstallGrok(projectRoot, versionInfo)
 	default:
@@ -98,9 +100,9 @@ func runUninstall(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if !uninstallDryRun && target == string(install.TargetGrok) {
-		if err := install.RemoveTargetInstallState(projectRoot, install.TargetGrok); err != nil {
-			return fmt.Errorf("remove grok install state: %w", err)
+	if !uninstallDryRun && (target == string(install.TargetGrok) || target == string(install.TargetDeepSeek)) {
+		if err := install.RemoveTargetInstallState(projectRoot, install.Target(target)); err != nil {
+			return fmt.Errorf("remove %s install state: %w", target, err)
 		}
 	}
 
@@ -348,6 +350,79 @@ func uninstallGeneric(projectRoot string, versionInfo *version.Info) (int, int, 
 	return removed, preserved, nil
 }
 
+func uninstallDeepSeek(projectRoot string, versionInfo *version.Info) (int, int, error) {
+	// Remove the home-patch entry first: if that file cannot be safely
+	// edited, fail before any project file is removed.
+	homeRemoved := 0
+	if cleaned, err := install.RemoveDeepSeekHomeEntry(projectRoot, uninstallDryRun); err != nil {
+		return 0, 0, err
+	} else if cleaned {
+		path, _ := install.DeepSeekHomePatchPath()
+		if uninstallDryRun {
+			fmt.Printf("  Would remove this project's Hero MCP entry from %s\n", path)
+		} else {
+			fmt.Printf("  Removed this project's Hero MCP entry from %s\n", path)
+			homeRemoved++
+		}
+	}
+	removed, preserved, err := removeHeroFiles(projectRoot, filepath.Join(projectRoot, ".dsh", "skills"), versionInfo)
+	removed += homeRemoved
+	if err != nil {
+		return removed, preserved, err
+	}
+	// Legacy (pre-home-patch) project overlay, removed only when unmodified.
+	if cleaned, err := install.RemoveDeepSeekOverlay(projectRoot, uninstallDryRun, false); err != nil {
+		return removed, preserved, err
+	} else if cleaned {
+		removed++
+		if versionInfo != nil {
+			delete(versionInfo.InstalledFiles, ".dsh/hero.cordis.patch.yml")
+		}
+	}
+	if _, err := os.Lstat(filepath.Join(projectRoot, ".dsh", "hero.cordis.patch.yml")); err == nil {
+		// A surviving overlay is user-owned (or a dry-run preview).
+		if !uninstallDryRun {
+			preserved++
+		}
+	}
+	if versionInfo != nil {
+		for rel := range versionInfo.InstalledFiles {
+			if !filepath.IsLocal(rel) || !strings.HasSuffix(filepath.ToSlash(rel), "/.dsh/hero.cordis.patch.yml") {
+				continue
+			}
+			path := filepath.Join(projectRoot, rel)
+			if version.IsFileModified(versionInfo, rel, path) {
+				preserved++
+				continue
+			}
+			r, p, err := removeHeroFile(projectRoot, path, versionInfo)
+			if err != nil {
+				return removed, preserved, err
+			}
+			removed, preserved = removed+r, preserved+p
+		}
+	}
+	remaining := install.UnionTargets(install.PreviouslyInstalledTargets(projectRoot), install.InferInstalledTargets(projectRoot))
+	shared := false
+	for _, target := range remaining {
+		if target != install.TargetClaude && target != install.TargetDeepSeek {
+			shared = true
+			break
+		}
+	}
+	if !shared {
+		if cleaned, err := install.RemoveManagedInstructionFile(filepath.Join(projectRoot, "AGENTS.md"), "# AGENTS.md", uninstallDryRun); err != nil {
+			return removed, preserved, err
+		} else if cleaned {
+			removed++
+		}
+	}
+	if !uninstallDryRun {
+		_ = os.Remove(filepath.Join(projectRoot, ".dsh"))
+	}
+	return removed, preserved, nil
+}
+
 func uninstallGrok(projectRoot string, versionInfo *version.Info) (int, int, error) {
 	base := filepath.Join(projectRoot, ".grok")
 	removed, preserved := 0, 0
@@ -452,7 +527,7 @@ func removeHeroFiles(projectRoot, dir string, versionInfo *version.Info) (int, i
 			return nil
 		}
 
-		if isHeroInstalledFile(relPath, versionInfo) {
+		if isHeroInstalledFile(relPath, versionInfo) && (!strings.HasPrefix(filepath.ToSlash(relPath), ".dsh/") || !version.IsFileModified(versionInfo, relPath, path)) {
 			if uninstallDryRun {
 				fmt.Printf("  Would remove %s\n", path)
 			} else {

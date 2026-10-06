@@ -26,9 +26,28 @@ The implementation agent detects the stack and loads only the relevant
 language, framework, testing, and architecture guidance. Workflow skills define
 Hero operations such as design, diagnosis, delivery, review, and capture.
 
-Codex and Grok render workflow commands as command skills because they do not
+Codex, Grok, and DeepSeek render workflow commands as command skills because they do not
 use Claude's command-file surface. That makes per-target skill totals different
 even when the underlying workflow inventory is the same.
+
+## DeepSeek role guidance
+
+DeepSeek (`dsh`) loads `.dsh/skills/<name>/SKILL.md`. Hero installs canonical
+skills, `command-*` workflow skills, and `role-*` instruction skills. Load them
+with the native `skill` tool, for example `{name: "command-design"}` or
+`{name: "role-engineer"}`, or read their installed files. Hero workflow names
+are not built-in slash commands.
+
+A role skill does not register a subagent, grant tools, or enforce a model or
+permission policy. Adopt the guidance locally, or pass it to a compatible native
+delegation tool provided by the selected profile. Local role adoption cannot
+satisfy a fresh reviewer or cold audit gate: stop at that gate if independent
+delegation is unavailable.
+
+DeepSeek also discovers `.agents/skills` and `CLAUDE.md`. Mixed installations can
+expose duplicate instructions or skill names; Hero does not delete another
+harness's content to suppress discovery. At the pinned loader baseline, project
+skills precede global skills, `.dsh/skills` precedes `.agents/skills`, and provider registration/local ordering break remaining ties. See [DeepSeek setup](../configuration/mcp-setup.md#deepseek-harness-dsh).
 
 ## Optional domain setups
 

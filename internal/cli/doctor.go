@@ -51,6 +51,10 @@ type doctorInfo struct {
 	binarySchema     string
 	graphSchema      string // "" when not in a workspace / no graph
 	heroDir          string // "" when not in a workspace
+	workspaceVersion string // last Hero version that wrote the workspace
+	// deepseekMCP is this project's DeepSeek home-patch registration; nil
+	// unless DeepSeek is installed here.
+	deepseekMCP *install.DeepSeekRegistration
 
 	// inventory is the per-target install introspection rendered as the
 	// "Installed harness targets" section. inventoryErr records a non-fatal
@@ -91,6 +95,9 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		heroDir := cfg.HeroDir(projectRoot)
 		if _, err := os.Stat(heroDir); err == nil {
 			info.heroDir = heroDir
+			if workspaceInfo, readErr := version.Read(heroDir); readErr == nil && workspaceInfo != nil {
+				info.workspaceVersion = workspaceInfo.HeroVersion
+			}
 			if gs, err := graph.ReadSchemaVersion(heroDir); err == nil {
 				info.graphSchema = gs
 			}
@@ -104,6 +111,12 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 			info.inventoryErr = err.Error()
 		} else {
 			info.inventory = inv
+			for _, row := range inv {
+				if row.Target == install.TargetDeepSeek {
+					reg := install.InspectDeepSeekRegistration(projectRoot)
+					info.deepseekMCP = &reg
+				}
+			}
 		}
 	}
 
@@ -151,7 +164,12 @@ func buildDoctorReport(info doctorInfo) string {
 	if info.graphSchema == "" {
 		fmt.Fprintf(&b, "  workspace:       %s\n", info.heroDir)
 		b.WriteString("  graph schema:    none (graph not yet created)\n\n")
-		b.WriteString("Verdict: cannot compare — no graph database in this workspace yet.\n")
+		b.WriteString(buildInventorySection(info))
+		if incompleteInventoryCount(info.inventory) > 0 || deepseekMCPBroken(info) {
+			b.WriteString(doctorVerdict(info))
+		} else {
+			b.WriteString("Verdict: cannot compare — no graph database in this workspace yet.\n")
+		}
 		return b.String()
 	}
 	fmt.Fprintf(&b, "  workspace:       %s\n", info.heroDir)
@@ -160,23 +178,27 @@ func buildDoctorReport(info doctorInfo) string {
 
 	b.WriteString(buildInventorySection(info))
 
-	b.WriteString(doctorVerdict(info.binarySchema, info.graphSchema))
+	b.WriteString(doctorVerdict(info))
 	return b.String()
 }
 
-// inventoryTargetNames is the full seven-target set, used to render the
+// inventoryTargetNames is the full eight-target set, used to render the
 // "not installed:" line for targets absent from the row set.
 var inventoryTargetNames = []install.Target{
 	install.TargetClaude, install.TargetOpenCode, install.TargetCursor,
 	install.TargetCopilot, install.TargetCodex, install.TargetGeneric,
-	install.TargetGrok,
+	install.TargetGrok, install.TargetDeepSeek,
 }
+
+// doctorMissingPathLimit caps the per-target missing-path listing.
+const doctorMissingPathLimit = 10
 
 // buildInventorySection renders the "Installed harness targets" section: one
 // row per installed target with expected-vs-actual agent/command/skill counts,
 // a single "not installed:" line for absent targets, an in-section WARNING when
-// an installed target is short on content (fixed by `hero upgrade`), and a
-// codex footnote when codex is present. Pure so tests can drive it directly.
+// an installed target is short on content (with a version-compatible repair
+// path), and a codex footnote when codex is present. Pure so tests can drive it
+// directly.
 func buildInventorySection(info doctorInfo) string {
 	var b strings.Builder
 	b.WriteString("Installed harness targets\n")
@@ -187,7 +209,7 @@ func buildInventorySection(info doctorInfo) string {
 	}
 
 	if len(info.inventory) == 0 {
-		b.WriteString("  no harness targets installed — run `hero install --target <claude|codex|copilot|cursor|opencode|generic|grok>`\n\n")
+		b.WriteString("  no harness targets installed — run `hero install --target <claude|codex|copilot|cursor|opencode|generic|grok|deepseek>`\n\n")
 		return b.String()
 	}
 
@@ -208,11 +230,17 @@ func buildInventorySection(info doctorInfo) string {
 			hasGrok = true
 			grok = inv
 		}
-		if kindShort(inv.Agents) || kindShort(inv.Commands) || kindShort(inv.Skills) {
+		name := string(inv.Target)
+		if inv.Incomplete() {
 			incomplete++
+			// Full counts can still hide a missing artifact (a stale extra
+			// keeps the total equal); flag the row so it agrees with the verdict.
+			if !kindShort(inv.Agents) && !kindShort(inv.Commands) && !kindShort(inv.Skills) {
+				name += " !"
+			}
 		}
 		rows = append(rows, []string{
-			string(inv.Target),
+			name,
 			kindCell(inv.Agents),
 			kindCell(inv.Commands),
 			kindCell(inv.Skills),
@@ -220,6 +248,15 @@ func buildInventorySection(info doctorInfo) string {
 		})
 	}
 	b.WriteString(renderInventoryTable(rows))
+	for _, inv := range info.inventory {
+		for i, path := range inv.Missing {
+			if i == doctorMissingPathLimit {
+				fmt.Fprintf(&b, "  ! %s missing: … and %d more\n", inv.Target, len(inv.Missing)-i)
+				break
+			}
+			fmt.Fprintf(&b, "  ! %s missing: %s\n", inv.Target, path)
+		}
+	}
 
 	var notInstalled []string
 	for _, t := range inventoryTargetNames {
@@ -238,9 +275,13 @@ func buildInventorySection(info doctorInfo) string {
 			noun, verb = "targets", "are"
 		}
 		b.WriteString("\n")
-		fmt.Fprintf(&b, "  WARNING: %d installed %s %s incomplete (marked !) — content is\n", incomplete, noun, verb)
-		b.WriteString("           missing. Run `hero upgrade` to re-materialize the missing\n")
-		b.WriteString("           agents, commands, and skills.\n")
+		fmt.Fprintf(&b, "  WARNING: %d installed %s %s incomplete (marked !) — content is missing.\n", incomplete, noun, verb)
+		if doctorCanRepairInventory(info) {
+			b.WriteString("           Run `hero upgrade` to re-materialize the missing agents, commands, and skills.\n")
+		} else {
+			fmt.Fprintf(&b, "           This binary (%s) is older than the workspace (%s) and cannot safely repair it.\n", displayVersion(info.binaryVersion), displayVersion(info.workspaceVersion))
+			fmt.Fprintf(&b, "           Install or select Hero %s or newer, then run `hero upgrade`.\n", displayVersion(info.workspaceVersion))
+		}
 	}
 
 	if hasCodex {
@@ -256,6 +297,19 @@ func buildInventorySection(info doctorInfo) string {
 		b.WriteString("\n")
 		fmt.Fprintf(&b, "  grok has no standalone command loader — its %d commands install as skills under\n", cmds)
 		fmt.Fprintf(&b, "  .grok/skills/command-<name>/ (%d canonical + %d commands = %d).\n", canonical, cmds, grok.Skills.Expected)
+	}
+
+	if installed[install.TargetDeepSeek] {
+		b.WriteString("\n  deepseek loads canonical, command-*, and role-* skills under .dsh/skills/.\n")
+		b.WriteString("  Roles are guidance, not registered native subagents.\n")
+		if reg := info.deepseekMCP; reg != nil {
+			if reg.Problem == "" {
+				fmt.Fprintf(&b, "  MCP: registered as %s in %s (command %s).\n", reg.ServerName, reg.Path, reg.Command)
+				b.WriteString("  Restart the DeepSeek desktop app, or start `dsh --profile web`, to load it.\n")
+			} else {
+				fmt.Fprintf(&b, "  ! deepseek MCP (%s in %s): %s\n", reg.ServerName, reg.Path, reg.Problem)
+			}
+		}
 	}
 
 	b.WriteString("\n")
@@ -327,10 +381,28 @@ func padCell(s string, w int, right bool) string {
 
 // doctorVerdict states whether the binary and graph schemas agree and, if
 // not, the TRUE remediation for each direction.
-func doctorVerdict(binarySchema, graphSchema string) string {
-	switch version.CompareVersions(binarySchema, graphSchema) {
+func doctorVerdict(info doctorInfo) string {
+	incomplete := incompleteInventoryCount(info.inventory)
+	if incomplete > 0 {
+		noun, verb := "target", "is"
+		if incomplete > 1 {
+			noun, verb = "targets", "are"
+		}
+		if doctorCanRepairInventory(info) {
+			return fmt.Sprintf("Verdict: NEEDS REPAIR — %d installed %s %s incomplete. Run `hero upgrade`.\n", incomplete, noun, verb)
+		}
+		return fmt.Sprintf("Verdict: NEEDS NEWER HERO — %d installed %s %s incomplete, but this binary cannot safely repair a workspace written by %s. Install or select Hero %s or newer, then run `hero upgrade`.\n", incomplete, noun, verb, displayVersion(info.workspaceVersion), displayVersion(info.workspaceVersion))
+	}
+
+	// Upgrade cannot fix a missing home-patch entry (a same-version upgrade
+	// is a no-op), so name the command that re-registers it.
+	if deepseekMCPBroken(info) {
+		return "Verdict: NEEDS REPAIR — DeepSeek MCP is not usable for this project. Run `hero install project . --target deepseek`.\n"
+	}
+
+	switch version.CompareVersions(info.binarySchema, info.graphSchema) {
 	case 0:
-		return fmt.Sprintf("Verdict: OK — binary and graph agree on schema %s.\n", binarySchema)
+		return fmt.Sprintf("Verdict: OK — binary and graph agree on schema %s.\n", info.binarySchema)
 	case -1:
 		return fmt.Sprintf(
 			"Verdict: this hero binary is OLDER than the workspace graph "+
@@ -338,7 +410,7 @@ func doctorVerdict(binarySchema, graphSchema string) string {
 				"  This is almost always the WRONG hero binary on PATH, not a workspace problem.\n"+
 				"  Fix: point your harness at the newer hero binary (check the PATH warning above).\n"+
 				"  `hero upgrade` will NOT help — it updates workspace files, not this binary.\n",
-			binarySchema, graphSchema)
+			info.binarySchema, info.graphSchema)
 	default:
 		return fmt.Sprintf(
 			"Verdict: this hero binary is NEWER than the workspace graph "+
@@ -346,8 +418,29 @@ func doctorVerdict(binarySchema, graphSchema string) string {
 				"  Opening the graph normally migrates it up to the binary's schema; if this\n"+
 				"  persists, a stale binary elsewhere may be holding the graph open.\n"+
 				"  Fix: re-run your command with this binary, or check the PATH warning above.\n",
-			binarySchema, graphSchema)
+			info.binarySchema, info.graphSchema)
 	}
+}
+
+func deepseekMCPBroken(info doctorInfo) bool {
+	return info.deepseekMCP != nil && info.deepseekMCP.Problem != ""
+}
+
+func incompleteInventoryCount(inventory []install.TargetInventory) int {
+	count := 0
+	for _, inv := range inventory {
+		if inv.Incomplete() {
+			count++
+		}
+	}
+	return count
+}
+
+func doctorCanRepairInventory(info doctorInfo) bool {
+	if info.binaryVersion == "dev" || info.workspaceVersion == "" || info.workspaceVersion == "unknown" || info.workspaceVersion == "dev" {
+		return true
+	}
+	return version.CompareVersions(info.binaryVersion, info.workspaceVersion) >= 0
 }
 
 // pathDiffersFromRunning reports whether the PATH-resolved `hero` is a

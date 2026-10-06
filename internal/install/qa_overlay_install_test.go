@@ -58,6 +58,12 @@ func TestQAOverlay_AllTargetsRenderNativeCoreAndQASurfaces(t *testing.T) {
 			qaSkill: ".grok/skills/risk-based-testing/SKILL.md", qaCommand: ".grok/skills/command-author-cases/SKILL.md",
 			engAgent: ".grok/agents/feature-delivery-lead.md",
 		},
+		{
+			name: "deepseek", target: TargetDeepSeek,
+			coreAgent: ".dsh/skills/role-session-primer/SKILL.md", qaAgent: ".dsh/skills/role-qa-delivery-lead/SKILL.md",
+			qaSkill: ".dsh/skills/risk-based-testing/SKILL.md", qaCommand: ".dsh/skills/command-author-cases/SKILL.md",
+			engAgent: ".dsh/skills/role-feature-delivery-lead/SKILL.md",
+		},
 	}
 
 	for _, tc := range cases {

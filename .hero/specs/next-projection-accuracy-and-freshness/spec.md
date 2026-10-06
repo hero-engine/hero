@@ -6,6 +6,7 @@ priority: P1
 severity: moderate
 size: small
 domain: engineering
+created: 2026-09-21
 ---
 
 ## Goal

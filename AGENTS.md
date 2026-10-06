@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- hero:managed-start v=dev -->
+<!-- hero:managed-start v=v0.34.2-20-gfce09e8d -->
 ## Hero — Spec-Driven AI Engineering
 
 This project uses **Hero** for spec-driven engineering workflows. Hero manages specs, integrates with work trackers (Jira, GitHub, Linear), and provides structured workflows via slash commands.
@@ -64,6 +64,8 @@ These are run in the terminal, not as slash commands:
 - `hero handoff status` / `hero handoff accept <spec>` — track handoffs across the boundary
 - `hero admin repos add <alias> <path>` — register a sibling repo as a peer (one-time setup)
 
+**Project Mail** is the generic transport — durable envelopes, inbox/outbox, receipts, replies. **Peering** is the application layer on top of Mail — it adds semantic meaning (advisory questions, spec-out requests, work transfers) and structured metadata (mode, provenance, related spec, budget hints). Peering commands compose typed Mail messages; Mail knows nothing about peering semantics. Use the `hero_mail_list` / `hero_mail_show` / `hero_mail_send` / `hero_mail_reply` MCP tools for raw inbox operations; use `hero peer call` / `hero handoff` CLI commands for structured cross-repo interactions.
+
 ### Project Structure
 
 - `<harness>/commands/` — Slash command definitions (workflows like /design, /deliver, /diagnose)
@@ -74,7 +76,7 @@ These are run in the terminal, not as slash commands:
 - `.hero/knowledge/` — Project knowledge base (conventions, decisions, context)
 - `.hero/hero.json` — Project configuration
 
-`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex (Codex has no commands directory — its slash commands are a built-in enum, so Hero commands install there as skills). They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.
+`hero install` **writes** these into your harness's own directory in that harness's native format — e.g. `.claude/commands/`, `.claude/agents/`, and `.claude/skills/` for Claude; `.codex/agents/*.toml` (TOML) plus workflow skills under `.agents/skills/` for Codex; and `.grok/agents/*.md` plus canonical and `command-*` skills under `.grok/skills/` for Grok Build. DeepSeek (`dsh`) receives canonical, `command-*`, and `role-*` skills under `.dsh/skills/` plus an explicitly activated `.dsh/hero.cordis.patch.yml` MCP overlay. Codex, Grok, and DeepSeek have no Hero-owned commands directory, so Hero commands install there as skills. DeepSeek roles are guidance, not registered subagents; use native delegation only when available and never substitute self-review for an independent audit. They are generated copies, **not** symlinks or views: re-running `hero install` regenerates them, so hand-edits to the installed files are overwritten on the next install.
 
 ### Declaring Spec Relationships
 
@@ -166,6 +168,17 @@ If the skill file doesn't exist, fall back to reading `.claude/commands/<name>.m
 
 **A Hero workflow is not finished until its closing gate runs.** For `/deliver`, that gate is `hero spec verify <slug>` passing — and verify requires the cold delivery audit to have run first. Do NOT yield back to the user with a spec still in `planning` or `delivering` and the audit unrun. The audit and verify run in the **same turn** as the implementation — they are not a follow-up step the user triggers later. If you find yourself about to say "the audit still needs to run" or "I did not mark the spec complete because the gate still needs to run" — **run it now instead.** Stopping one step short of the closing gate is an unfinished delivery, not a handoff. This holds in every delivery mode, including the default supervised mode: "pause at handoffs" does not include the closing gates.
 
+
+### Running Hero Workflows in DeepSeek
+
+DeepSeek (dsh) loads Hero workflows as command-* skills, and role guidance as role-* skills under .dsh/skills. These are not built-in slash commands or registered named subagents. Route natural-language requests to the matching workflow: deliver/implement to command-deliver, design/plan to command-design, diagnose/fix to command-diagnose, and review to command-review. Use the native skill tool with {name: "command-design"} or {name: "role-engineer"} when available; otherwise read .dsh/skills/<name>/SKILL.md and execute its instructions. For global installation use $DSH_HOME/skills (default ~/.dsh/skills).
+
+A role skill grants no tools, permissions, models, or hooks. Pass its guidance to compatible native delegation when available; otherwise adopt the role in the current agent. Local role adoption is not independent review: if a workflow requires a fresh reviewer or cold audit and the profile cannot provide one, stop at that named gate and report the unavailable capability. Never self-grade or mark delivery verified.
+
+Hero's MCP server is registered per project in the DeepSeek home patch ($DSH_HOME/cordis.patch.yml, default ~/.dsh/cordis.patch.yml), which every profile loads, including the desktop app. Each installed project gets its own server named hero-<project>-<hash>, so Hero tools appear as mcp__hero-<project>-<hash>__<tool>. Other projects' Hero servers may be loaded too: call that server's hero_status and use only the server whose project root is this repository. If no Hero tools appear, restart the DeepSeek app and run hero doctor. Hero changes only its own marked entries in that file.
+
+DeepSeek also discovers CLAUDE.md and .agents/skills; installing other harnesses may expose duplicate instructions and skills. Hero does not delete or suppress those files. Within a Git tree, DeepSeek discovers skills from the first ancestor with .git; separately rooted or non-Git satellites use their own skills links.
+
 ## Natural Language Routing
 
 When the user describes what they want in natural language, route to the appropriate Hero workflow. **Run the workflow — don't just suggest it.**
@@ -216,6 +229,8 @@ When routing, pass the user's original context as arguments to the workflow. If 
 Route ordinary Attention language to the typed operation below. Use the
 advertised MCP schema or row action as the executable contract; do not invent
 arguments or action IDs from prose.
+
+The Mail rows below use the generic transport (the `hero_mail_list` / `hero_mail_send` / `hero_mail_reply` MCP tools) for unstructured messages and raw inbox operations. The Peering rows use the semantic layer (`hero peer call` / `hero handoff` CLI) for structured cross-repo interactions that carry mode, provenance, and related-spec metadata. Peer calls *produce* Mail — they are not an alternative to it.
 
 | User intent | Example | Canonical operation |
 |---|---|---|

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,75 @@ import (
 	"github.com/hero-engine/hero/internal/config"
 	"github.com/spf13/cobra"
 )
+
+func TestNonInteractiveConnectFailedVerificationRetainsPriorCredential(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".hero"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	connectIntegrationID = "jira-delivery"
+	connectProject = "MORPH"
+	connectBaseURL = "https://jira.example"
+	connectUserEmail = "dev@example.com"
+	connectRole = "delivery"
+	connectTokenStdin = true
+	connectLocalOnly = false
+	connectGlobal = false
+	connectJSON = true
+	connectNoVerify = true
+
+	cmd := &cobra.Command{}
+	cmd.SetIn(strings.NewReader("prior-token\n"))
+	cmd.SetOut(&bytes.Buffer{})
+	if err := runConnectNonInteractive(cmd, root, config.Credentials{}, "jira"); err != nil {
+		t.Fatal(err)
+	}
+	committedPath := filepath.Join(root, ".hero", config.ConfigFileName)
+	localPath := filepath.Join(root, ".hero", config.LocalConfigFileName)
+	committedBefore, err := os.ReadFile(committedPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	localBefore, err := os.ReadFile(localPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	originalProvider := connectProviders["jira"]
+	defer func() { connectProviders["jira"] = originalProvider }()
+	connectProviders["jira"] = connectProvider{
+		intro: originalProvider.intro,
+		name:  originalProvider.name,
+		verify: func(map[string]string) error {
+			return errors.New("HTTP 401 unauthorized")
+		},
+	}
+	connectNoVerify = false
+	cmd = &cobra.Command{}
+	cmd.SetIn(strings.NewReader("replacement-token\n"))
+	cmd.SetOut(&bytes.Buffer{})
+	if err := runConnectNonInteractive(cmd, root, config.Credentials{}, "jira"); err == nil {
+		t.Fatal("expected replacement verification to fail")
+	}
+
+	committedAfter, err := os.ReadFile(committedPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	localAfter, err := os.ReadFile(localPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(committedBefore, committedAfter) {
+		t.Fatal("failed verification changed committed integration state")
+	}
+	if !bytes.Equal(localBefore, localAfter) {
+		t.Fatal("failed verification replaced the prior credential")
+	}
+	if !bytes.Contains(localAfter, []byte("prior-token")) || bytes.Contains(localAfter, []byte("replacement-token")) {
+		t.Fatal("prior credential was not retained exactly")
+	}
+}
 
 func TestNonInteractiveConnectSplitsLayersAndRedactsStatus(t *testing.T) {
 	root := t.TempDir()
@@ -65,7 +135,7 @@ func TestConnectAliasIntegrationFlagsEquivalent(t *testing.T) {
 }
 
 func TestNonInteractiveConnectAllProvidersLocalOnly(t *testing.T) {
-	for _, provider := range []string{"github", "jira", "linear", "gitlab", "confluence"} {
+	for _, provider := range []string{"github", "jira", "linear", "gitlab", "aha", "confluence"} {
 		t.Run(provider, func(t *testing.T) {
 			root := t.TempDir()
 			os.MkdirAll(filepath.Join(root, ".hero"), 0755)
@@ -96,6 +166,33 @@ func TestNonInteractiveConnectAllProvidersLocalOnly(t *testing.T) {
 				t.Fatalf("missing %s integration", provider)
 			}
 		})
+	}
+}
+
+// AC-4 (sept-review-cleanup): connecting aha states the broker-only limit.
+func TestNonInteractiveConnectAhaStatesBrokerOnlyLimit(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(filepath.Join(root, ".hero"), 0755)
+	connectIntegrationID = "aha-roadmap"
+	connectProject = "PRODUCT"
+	connectBaseURL = "https://acme.aha.io"
+	connectUserEmail = ""
+	connectRole = "delivery"
+	connectTokenStdin = true
+	connectLocalOnly = true
+	connectGlobal = false
+	connectJSON = false
+	connectNoVerify = true
+	defer func() { connectJSON = false }()
+	var out bytes.Buffer
+	cmd := &cobra.Command{}
+	cmd.SetIn(strings.NewReader("provider-canary\n"))
+	cmd.SetOut(&out)
+	if err := runConnectNonInteractive(cmd, root, config.Credentials{}, "aha"); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), "raw tracker requests (hero_tracker_request) only") {
+		t.Fatalf("missing broker-only notice:\n%s", out.String())
 	}
 }
 

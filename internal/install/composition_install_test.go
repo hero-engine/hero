@@ -10,7 +10,7 @@ import (
 )
 
 func TestComposedInstallAllTargets(t *testing.T) {
-	tests := []Target{TargetClaude, TargetOpenCode, TargetCursor, TargetCopilot, TargetCodex, TargetGeneric, TargetGrok}
+	tests := []Target{TargetClaude, TargetOpenCode, TargetCursor, TargetCopilot, TargetCodex, TargetGeneric, TargetGrok, TargetDeepSeek}
 	content, manifest, err := hero.ComposeContent(hero.DomainComposition{Primary: "engineering", Extensions: []string{"pm", "qa"}})
 	if err != nil {
 		t.Fatal(err)
@@ -95,6 +95,11 @@ func composedInstalledPath(target Target, kind, name string) string {
 		return filepath.Join(".agents", "skills", "command-"+name, "SKILL.md")
 	case TargetGeneric:
 		return filepath.Join(".ai", kind+"s", name+".md")
+	case TargetDeepSeek:
+		if kind == "agent" {
+			return filepath.Join(".dsh", "skills", "role-"+name, "SKILL.md")
+		}
+		return filepath.Join(".dsh", "skills", "command-"+name, "SKILL.md")
 	case TargetGrok:
 		if kind == "agent" {
 			return filepath.Join(".grok", "agents", name+".md")

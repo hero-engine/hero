@@ -192,6 +192,7 @@ func TestHarness_DesignClosingUsesProgressiveACDisclosureForAllTargets(t *testin
 		{"codex", TargetCodex, ".agents/skills/command-design/SKILL.md"},
 		{"generic", TargetGeneric, ".ai/commands/design.md"},
 		{"grok", TargetGrok, ".grok/skills/command-design/SKILL.md"},
+		{"deepseek", TargetDeepSeek, ".dsh/skills/command-design/SKILL.md"},
 	}
 
 	for _, tt := range tests {
@@ -225,6 +226,7 @@ func TestHarness_DiagnosePullsCredentialSafeTrackerDescriptionForAllTargets(t *t
 		{"codex", TargetCodex, ".agents/skills/command-diagnose/SKILL.md"},
 		{"generic", TargetGeneric, ".ai/commands/diagnose.md"},
 		{"grok", TargetGrok, ".grok/skills/command-diagnose/SKILL.md"},
+		{"deepseek", TargetDeepSeek, ".dsh/skills/command-diagnose/SKILL.md"},
 	}
 
 	for _, tt := range tests {
@@ -413,6 +415,7 @@ func TestHarness_InstalledContentSurvivesOrdinaryCommands(t *testing.T) {
 		{"copilot", TargetCopilot, "AGENTS.md"},
 		{"generic", TargetGeneric, "AGENTS.md"},
 		{"grok", TargetGrok, "AGENTS.md"},
+		{"deepseek", TargetDeepSeek, "AGENTS.md"},
 	}
 
 	// A distinctive line from the shared managed body — it reaches every

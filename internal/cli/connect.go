@@ -13,6 +13,7 @@ import (
 
 	"github.com/hero-engine/hero/internal/cli/prompt"
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/tracker"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,7 @@ var connectCmd = &cobra.Command{
 	Short: "Connect hero to an external tracker or wiki service",
 	Long: `Configure a tracker or wiki connection interactively, or with flags for automation.
 
-Supported types: github, jira, linear, gitlab, confluence
+Supported types: github, jira, linear, gitlab, aha, confluence
 
 Examples:
   hero connect github       — guided setup for GitHub Issues
@@ -100,7 +101,7 @@ func runConnect(cmd *cobra.Command, args []string) error {
 		trackerType = strings.ToLower(args[0])
 	} else {
 		if connectJSON || !prompt.IsInputTTY(cmd.InOrStdin()) {
-			return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, gitlab, confluence)\n\nRun 'hero connect --list' to see saved connections.")
+			return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, gitlab, aha, confluence)\n\nRun 'hero connect --list' to see saved connections.")
 		}
 		providers := connectProviderNames()
 		choice, err := prompt.Choice(cmd.InOrStdin(), cmd.OutOrStdout(), "Provider", providers)
@@ -108,7 +109,7 @@ func runConnect(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if choice == "" {
-			return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, gitlab, confluence)\n\nRun 'hero connect --list' to see saved connections.")
+			return fmt.Errorf("usage: hero connect <type>  (github, jira, linear, gitlab, aha, confluence)\n\nRun 'hero connect --list' to see saved connections.")
 		}
 		trackerType = choice
 	}
@@ -405,6 +406,9 @@ func writeConnection(cmd *cobra.Command, root string, creds config.Credentials, 
 		fmt.Fprintln(cmd.OutOrStdout(), string(b))
 	} else {
 		fmt.Fprintf(cmd.OutOrStdout(), "Connected integration %s (%s). Inspect with 'hero connect --list'.\n", in.id, in.provider)
+		if in.provider == "aha" {
+			fmt.Fprintf(cmd.OutOrStdout(), "Note: %v\n", tracker.ErrAhaAdapterNotImplemented)
+		}
 	}
 	return nil
 }
@@ -501,6 +505,9 @@ var connectProviders = map[string]connectProvider{
 	"gitlab": {intro: "Connecting to GitLab...", name: "GitLab", verify: func(v map[string]string) error {
 		return verifyGitLabToken(v["base_url"], v["project"], v["token"])
 	}},
+	"aha": {intro: "Connecting to Aha!...", name: "Aha!", verify: func(v map[string]string) error {
+		return verifyAhaToken(v["base_url"], v["token"])
+	}},
 	"confluence": {intro: "Connecting to Confluence...", name: "Confluence", verify: func(v map[string]string) error {
 		return verifyConfluenceToken(v["base_url"], v["project"], v["user_email"], v["token"])
 	}},
@@ -551,6 +558,11 @@ var connectFields = []connectField{
 	{name: "project", provider: "gitlab", label: "Project (namespace/project or numeric ID): ", missingErr: "project is required"},
 	{name: "token", provider: "gitlab", secret: true, label: "Personal/Project access token (needs 'api' scope): ", missingErr: secretUnavailable},
 
+	// aha
+	{name: "base_url", provider: "aha", label: "Aha! account URL (e.g. https://company.aha.io): ", missingErr: "base URL is required"},
+	{name: "project", provider: "aha", label: "Product reference: ", missingErr: "product reference is required"},
+	{name: "token", provider: "aha", secret: true, label: "API key: ", missingErr: secretUnavailable},
+
 	// confluence — user_email is optional here and required for jira, which is
 	// the whole reason the message is per-field rather than per-command.
 	{name: "base_url", provider: "confluence", label: "Confluence base URL (e.g. https://mycompany.atlassian.net/wiki): ", missingErr: "base URL is required"},
@@ -571,7 +583,7 @@ var connectFields = []connectField{
 func runConnectInteractive(cmd *cobra.Command, root string, creds config.Credentials, provider string, known map[string]string) error {
 	p, ok := connectProviders[provider]
 	if !ok {
-		return fmt.Errorf("unknown type %q — supported: github, jira, linear, gitlab, confluence", provider)
+		return fmt.Errorf("unknown type %q — supported: github, jira, linear, gitlab, aha, confluence", provider)
 	}
 	// --json is a machine-readable contract on stdout, and every value this
 	// path needs comes from a prompt. Refuse rather than ask.
@@ -775,6 +787,14 @@ func verifyLinearToken(_, token string) error {
 func verifyGitLabToken(baseURL, project, token string) error {
 	_, err := httpGET(baseURL+"/api/v4/projects/"+url.PathEscape(project), map[string]string{
 		"PRIVATE-TOKEN": token,
+		"Accept":        "application/json",
+	})
+	return err
+}
+
+func verifyAhaToken(baseURL, token string) error {
+	_, err := httpGET(strings.TrimRight(baseURL, "/")+"/api/v1/products", map[string]string{
+		"Authorization": "Bearer " + token,
 		"Accept":        "application/json",
 	})
 	return err

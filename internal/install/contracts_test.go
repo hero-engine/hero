@@ -53,8 +53,11 @@ func TestEveryInstalledKindHasContract(t *testing.T) {
 		{TargetGeneric, KindCommands, "install-smoke-coverage-codex-copilot-generic"},
 		{TargetGeneric, KindSkills, "install-smoke-coverage-codex-copilot-generic"},
 		{TargetGrok, KindAgents, ""},
+		{TargetDeepSeek, KindAgents, ""},
 		{TargetGrok, KindCommands, ""},
+		{TargetDeepSeek, KindCommands, ""},
 		{TargetGrok, KindSkills, ""},
+		{TargetDeepSeek, KindSkills, ""},
 	}
 
 	for _, cell := range cells {

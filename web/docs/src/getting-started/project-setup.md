@@ -30,7 +30,7 @@ This creates the `.hero/` directory structure:
 ## Install into Your AI Tool
 
 Hero renders workflows into each AI tool's native surfaces. Claude uses command
-files; Codex and Grok use command skills; other targets receive their supported
+files; Codex, Grok, and DeepSeek use command skills; other targets receive their supported
 surfaces and root instructions. Install with:
 
 === "OpenCode"
@@ -68,6 +68,14 @@ surfaces and root instructions. Install with:
     ```bash
     hero install project . --target grok
     ```
+
+=== "DeepSeek Harness"
+
+    ```bash
+    hero install project . --target deepseek
+    ```
+
+    Restart the DeepSeek desktop app (or start `dsh --profile web`); Hero's MCP server is registered in `~/.dsh/cordis.patch.yml`. See [MCP setup](../configuration/mcp-setup.md#deepseek-harness-dsh).
 
 === "Generic MCP"
 

@@ -84,6 +84,7 @@ func TestInstallLeavesForeignSkillDirsAlone(t *testing.T) {
 		{"copilot", TargetCopilot, []string{".github", "skills"}},
 		{"generic", TargetGeneric, []string{".ai", "skills"}},
 		{"grok", TargetGrok, []string{".grok", "skills"}},
+		{"deepseek", TargetDeepSeek, []string{".dsh", "skills"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sourceDir := t.TempDir()

@@ -2,6 +2,7 @@ package serve
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -184,4 +185,20 @@ func TestConditionalWritersAreNotReadOnly(t *testing.T) {
 				"a harness could auto-call it believing it safe", name)
 		}
 	}
+}
+
+func TestSkillRunMetadataNamesSavedSkillNamespace(t *testing.T) {
+	s := &MCPServer{}
+	for _, def := range s.toolDefinitions() {
+		if def.Name != "hero_skill_run" {
+			continue
+		}
+		for _, want := range []string{".hero/skills", "does not load built-in Hero commands", "command-*"} {
+			if !strings.Contains(def.Description, want) {
+				t.Errorf("hero_skill_run description missing %q: %s", want, def.Description)
+			}
+		}
+		return
+	}
+	t.Fatal("hero_skill_run definition not found")
 }

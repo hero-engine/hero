@@ -1,0 +1,14 @@
+Installed harness targets
+  TARGET    AGENTS   COMMANDS   SKILLS   ROOT FILE
+  claude     35/35      29/29    57/57   CLAUDE.md
+  codex !    35/35          —    86/86   AGENTS.md
+  ! codex missing: .agents/skills/command-decide/SKILL.md
+  not installed: copilot, cursor, deepseek, generic, grok, opencode
+
+  WARNING: 1 installed target is incomplete (marked !) — content is missing.
+           Run `hero upgrade` to re-materialize the missing agents, commands, and skills.
+
+  codex has no command loader — its 29 commands install as skills under
+  .agents/skills/command-<name>/ (57 canonical + 29 commands = 86).
+
+Verdict: NEEDS REPAIR — 1 installed target is incomplete. Run `hero upgrade`.

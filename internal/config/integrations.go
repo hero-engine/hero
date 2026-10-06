@@ -48,6 +48,7 @@ var providerDescriptors = map[string]providerDescriptor{
 	"gitlab":     {Capabilities: []IntegrationCapability{CapabilityTracker, CapabilityCodeHost}, Legacy: CapabilityTracker},
 	"jira":       {Capabilities: []IntegrationCapability{CapabilityTracker}, Legacy: CapabilityTracker},
 	"linear":     {Capabilities: []IntegrationCapability{CapabilityTracker}, Legacy: CapabilityTracker},
+	"aha":        {Capabilities: []IntegrationCapability{CapabilityTracker}, Legacy: CapabilityTracker},
 	"confluence": {Capabilities: []IntegrationCapability{CapabilityDocs}, Legacy: CapabilityDocs},
 }
 
@@ -477,7 +478,7 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 	schema := map[string]string{}
 	required := []string{}
 	switch c.Provider {
-	case "github", "linear":
+	case "github", "linear", "aha":
 		for k, v := range commonTracker {
 			schema[k] = v
 		}
@@ -485,6 +486,9 @@ func validateProviderSettings(id string, c IntegrationConfig) error {
 			schema["repositories"] = "string_array"
 		}
 		required = []string{"project"}
+		if c.Provider == "aha" {
+			required = append(required, "base_url")
+		}
 	case "jira":
 		for k, v := range commonTracker {
 			schema[k] = v

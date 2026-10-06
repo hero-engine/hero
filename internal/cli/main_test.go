@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -18,6 +19,17 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	os.Setenv("HOME", home)
+	// DeepSeek project installs write an absolute hero path into the
+	// (isolated) DeepSeek home patch. Pin it to a stable fake executable so
+	// results never depend on whether this machine has hero on PATH.
+	fakeHero := filepath.Join(home, "bin", "hero")
+	if err := os.MkdirAll(filepath.Dir(fakeHero), 0o755); err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(fakeHero, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		panic(err)
+	}
+	os.Setenv("HERO_DEEPSEEK_MCP_COMMAND", fakeHero)
 	code := m.Run()
 	os.RemoveAll(home)
 	os.Exit(code)

@@ -54,6 +54,7 @@ func TestHarnessNative_PerTargetFileSet(t *testing.T) {
 		{TargetCopilot, "AGENTS.md", "CLAUDE.md"},
 		{TargetGeneric, "AGENTS.md", "CLAUDE.md"},
 		{TargetGrok, "AGENTS.md", "CLAUDE.md"},
+		{TargetDeepSeek, "AGENTS.md", "CLAUDE.md"},
 	}
 	for _, tc := range cases {
 		t.Run(string(tc.target), func(t *testing.T) {
@@ -98,7 +99,7 @@ func TestHarnessNative_DoctorRoutingGuidanceAllTargets(t *testing.T) {
 	}
 	targets := []Target{
 		TargetClaude, TargetCodex, TargetOpenCode,
-		TargetCursor, TargetCopilot, TargetGeneric, TargetGrok,
+		TargetCursor, TargetCopilot, TargetGeneric, TargetGrok, TargetDeepSeek,
 	}
 	// Per-domain Options mutator supplying that domain's real pack body.
 	// engineering/pm/sales are installable, so they go through the real

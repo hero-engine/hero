@@ -36,6 +36,7 @@ const (
 	TargetCodex    Target = "codex"
 	TargetGeneric  Target = "generic"
 	TargetGrok     Target = "grok"
+	TargetDeepSeek Target = "deepseek"
 )
 
 // Mode represents whether installation is project-local or global.
@@ -124,7 +125,8 @@ type Result struct {
 	// target's nested-skills dest. RecordTargetInstall persists it as the
 	// next run's prune manifest (see prune.go). Unexported — internal
 	// bookkeeping, not part of the --json contract.
-	skillDirs []string
+	skillDirs     []string
+	deepseekOwned []string
 
 	// rendered is the set of flat agent/command/flat-skill dest paths this
 	// run materialized (absolute). Populated unconditionally by the flat
@@ -152,6 +154,15 @@ type CopyAction struct {
 // canonical dirs and harness-dir symlinks pointing at them are removed
 // when their content is detectably Hero-authored.
 func Run(opts Options) (*Result, error) {
+	// DeepSeek collisions must fail before the legacy migration below mutates
+	// anything; the checked plan is then reused so the file set renders once.
+	var deepseek *deepseekPlan
+	if opts.Target == TargetDeepSeek {
+		var err error
+		if deepseek, err = planDeepSeek(opts); err != nil {
+			return nil, err
+		}
+	}
 	// Legacy migration: remove `.hero/{agents,commands,skills}/` canonical
 	// mirror and any harness symlinks pointing at it. Idempotent —
 	// no-op after the first install on the new architecture.
@@ -179,8 +190,10 @@ func Run(opts Options) (*Result, error) {
 		result, err = runGeneric(opts)
 	case TargetGrok:
 		result, err = runGrok(opts)
+	case TargetDeepSeek:
+		result, err = runDeepSeek(opts, deepseek)
 	default:
-		return nil, fmt.Errorf("unknown target %q; supported targets: opencode, cursor, claude, copilot, codex, generic, grok", opts.Target)
+		return nil, fmt.Errorf("unknown target %q; supported targets: opencode, cursor, claude, copilot, codex, generic, grok, deepseek", opts.Target)
 	}
 
 	if err != nil {
@@ -191,8 +204,8 @@ func Run(opts Options) (*Result, error) {
 		result = &Result{}
 	}
 
-	if mcpErr := RegisterMCP(opts.Target, opts); mcpErr != nil && opts.Target == TargetGrok {
-		return result, fmt.Errorf("register grok MCP server: %w", mcpErr)
+	if mcpErr := RegisterMCP(opts.Target, opts); mcpErr != nil && (opts.Target == TargetGrok || opts.Target == TargetDeepSeek) {
+		return result, fmt.Errorf("register %s MCP server: %w", opts.Target, mcpErr)
 	} else if mcpErr != nil {
 		fmt.Printf("  warning: could not register MCP server: %v\n", mcpErr)
 	}

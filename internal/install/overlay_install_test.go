@@ -118,6 +118,13 @@ func TestOverlay_AllTargetsIncludeCoreAndDomain(t *testing.T) {
 			domainSkillAt:   ".grok/skills/pm-agent-doctrine/SKILL.md",
 			domainCommandAt: ".grok/skills/command-prd/SKILL.md",
 		},
+		{
+			target:          TargetDeepSeek,
+			coreAgentAt:     ".dsh/skills/role-session-primer/SKILL.md",
+			domainAgentAt:   ".dsh/skills/role-prd-author/SKILL.md",
+			domainSkillAt:   ".dsh/skills/pm-agent-doctrine/SKILL.md",
+			domainCommandAt: ".dsh/skills/command-prd/SKILL.md",
+		},
 	}
 
 	for _, tc := range cases {

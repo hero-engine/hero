@@ -130,7 +130,7 @@ func TestConnectProviderOptionsComeFromTheProviderMap(t *testing.T) {
 
 // TestConnectProviderPickerStaysSilentWithoutATerminal is AC-3 for connect.
 func TestConnectProviderPickerStaysSilentWithoutATerminal(t *testing.T) {
-	const wantErr = "usage: hero connect <type>  (github, jira, linear, gitlab, confluence)"
+	const wantErr = "usage: hero connect <type>  (github, jira, linear, gitlab, aha, confluence)"
 
 	for _, cond := range []string{condPipe, condClosed} {
 		t.Run(cond, func(t *testing.T) {
@@ -242,8 +242,8 @@ func optionsFromPrompt(t *testing.T, output string) []string {
 	return strings.Split(m[1], "|")
 }
 
-// TestUninstallTargetPickerOffersAllSevenTargets is AC-4 for uninstall.
-func TestUninstallTargetPickerOffersAllSevenTargets(t *testing.T) {
+// TestUninstallTargetPickerOffersAllEightTargets is AC-4 for uninstall.
+func TestUninstallTargetPickerOffersAllEightTargets(t *testing.T) {
 	bin := baselineBinary(t)
 	base, root := newSanctionedWorkspace(t)
 
@@ -253,10 +253,10 @@ func TestUninstallTargetPickerOffersAllSevenTargets(t *testing.T) {
 	if exit == -1 {
 		t.Fatalf("uninstall blocked at a terminal:\n%s", combined)
 	}
-	want := []string{"opencode", "cursor", "claude", "copilot", "codex", "generic", "grok"}
+	want := []string{"opencode", "cursor", "claude", "copilot", "codex", "generic", "grok", "deepseek"}
 	got := optionsFromPrompt(t, combined)
 	if strings.Join(got, "|") != strings.Join(want, "|") {
-		t.Errorf("uninstall picker offers %v, want all seven targets %v", got, want)
+		t.Errorf("uninstall picker offers %v, want all eight targets %v", got, want)
 	}
 	// And the answer must actually select: uninstalling claude from a
 	// workspace with nothing installed reports that, and reports it for claude.
@@ -290,14 +290,14 @@ func TestInstallAndUninstallPickersEnumerateIdenticalTargets(t *testing.T) {
 		t.Errorf("install picker offers %v but uninstall picker offers %v — the two must be identical",
 			installOptions, uninstallOptions)
 	}
-	if len(installOptions) != 7 {
-		t.Errorf("the shared target list has %d entries, want 7: %v", len(installOptions), installOptions)
+	if len(installOptions) != 8 {
+		t.Errorf("the shared target list has %d entries, want 8: %v", len(installOptions), installOptions)
 	}
 }
 
 // TestUninstallWithoutTargetStaysSilentWithoutATerminal is AC-3 for uninstall.
 func TestUninstallWithoutTargetStaysSilentWithoutATerminal(t *testing.T) {
-	const wantErr = "--target is required (opencode|cursor|claude|copilot|codex|generic|grok)"
+	const wantErr = "--target is required (opencode|cursor|claude|copilot|codex|generic|grok|deepseek)"
 
 	for _, cond := range []string{condPipe, condClosed} {
 		t.Run(cond, func(t *testing.T) {

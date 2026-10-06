@@ -59,10 +59,13 @@ hero status
 ```
 
 Replace `codex` with `opencode`, `cursor`, `claude`, `copilot`, `generic`, or
-`grok` for another supported target. Hero renders workflows into each target's
-native surfaces. Claude receives command files; Codex and Grok receive
+`grok` or `deepseek` for another supported target. Hero renders workflows into each target's
+native surfaces. Claude receives command files; Codex, Grok, and DeepSeek receive
 `command-*` workflow skills; other targets receive their supported native
 surfaces and root instructions. Do not assume slash commands exist everywhere.
+
+DeepSeek (desktop app or `dsh`) loads Hero's MCP server from its home patch after a
+project install; restart the app. See [DeepSeek setup](MCP-SETUP.md#deepseek-harness-dsh).
 
 The default setup combines Core with Engineering, including lightweight PM and
 QA assistance used inside engineering workflows. Focused PM, QA, and Sales

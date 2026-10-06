@@ -53,6 +53,114 @@ func TestUpgradeAlreadyAtVersion(t *testing.T) {
 	}
 }
 
+func installCodexFixture(t *testing.T, env *testEnv) {
+	t.Helper()
+	t.Setenv("HOME", t.TempDir())
+	if _, err := install.Run(install.Options{
+		Target: install.TargetCodex, Mode: install.ModeProject, TargetDir: env.dir,
+		Force: true, ContentFS: testContentFS(), Version: "1.0.0",
+	}); err != nil {
+		t.Fatalf("install codex fixture: %v", err)
+	}
+}
+
+func TestUpgradeSameVersionRepairsIncompleteDiscoveredCodex(t *testing.T) {
+	env := newTestEnv(t)
+	upgradeContentFS = testContentFS()
+	defer func() { upgradeContentFS = nil }()
+	installCodexFixture(t, env)
+
+	// Simulate a fresh clone / partial migration: Codex is visible on disk,
+	// install-state is absent, and one generated command workflow is gone.
+	if err := os.Remove(filepath.Join(env.dir, ".hero", "install-state.json")); err != nil {
+		t.Fatalf("remove install state: %v", err)
+	}
+	commandSkill := filepath.Join(env.dir, ".agents", "skills", "command-design", "SKILL.md")
+	if err := os.Remove(commandSkill); err != nil {
+		t.Fatalf("remove command skill: %v", err)
+	}
+	extraSkill := filepath.Join(env.dir, ".agents", "skills", "user-extra", "SKILL.md")
+	if err := os.MkdirAll(filepath.Dir(extraSkill), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(extraSkill, []byte("# User skill\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := version.StampInit(env.heroDir, "1.0.0"); err != nil {
+		t.Fatalf("StampInit: %v", err)
+	}
+	rootCmd.Version = "1.0.0"
+	defer func() { rootCmd.Version = "" }()
+
+	output, err := runCmd("upgrade")
+	if err != nil {
+		t.Fatalf("same-version repair: %v", err)
+	}
+	if !strings.Contains(output, "integrity is incomplete (codex)") || !strings.Contains(output, "repairing generated files") {
+		t.Fatalf("output should explain same-version repair:\n%s", output)
+	}
+	if _, err := os.Stat(commandSkill); err != nil {
+		t.Fatalf("command workflow was not restored: %v", err)
+	}
+	if _, err := os.Stat(extraSkill); err != nil {
+		t.Fatalf("unrelated user skill should be preserved: %v", err)
+	}
+}
+
+func TestUpgradeSameVersionRepairsLegacyManagedRootWithoutContentTree(t *testing.T) {
+	env := newTestEnv(t)
+	upgradeContentFS = testContentFS()
+	defer func() { upgradeContentFS = nil }()
+	if _, err := install.Run(install.Options{
+		Target: install.TargetClaude, Mode: install.ModeProject, TargetDir: env.dir,
+		Force: true, ContentFS: testContentFS(), Version: "1.0.0",
+	}); err != nil {
+		t.Fatalf("install claude fixture: %v", err)
+	}
+	if err := os.Remove(filepath.Join(env.dir, ".hero", "install-state.json")); err != nil {
+		t.Fatalf("remove install state: %v", err)
+	}
+	if err := os.RemoveAll(filepath.Join(env.dir, ".claude")); err != nil {
+		t.Fatalf("remove claude tree: %v", err)
+	}
+	if err := version.StampInit(env.heroDir, "1.0.0"); err != nil {
+		t.Fatalf("StampInit: %v", err)
+	}
+	rootCmd.Version = "1.0.0"
+	defer func() { rootCmd.Version = "" }()
+
+	output, err := runCmd("upgrade")
+	if err != nil {
+		t.Fatalf("same-version legacy repair: %v", err)
+	}
+	if !strings.Contains(output, "integrity is incomplete (claude)") {
+		t.Fatalf("legacy inferred target should trigger repair:\n%s", output)
+	}
+	if _, err := os.Stat(filepath.Join(env.dir, ".claude", "agents", "hero.md")); err != nil {
+		t.Fatalf("legacy inferred Claude tree was not restored: %v", err)
+	}
+}
+
+func TestUpgradeSameVersionCompleteInstalledTargetRemainsNoOp(t *testing.T) {
+	env := newTestEnv(t)
+	upgradeContentFS = testContentFS()
+	defer func() { upgradeContentFS = nil }()
+	installCodexFixture(t, env)
+	if err := version.StampInit(env.heroDir, "1.0.0"); err != nil {
+		t.Fatalf("StampInit: %v", err)
+	}
+	rootCmd.Version = "1.0.0"
+	defer func() { rootCmd.Version = "" }()
+
+	output, err := runCmd("upgrade")
+	if err != nil {
+		t.Fatalf("same-version no-op: %v", err)
+	}
+	if !strings.Contains(output, "already at v1.0.0 — nothing to upgrade") {
+		t.Fatalf("complete target should remain a no-op:\n%s", output)
+	}
+}
+
 func TestUpgradeDryRun(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -481,6 +589,35 @@ func TestUpgradeRejectsDowngrade(t *testing.T) {
 	info, _ := version.Read(env.heroDir)
 	if info.HeroVersion != "1.0.0" {
 		t.Errorf("version should remain 1.0.0, got %s", info.HeroVersion)
+	}
+}
+
+func TestUpgradeOlderBinaryNamesRequiredVersionWithoutRepairing(t *testing.T) {
+	env := newTestEnv(t)
+	upgradeContentFS = testContentFS()
+	defer func() { upgradeContentFS = nil }()
+	installCodexFixture(t, env)
+	commandSkill := filepath.Join(env.dir, ".agents", "skills", "command-design", "SKILL.md")
+	if err := os.Remove(commandSkill); err != nil {
+		t.Fatalf("remove command skill: %v", err)
+	}
+	if err := version.StampInit(env.heroDir, "1.0.0"); err != nil {
+		t.Fatalf("StampInit: %v", err)
+	}
+	rootCmd.Version = "0.9.0"
+	defer func() { rootCmd.Version = "" }()
+
+	_, err := runCmd("upgrade")
+	if err == nil {
+		t.Fatal("older binary should refuse incomplete-workspace repair")
+	}
+	for _, want := range []string{"incomplete target(s) codex", "requires Hero v1.0.0 or newer", "then run 'hero upgrade'"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error missing %q: %v", want, err)
+		}
+	}
+	if _, statErr := os.Stat(commandSkill); !os.IsNotExist(statErr) {
+		t.Fatalf("older binary rewrote missing command skill: %v", statErr)
 	}
 }
 

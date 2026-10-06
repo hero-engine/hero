@@ -75,6 +75,10 @@ type ContextEvidenceTracker interface {
 // adapter just doesn't write sizes" from real network/auth errors.
 var ErrSizeUpdateNotSupported = errors.New("tracker: UpdateSize not supported by this adapter")
 
+// ErrAhaAdapterNotImplemented reports that an Aha! connection is usable only
+// through the raw tracker broker; there is no issue adapter for it.
+var ErrAhaAdapterNotImplemented = errors.New("aha connections support raw tracker requests (hero_tracker_request) only; issue import/sync is not implemented for Aha!")
+
 // Issue represents an issue in an external tracker.
 type Issue struct {
 	ID           string // tracker-native ID (e.g. "42" for GitHub, "PROJ-123" for Jira)
@@ -258,6 +262,8 @@ func New(cfg *config.TrackerConfig) (Tracker, error) {
 		}
 		gl.configuredSizeMapping = cfg.SizeMapping
 		return gl, nil
+	case "aha":
+		return nil, ErrAhaAdapterNotImplemented
 	default:
 		return nil, fmt.Errorf("unknown tracker type: %q", cfg.Type)
 	}

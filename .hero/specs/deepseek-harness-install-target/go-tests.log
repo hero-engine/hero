@@ -1,0 +1,128 @@
+ok  	github.com/hero-engine/hero	(cached)
+ok  	github.com/hero-engine/hero/cmd/attention-conformance	(cached)
+?   	github.com/hero-engine/hero/cmd/hero	[no test files]
+?   	github.com/hero-engine/hero/cmd/mock-tracker-server	[no test files]
+ok  	github.com/hero-engine/hero/contracts	(cached)
+ok  	github.com/hero-engine/hero/contracts/attention	(cached)
+ok  	github.com/hero-engine/hero/contracts/attention/mailread	(cached)
+?   	github.com/hero-engine/hero/contracts/attention/mailread/cmd/mailread-bundle	[no test files]
+ok  	github.com/hero-engine/hero/contracts/attention/mailthread	(cached)
+?   	github.com/hero-engine/hero/contracts/attention/mailthread/cmd/mailthread-bundle	[no test files]
+ok  	github.com/hero-engine/hero/contracts/codehostbroker	(cached)
+?   	github.com/hero-engine/hero/contracts/codehostbroker/cmd/generate	[no test files]
+?   	github.com/hero-engine/hero/contracts/governance	[no test files]
+ok  	github.com/hero-engine/hero/contracts/peering	(cached)
+ok  	github.com/hero-engine/hero/contracts/trackerbroker	(cached)
+ok  	github.com/hero-engine/hero/contracts/trackerevidence	(cached)
+?   	github.com/hero-engine/hero/contracts/trackerproject	[no test files]
+?   	github.com/hero-engine/hero/domains/engineering/scan	[no test files]
+ok  	github.com/hero-engine/hero/internal/acceptance	(cached)
+ok  	github.com/hero-engine/hero/internal/active	(cached)
+ok  	github.com/hero-engine/hero/internal/async	(cached)
+ok  	github.com/hero-engine/hero/internal/attention/conformance	(cached)
+ok  	github.com/hero-engine/hero/internal/attention/focus	(cached)
+ok  	github.com/hero-engine/hero/internal/attention/mail	(cached)
+ok  	github.com/hero-engine/hero/internal/attention/mailquery	(cached)
+ok  	github.com/hero-engine/hero/internal/attention/projection	(cached)
+ok  	github.com/hero-engine/hero/internal/attention/state	(cached)
+ok  	github.com/hero-engine/hero/internal/attention/suggestion	(cached)
+ok  	github.com/hero-engine/hero/internal/automations	(cached)
+ok  	github.com/hero-engine/hero/internal/cli	92.557s
+ok  	github.com/hero-engine/hero/internal/cli/prompt	(cached)
+ok  	github.com/hero-engine/hero/internal/cloud	(cached)
+ok  	github.com/hero-engine/hero/internal/clusters	(cached)
+ok  	github.com/hero-engine/hero/internal/codehost	(cached)
+ok  	github.com/hero-engine/hero/internal/codescan	(cached)
+ok  	github.com/hero-engine/hero/internal/config	(cached)
+ok  	github.com/hero-engine/hero/internal/contract	(cached)
+?   	github.com/hero-engine/hero/internal/cost	[no test files]
+ok  	github.com/hero-engine/hero/internal/coverage	(cached)
+ok  	github.com/hero-engine/hero/internal/demos	(cached)
+ok  	github.com/hero-engine/hero/internal/digest	(cached)
+ok  	github.com/hero-engine/hero/internal/domains	(cached)
+ok  	github.com/hero-engine/hero/internal/drift	(cached)
+ok  	github.com/hero-engine/hero/internal/drive	(cached)
+?   	github.com/hero-engine/hero/internal/driveio	[no test files]
+ok  	github.com/hero-engine/hero/internal/embeddings	(cached)
+?   	github.com/hero-engine/hero/internal/embeddings/defaultmodel	[no test files]
+?   	github.com/hero-engine/hero/internal/environment	[no test files]
+?   	github.com/hero-engine/hero/internal/errpattern	[no test files]
+ok  	github.com/hero-engine/hero/internal/extract	(cached)
+ok  	github.com/hero-engine/hero/internal/feed	(cached)
+ok  	github.com/hero-engine/hero/internal/filelock	(cached)
+ok  	github.com/hero-engine/hero/internal/gitutil	(cached)
+ok  	github.com/hero-engine/hero/internal/graph	2.848s
+ok  	github.com/hero-engine/hero/internal/handoff	(cached)
+ok  	github.com/hero-engine/hero/internal/herotest	(cached)
+ok  	github.com/hero-engine/hero/internal/hooks	(cached)
+ok  	github.com/hero-engine/hero/internal/impact	(cached)
+ok  	github.com/hero-engine/hero/internal/index	(cached)
+ok  	github.com/hero-engine/hero/internal/install	(cached)
+ok  	github.com/hero-engine/hero/internal/intake	(cached)
+ok  	github.com/hero-engine/hero/internal/integrity	(cached)
+ok  	github.com/hero-engine/hero/internal/knowledge	(cached)
+ok  	github.com/hero-engine/hero/internal/managed	(cached)
+ok  	github.com/hero-engine/hero/internal/memory	(cached)
+ok  	github.com/hero-engine/hero/internal/methodology	(cached)
+ok  	github.com/hero-engine/hero/internal/mission	(cached)
+ok  	github.com/hero-engine/hero/internal/mockcodehost	(cached)
+ok  	github.com/hero-engine/hero/internal/mocktracker	(cached)
+ok  	github.com/hero-engine/hero/internal/nextdoc	(cached)
+ok  	github.com/hero-engine/hero/internal/peering	(cached)
+ok  	github.com/hero-engine/hero/internal/projection	(cached)
+ok  	github.com/hero-engine/hero/internal/projectregistry	(cached)
+ok  	github.com/hero-engine/hero/internal/propose	(cached)
+?   	github.com/hero-engine/hero/internal/ptytest	[no test files]
+?   	github.com/hero-engine/hero/internal/pulse	[no test files]
+ok  	github.com/hero-engine/hero/internal/recap	(cached)
+ok  	github.com/hero-engine/hero/internal/reconcile	(cached)
+ok  	github.com/hero-engine/hero/internal/refs	(cached)
+ok  	github.com/hero-engine/hero/internal/releasecontract	(cached)
+ok  	github.com/hero-engine/hero/internal/retrieval	(cached)
+ok  	github.com/hero-engine/hero/internal/runner	(cached)
+ok  	github.com/hero-engine/hero/internal/scan	(cached)
+ok  	github.com/hero-engine/hero/internal/score	(cached)
+?   	github.com/hero-engine/hero/internal/search	[no test files]
+ok  	github.com/hero-engine/hero/internal/serve	4.399s
+ok  	github.com/hero-engine/hero/internal/serve/api	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/chat	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/edition	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/healthcache	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/mdrender	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/metrics	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/opsrunner	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/pages/agentspage	(cached)
+?   	github.com/hero-engine/hero/internal/serve/pages/agentspage/data	[no test files]
+ok  	github.com/hero-engine/hero/internal/serve/pages/knowledge	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/pages/knowledge/data	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/pages/now	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/pages/now/data	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/pages/people	(cached)
+?   	github.com/hero-engine/hero/internal/serve/pages/people/data	[no test files]
+ok  	github.com/hero-engine/hero/internal/serve/pages/rollup	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/pages/work	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/pages/work/data	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/projectpage	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/projectpage/data	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/session	(cached)
+ok  	github.com/hero-engine/hero/internal/serve/shell	(cached)
+ok  	github.com/hero-engine/hero/internal/sessions	(cached)
+ok  	github.com/hero-engine/hero/internal/sitegen	(cached)
+ok  	github.com/hero-engine/hero/internal/sizing	(cached)
+?   	github.com/hero-engine/hero/internal/skills	[no test files]
+ok  	github.com/hero-engine/hero/internal/snapshot	0.184s
+ok  	github.com/hero-engine/hero/internal/spec	(cached)
+ok  	github.com/hero-engine/hero/internal/spectypes	0.623s
+ok  	github.com/hero-engine/hero/internal/sync	(cached)
+ok  	github.com/hero-engine/hero/internal/synthesize	(cached)
+ok  	github.com/hero-engine/hero/internal/tasks	(cached)
+?   	github.com/hero-engine/hero/internal/templates	[no test files]
+ok  	github.com/hero-engine/hero/internal/tracker	(cached)
+ok  	github.com/hero-engine/hero/internal/tracking	(cached)
+ok  	github.com/hero-engine/hero/internal/traversal	(cached)
+?   	github.com/hero-engine/hero/internal/triage	[no test files]
+ok  	github.com/hero-engine/hero/internal/version	(cached)
+ok  	github.com/hero-engine/hero/internal/vocabulary	(cached)
+ok  	github.com/hero-engine/hero/internal/watch	(cached)
+ok  	github.com/hero-engine/hero/internal/wiki	(cached)
+ok  	github.com/hero-engine/hero/internal/workspace	(cached)

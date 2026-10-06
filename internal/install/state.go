@@ -371,6 +371,16 @@ func StampInstallVersion(opts Options, result *Result) {
 		checksums[relPath] = cs
 	}
 
+	for _, path := range result.deepseekOwned {
+		rel, err := filepath.Rel(opts.TargetDir, path)
+		if err != nil {
+			continue
+		}
+		sum, err := version.FileChecksum(path)
+		if err == nil {
+			checksums[rel] = sum
+		}
+	}
 	ver := opts.Version
 	if ver == "" {
 		ver = "dev"

@@ -28,6 +28,7 @@ var integrityTargets = []struct {
 	{"copilot", TargetCopilot, "AGENTS.md"},
 	{"generic", TargetGeneric, "AGENTS.md"},
 	{"grok", TargetGrok, "AGENTS.md"},
+	{"deepseek", TargetDeepSeek, "AGENTS.md"},
 }
 
 // newIntegrityHarness installs one target with a .hero/ workspace

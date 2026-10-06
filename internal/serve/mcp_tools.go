@@ -1326,7 +1326,7 @@ func (s *MCPServer) toolSkillRun(args map[string]interface{}) (string, error) {
 		}
 	}
 	if skill == nil {
-		return fmt.Sprintf("Skill %q not found in %s", slug, skillsDir), nil
+		return fmt.Sprintf("Saved project skill %q not found in %s. hero_skill_run only loads project-authored workflows from .hero/skills. Built-in Hero command workflows use the harness-native command-* surface (for Codex: .agents/skills/command-<name>/SKILL.md).", slug, skillsDir), nil
 	}
 
 	// Parse params string: key=value,key=value
