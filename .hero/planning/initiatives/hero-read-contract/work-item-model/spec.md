@@ -2,24 +2,84 @@
 title: "Work-item model — one WorkItem for every read tool"
 slug: work-item-model
 type: feature
-status: planning
+status: delivering
 priority: critical
 domain: engineering
+size: medium
 created: 2026-10-06
 parent: hero-read-contract
 depends-on: [read-contract-v1]
+delivery_method: manual
 ---
 
 # Work-item model
 
+## Goal
+
+A single deterministic Go model, `internal/workmodel`, that turns the spec corpus into the read contract's `WorkItem`s. `hero_work`, `hero_spec` and the next-step engine all render it, so there is exactly one interpretation of lanes, verify state and revisions.
+
 ## Kickoff
 
-Build the shared Go model behind the read contract: `WorkItem` for every work spec. It carries slug, unquoted title, type, status, priority, severity, size, path, parent, progress (children verified / total), lane, timestamps, tracker, verify state, and a per-item revision. Use `read-contract-v1`'s rules and reuse `internal/spec`, `internal/acceptance` and `internal/projection`.
+Implement `internal/workmodel`. `Build(specs, Options{Now, RecentDays})` returns `[]Item`, with JSON matching `WorkItem` in `read-contract-v1` (`next` is left nil for `next-step-engine`). It derives:
+- the work-type filter;
+- normalized priority and severity;
+- lane, designed, unmet dependencies, initiative progress and verify state;
+- the per-item revision.
 
-→ `/design work-item-model`
+All of it uses `internal/spec` (sections, relations, `IsFinished`, `DeclaredChildren`, `ParseLedger`, `FindAuditReport`) exactly as `read-contract-v1` defines. Test with `go test ./internal/workmodel`.
 
-## Scope
+## Design
 
-- One package (e.g. `internal/workmodel`) that builds `[]WorkItem` from the corpus deterministically.
-- Lane and verify derivation per the decision. Revision = a hash of the file plus its relation targets' statuses.
-- No MCP surface here; the tools consume it.
+- `type Item` mirrors `WorkItem`: `slug, title, revision, type, status, priority, severity, size, path (repo-relative), parent, progress {done,total}|null, lane, created_at, updated_at, completed_at|null, tracker {id,url}|null, verify {state,audit}|null, next *NextStep` (the `NextStep` struct is defined here; the engine fills it).
+- **Work types:** feature, bug, enhancement, initiative, epic, plus decisions whose parent is an initiative.
+- **Normalization:**
+  - priority `P0|critical`→critical, `P1|high`→high, `P2|medium|moderate`→medium, `P3|low`→low, anything else null; severity the same.
+  - `updated_at` is the file mtime; `completed_at` is `CompletedAt`, else null.
+  - `tracker` is `{id, url:null}` when a `TrackerID` exists.
+- **Designed, unmet dependencies and lanes:** exactly the `read-contract-v1` rules. Relation kinds `depends-on`/`depends_on` and `blocks` count as dependency edges. A missing target counts as unmet.
+- **Verify state:** per `read-contract-v1`, from `FindAuditReport` (validated), `ParseLedger`, and finished status. It is `null` for decisions.
+- **Revision:** 16 hex characters of SHA-256 over the raw file bytes, the sorted `slug:status` of every related or declared-child spec, and the audit verdict plus report mtime.
+- **Helpers exported for the engine:** `Designed`, `UnmetDeps`, plus an index lookup.
+- Deterministic output order: `path` ascending.
+
+## Acceptance Criteria
+
+- **AC-1:** WHEN `Build` runs over a corpus THE SYSTEM SHALL return one item per work spec (feature, bug, enhancement, initiative, epic, and initiative-child decision) and none for knowledge types, ordered by path.
+- **AC-2:** THE SYSTEM SHALL assign each item exactly one lane by the `read-contract-v1` first-match rules (recently_done, in_progress, ready, designed, none), honoring `RecentDays` and unmet `depends-on`/`blocks` edges.
+- **AC-3:** THE SYSTEM SHALL derive `verify` as passed, partial, failed or not_run with the audit verdict from the spec's own validated report, and null for decisions.
+- **AC-4:** THE SYSTEM SHALL normalize priority and severity to critical, high, medium, low or null, and report initiative `progress` as finished declared children over declared children.
+- **AC-5:** WHEN a spec's file, a related spec's status, or its audit report changes THE SYSTEM SHALL change that item's `revision`; otherwise the revision SHALL stay identical across builds.
+
+## Changes
+
+1. `internal/workmodel/model.go`: types, `Build`, normalization, lanes, verify, progress.
+2. `internal/workmodel/revision.go`: item revision.
+3. `internal/workmodel/model_test.go`: table tests over a temp corpus.
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | AC-1: one item per work spec, knowledge excluded, path order | DONE | `IsWorkItem` and `Build` in `model.go`. `TestBuildIncludesOnlyWorkSpecsInPathOrder`: 11 work specs including an initiative-child decision; a convention and a parentless decision are excluded; path order; decoded title; repo-relative path |
+| 2 | AC-2: one lane per item by first-match rules, with RecentDays and unmet deps | DONE | `Lane`, `UnmetDeps`, `Designed`. `TestLanes` covers all five lanes (stub, ready, blocked, in-progress, undiagnosed/diagnosed bug, recent/old/superseded, started initiative, decision). `TestRecentDaysWindow` |
+| 3 | AC-3: verify state and audit from the validated report; null for decisions | DONE | `VerifyOf` uses `spec.FindAuditReport` and `ParseLedger`. `TestVerifyState` covers passed, partial (no audit), failed (HOLD and regressed), not_run, and a null decision |
+| 4 | AC-4: priority/severity normalization; initiative progress | DONE | `normalizeLevel`, `initiativeProgress`. `TestNormalizationAndProgress`: P1→high, moderate→medium, unset→null, tracker `{id, url:null}`, progress 1/3, parent, and JSON nulls serialized as `null` |
+| 5 | AC-5: revision changes with file, related status, audit; otherwise stable | DONE | `revision.go`. `TestRevisionChangesOnlyWithInputs`: stable across builds and 16 characters; a dependency's status change moves the dependent; its own edit moves it; an unrelated item is unchanged; a new audit moves it |
+
+### Changes
+
+| # | Changes item (abbreviated) | Status | Note |
+|---|---|---|---|
+| 1 | model.go | DONE | Also defines the `NextStep`/`Phase`/`Extra` types for the engine, plus the `BuildOne` and `Corpus` helpers |
+| 2 | revision.go | DONE | — |
+| 3 | model_test.go | DONE | 6 tests over a real `spec.Discover` corpus in a temp dir |
+
+### Exercise-the-feature check
+
+- [x] The tests build real spec files on disk and parse them with `spec.Discover`, the same path the MCP tools use. There is no user-facing surface until `hero-work-tool`.
+
+### Excellence Bar self-check
+
+- [x] Yes. One pure model encodes `read-contract-v1` exactly, with explicit null semantics for the JSON contract.

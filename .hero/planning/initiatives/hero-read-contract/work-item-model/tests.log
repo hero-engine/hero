@@ -1,0 +1,14 @@
+=== RUN   TestBuildIncludesOnlyWorkSpecsInPathOrder
+--- PASS: TestBuildIncludesOnlyWorkSpecsInPathOrder (0.01s)
+=== RUN   TestLanes
+--- PASS: TestLanes (0.01s)
+=== RUN   TestRecentDaysWindow
+--- PASS: TestRecentDaysWindow (0.01s)
+=== RUN   TestVerifyState
+--- PASS: TestVerifyState (0.02s)
+=== RUN   TestNormalizationAndProgress
+--- PASS: TestNormalizationAndProgress (0.01s)
+=== RUN   TestRevisionChangesOnlyWithInputs
+--- PASS: TestRevisionChangesOnlyWithInputs (0.02s)
+PASS
+ok  	github.com/hero-engine/hero/internal/workmodel	0.161s
