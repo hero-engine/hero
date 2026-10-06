@@ -3,6 +3,7 @@ package spec
 import (
 	"bufio"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"sort"
@@ -510,7 +511,7 @@ func (s *Spec) parseFrontmatter(content string) string {
 
 		switch key {
 		case "title":
-			s.Title = val
+			s.Title = unquoteYAMLScalar(val)
 		case "type":
 			s.Type = Type(val)
 		case "status":
@@ -1942,4 +1943,18 @@ func ClearFrontmatterField(content, key string) string {
 		}
 	}
 	return content
+}
+
+// unquoteYAMLScalar decodes a single- or double-quoted YAML scalar so a
+// title written as `title: "A: B"` reads as `A: B`, not with its quotes.
+// Unquoted or undecodable values are returned unchanged.
+func unquoteYAMLScalar(v string) string {
+	if len(v) < 2 || (v[0] != '"' && v[0] != '\'') {
+		return v
+	}
+	var out string
+	if err := yaml.Unmarshal([]byte(v), &out); err != nil {
+		return v
+	}
+	return out
 }

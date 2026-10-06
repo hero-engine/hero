@@ -558,6 +558,19 @@ func ensureManagedGitignoreBlock(gitignorePath string) error {
 	return os.WriteFile(gitignorePath, []byte(body), 0o644)
 }
 
+// refreshManagedGitignoreIfPresent re-renders the hero-managed block in the
+// root .gitignore when one already exists, so entries added in a newer Hero
+// (e.g. MCP pidfiles) reach workspaces initialized earlier. Like hook
+// refresh, it never creates the block — `hero init` is the opt-in.
+func refreshManagedGitignoreIfPresent(projectRoot string, dryRun bool) error {
+	path := filepath.Join(projectRoot, ".gitignore")
+	existing, err := os.ReadFile(path)
+	if err != nil || !strings.Contains(string(existing), gitignoreMarkerStart) || dryRun {
+		return nil
+	}
+	return ensureManagedGitignoreBlock(path)
+}
+
 // mergeGitignoreBlock replaces or appends the hero-managed marker
 // block. Mirrors mergeMarkerBlock in next_hooks.go but specialised to
 // the gitignore markers so the two sets stay independently versioned.

@@ -1,0 +1,128 @@
+ok  	github.com/hero-engine/hero	0.273s
+ok  	github.com/hero-engine/hero/cmd/attention-conformance	0.368s
+?   	github.com/hero-engine/hero/cmd/hero	[no test files]
+?   	github.com/hero-engine/hero/cmd/mock-tracker-server	[no test files]
+ok  	github.com/hero-engine/hero/contracts	0.629s
+ok  	github.com/hero-engine/hero/contracts/attention	0.156s
+ok  	github.com/hero-engine/hero/contracts/attention/mailread	0.203s
+?   	github.com/hero-engine/hero/contracts/attention/mailread/cmd/mailread-bundle	[no test files]
+ok  	github.com/hero-engine/hero/contracts/attention/mailthread	0.142s
+?   	github.com/hero-engine/hero/contracts/attention/mailthread/cmd/mailthread-bundle	[no test files]
+ok  	github.com/hero-engine/hero/contracts/codehostbroker	0.212s
+?   	github.com/hero-engine/hero/contracts/codehostbroker/cmd/generate	[no test files]
+?   	github.com/hero-engine/hero/contracts/governance	[no test files]
+ok  	github.com/hero-engine/hero/contracts/peering	0.132s
+ok  	github.com/hero-engine/hero/contracts/trackerbroker	0.104s
+ok  	github.com/hero-engine/hero/contracts/trackerevidence	0.104s
+?   	github.com/hero-engine/hero/contracts/trackerproject	[no test files]
+?   	github.com/hero-engine/hero/domains/engineering/scan	[no test files]
+ok  	github.com/hero-engine/hero/internal/acceptance	1.283s
+ok  	github.com/hero-engine/hero/internal/active	0.177s
+ok  	github.com/hero-engine/hero/internal/async	0.145s
+ok  	github.com/hero-engine/hero/internal/attention/conformance	2.108s
+ok  	github.com/hero-engine/hero/internal/attention/focus	0.542s
+ok  	github.com/hero-engine/hero/internal/attention/mail	9.774s
+ok  	github.com/hero-engine/hero/internal/attention/mailquery	5.261s
+ok  	github.com/hero-engine/hero/internal/attention/projection	0.219s
+ok  	github.com/hero-engine/hero/internal/attention/state	0.164s
+ok  	github.com/hero-engine/hero/internal/attention/suggestion	0.642s
+ok  	github.com/hero-engine/hero/internal/automations	0.118s
+ok  	github.com/hero-engine/hero/internal/cli	151.748s
+ok  	github.com/hero-engine/hero/internal/cli/prompt	0.107s
+ok  	github.com/hero-engine/hero/internal/cloud	74.655s
+ok  	github.com/hero-engine/hero/internal/clusters	0.153s
+ok  	github.com/hero-engine/hero/internal/codehost	10.655s
+ok  	github.com/hero-engine/hero/internal/codescan	2.793s
+ok  	github.com/hero-engine/hero/internal/config	0.770s
+ok  	github.com/hero-engine/hero/internal/contract	0.221s
+?   	github.com/hero-engine/hero/internal/cost	[no test files]
+ok  	github.com/hero-engine/hero/internal/coverage	0.378s
+ok  	github.com/hero-engine/hero/internal/demos	0.367s
+ok  	github.com/hero-engine/hero/internal/digest	3.052s
+ok  	github.com/hero-engine/hero/internal/domains	0.156s
+ok  	github.com/hero-engine/hero/internal/drift	0.525s
+ok  	github.com/hero-engine/hero/internal/drive	0.182s
+?   	github.com/hero-engine/hero/internal/driveio	[no test files]
+ok  	github.com/hero-engine/hero/internal/embeddings	11.700s
+?   	github.com/hero-engine/hero/internal/embeddings/defaultmodel	[no test files]
+?   	github.com/hero-engine/hero/internal/environment	[no test files]
+?   	github.com/hero-engine/hero/internal/errpattern	[no test files]
+ok  	github.com/hero-engine/hero/internal/extract	1.687s
+ok  	github.com/hero-engine/hero/internal/feed	0.275s
+ok  	github.com/hero-engine/hero/internal/filelock	0.284s
+ok  	github.com/hero-engine/hero/internal/gitutil	8.393s
+ok  	github.com/hero-engine/hero/internal/graph	9.681s
+ok  	github.com/hero-engine/hero/internal/handoff	9.490s
+ok  	github.com/hero-engine/hero/internal/herotest	0.646s
+ok  	github.com/hero-engine/hero/internal/hooks	0.748s
+ok  	github.com/hero-engine/hero/internal/impact	0.481s
+ok  	github.com/hero-engine/hero/internal/index	10.250s
+ok  	github.com/hero-engine/hero/internal/install	16.687s
+ok  	github.com/hero-engine/hero/internal/intake	0.353s
+ok  	github.com/hero-engine/hero/internal/integrity	1.354s
+ok  	github.com/hero-engine/hero/internal/knowledge	1.352s
+ok  	github.com/hero-engine/hero/internal/managed	0.251s
+ok  	github.com/hero-engine/hero/internal/memory	0.669s
+ok  	github.com/hero-engine/hero/internal/methodology	0.160s
+ok  	github.com/hero-engine/hero/internal/mission	0.381s
+ok  	github.com/hero-engine/hero/internal/mockcodehost	0.135s
+ok  	github.com/hero-engine/hero/internal/mocktracker	0.212s
+ok  	github.com/hero-engine/hero/internal/nextdoc	0.764s
+ok  	github.com/hero-engine/hero/internal/peering	6.414s
+ok  	github.com/hero-engine/hero/internal/projection	6.875s
+ok  	github.com/hero-engine/hero/internal/projectregistry	0.191s
+ok  	github.com/hero-engine/hero/internal/propose	0.205s
+?   	github.com/hero-engine/hero/internal/ptytest	[no test files]
+?   	github.com/hero-engine/hero/internal/pulse	[no test files]
+ok  	github.com/hero-engine/hero/internal/recap	0.646s
+ok  	github.com/hero-engine/hero/internal/reconcile	7.901s
+ok  	github.com/hero-engine/hero/internal/refs	1.247s
+ok  	github.com/hero-engine/hero/internal/releasecontract	0.184s
+ok  	github.com/hero-engine/hero/internal/retrieval	6.747s
+ok  	github.com/hero-engine/hero/internal/runner	0.123s
+ok  	github.com/hero-engine/hero/internal/scan	2.437s
+ok  	github.com/hero-engine/hero/internal/score	0.209s
+?   	github.com/hero-engine/hero/internal/search	[no test files]
+ok  	github.com/hero-engine/hero/internal/serve	10.158s
+ok  	github.com/hero-engine/hero/internal/serve/api	0.674s
+ok  	github.com/hero-engine/hero/internal/serve/chat	3.199s
+ok  	github.com/hero-engine/hero/internal/serve/edition	0.110s
+ok  	github.com/hero-engine/hero/internal/serve/healthcache	0.425s
+ok  	github.com/hero-engine/hero/internal/serve/mdrender	0.093s
+ok  	github.com/hero-engine/hero/internal/serve/metrics	0.102s
+ok  	github.com/hero-engine/hero/internal/serve/opsrunner	2.249s
+ok  	github.com/hero-engine/hero/internal/serve/pages/agentspage	0.437s
+?   	github.com/hero-engine/hero/internal/serve/pages/agentspage/data	[no test files]
+ok  	github.com/hero-engine/hero/internal/serve/pages/knowledge	0.397s
+ok  	github.com/hero-engine/hero/internal/serve/pages/knowledge/data	0.365s
+ok  	github.com/hero-engine/hero/internal/serve/pages/now	0.400s
+ok  	github.com/hero-engine/hero/internal/serve/pages/now/data	0.224s
+ok  	github.com/hero-engine/hero/internal/serve/pages/people	0.219s
+?   	github.com/hero-engine/hero/internal/serve/pages/people/data	[no test files]
+ok  	github.com/hero-engine/hero/internal/serve/pages/rollup	0.229s
+ok  	github.com/hero-engine/hero/internal/serve/pages/work	0.263s
+ok  	github.com/hero-engine/hero/internal/serve/pages/work/data	0.330s
+ok  	github.com/hero-engine/hero/internal/serve/projectpage	0.621s
+ok  	github.com/hero-engine/hero/internal/serve/projectpage/data	0.431s
+ok  	github.com/hero-engine/hero/internal/serve/session	0.160s
+ok  	github.com/hero-engine/hero/internal/serve/shell	0.239s
+ok  	github.com/hero-engine/hero/internal/sessions	0.250s
+ok  	github.com/hero-engine/hero/internal/sitegen	0.322s
+ok  	github.com/hero-engine/hero/internal/sizing	0.293s
+?   	github.com/hero-engine/hero/internal/skills	[no test files]
+ok  	github.com/hero-engine/hero/internal/snapshot	0.175s
+ok  	github.com/hero-engine/hero/internal/spec	0.215s
+ok  	github.com/hero-engine/hero/internal/spectypes	0.365s
+ok  	github.com/hero-engine/hero/internal/sync	0.103s
+ok  	github.com/hero-engine/hero/internal/synthesize	0.219s
+ok  	github.com/hero-engine/hero/internal/tasks	0.275s
+?   	github.com/hero-engine/hero/internal/templates	[no test files]
+ok  	github.com/hero-engine/hero/internal/tracker	1.049s
+ok  	github.com/hero-engine/hero/internal/tracking	0.151s
+ok  	github.com/hero-engine/hero/internal/traversal	0.242s
+?   	github.com/hero-engine/hero/internal/triage	[no test files]
+ok  	github.com/hero-engine/hero/internal/version	0.159s
+ok  	github.com/hero-engine/hero/internal/vocabulary	0.221s
+ok  	github.com/hero-engine/hero/internal/watch	0.385s
+ok  	github.com/hero-engine/hero/internal/wiki	0.153s
+ok  	github.com/hero-engine/hero/internal/workspace	0.131s

@@ -207,6 +207,9 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 				fmt.Fprintf(os.Stderr, "Warning: hook refresh failed: %v\n", err)
 			}
 		}
+		if err := refreshManagedGitignoreIfPresent(projectRoot, upgradeDryRun); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: .gitignore refresh failed: %v\n", err)
+		}
 		return nil
 	}
 
@@ -304,6 +307,9 @@ func runUpgrade(cmd *cobra.Command, args []string) error {
 		if err := refreshHooksIfPresent(projectRoot, upgradeDryRun, cmd.OutOrStdout()); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: hook refresh failed: %v\n", err)
 		}
+	}
+	if err := refreshManagedGitignoreIfPresent(projectRoot, upgradeDryRun); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: .gitignore refresh failed: %v\n", err)
 	}
 
 	return nil
