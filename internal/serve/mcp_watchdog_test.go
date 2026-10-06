@@ -54,7 +54,7 @@ func TestStartParentWatchdog_StopsOnDone(t *testing.T) {
 	before := runtime.NumGoroutine()
 
 	done := make(chan struct{})
-	startParentWatchdog(done)
+	startParentWatchdog(done, nil)
 
 	close(done)
 
@@ -107,7 +107,7 @@ func TestParentWatchdog_ExitsOnPpidChange(t *testing.T) {
 
 	done := make(chan struct{})
 	defer close(done)
-	startParentWatchdog(done)
+	startParentWatchdog(done, nil)
 
 	select {
 	case code := <-exited:
@@ -157,7 +157,7 @@ func TestParentWatchdog_IgnoresReparentWhileParentAlive(t *testing.T) {
 	parentWatchdogInterval = time.Millisecond
 
 	done := make(chan struct{})
-	stopped := startParentWatchdog(done)
+	stopped := startParentWatchdog(done, nil)
 	// Join the goroutine before the deferred cleanup restores the seam
 	// vars. `close(done)` only signals the goroutine to stop; it may still
 	// be mid-tick reading watchdogGetppid/singletonIsAlive when the restore
@@ -211,7 +211,7 @@ func TestParentWatchdog_ExitsWhenOriginalParentDead(t *testing.T) {
 
 	done := make(chan struct{})
 	defer close(done)
-	startParentWatchdog(done)
+	startParentWatchdog(done, nil)
 
 	select {
 	case code := <-exited:
@@ -236,4 +236,57 @@ func waitForGoroutinesAtMost(target int, timeout time.Duration) int {
 		time.Sleep(10 * time.Millisecond)
 	}
 	return last
+}
+
+// TestParentWatchdog_RunsOnExitBeforeExiting is the leak regression: the
+// watchdog terminates via os.Exit, which skips deferred functions, so the
+// pidfile release must be invoked explicitly on this path. Reproduced in the
+// field as .hero/mcp-<ppid>.pid files surviving every orphaned daemon.
+// It must NOT run in parallel — it mutates package-level seam vars.
+func TestParentWatchdog_RunsOnExitBeforeExiting(t *testing.T) {
+	origExit := watchdogExit
+	origGetppid := watchdogGetppid
+	origAlive := singletonIsAlive
+	origInterval := parentWatchdogInterval
+	defer func() {
+		watchdogExit = origExit
+		watchdogGetppid = origGetppid
+		singletonIsAlive = origAlive
+		parentWatchdogInterval = origInterval
+	}()
+
+	const startPpid = 1000
+	var calls int64
+	watchdogGetppid = func() int {
+		if atomic.AddInt64(&calls, 1) == 1 {
+			return startPpid
+		}
+		return 1 // reparented to init → genuine orphan
+	}
+	singletonIsAlive = func(pid int) bool { return false }
+
+	released := make(chan struct{})
+	exited := make(chan int, 1)
+	watchdogExit = func(code int) {
+		// Ordering matters: cleanup must already have happened by the
+		// time the process is torn down.
+		select {
+		case <-released:
+		default:
+			t.Errorf("watchdog exited before running onExit — pidfile would leak")
+		}
+		exited <- code
+		select {}
+	}
+	parentWatchdogInterval = time.Millisecond
+
+	done := make(chan struct{})
+	defer close(done)
+	startParentWatchdog(done, func() { close(released) })
+
+	select {
+	case <-exited:
+	case <-time.After(2 * time.Second):
+		t.Fatal("watchdog did not exit on a genuine orphan")
+	}
 }

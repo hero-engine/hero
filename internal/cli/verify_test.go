@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/hero-engine/hero/internal/config"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -189,6 +191,78 @@ func TestVerify_HoldAudit(t *testing.T) {
 	}
 }
 
+// TestVerify_FlatSiblingSpecs_EachResolvesOwnAuditReport covers two
+// flat-named specs (initiative children stored as sibling <slug>.md files,
+// not yet given their own subdirectory — see flat-named-spec-discovery)
+// that share an initiative folder. Each has its own slug-scoped audit
+// report; verify must resolve the correct one for each spec despite the
+// shared directory.
+func TestVerify_FlatSiblingSpecs_EachResolvesOwnAuditReport(t *testing.T) {
+	env := newTestEnv(t)
+	initDir := "planning/initiatives/my-initiative"
+
+	env.addSpec(initDir+"/spec.md", `---
+title: My Initiative
+type: initiative
+status: planning
+slug: my-initiative
+---
+# My Initiative
+`)
+	env.addSpec(initDir+"/child-a.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "child-a", -1))
+	env.addSpec(initDir+"/child-b.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "child-b", -1))
+
+	writeVerifyFile(t, filepath.Join(env.heroDir, initDir, "child-a-delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "child-a", -1))
+	writeVerifyFile(t, filepath.Join(env.heroDir, initDir, "child-b-delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "child-b", -1))
+	env.indexAll()
+
+	for _, slug := range []string{"child-a", "child-b"} {
+		output, err := runCmd("spec", "verify", "--skip-tests", slug)
+		if err != nil {
+			t.Fatalf("verify %s failed: %v\noutput: %s", slug, err, output)
+		}
+		if !strings.Contains(output, "PASS") {
+			t.Errorf("verify %s: expected PASS in output, got:\n%s", slug, output)
+		}
+	}
+}
+
+// TestVerify_FlatSpec_RejectsSiblingsLeftoverAuditReport reproduces the
+// directory-sharing false positive directly: child-a has already been
+// audited and left a generic delivery-audit.md behind in the shared
+// initiative folder (the pre-fix convention). child-b, a different flat
+// sibling in the same folder, has no audit report of its own yet. Gate 2
+// for child-b must FAIL — it must not silently pick up child-a's report
+// just because it sits at the conventional filename in the same directory.
+func TestVerify_FlatSpec_RejectsSiblingsLeftoverAuditReport(t *testing.T) {
+	env := newTestEnv(t)
+	initDir := "planning/initiatives/my-initiative"
+
+	env.addSpec(initDir+"/spec.md", `---
+title: My Initiative
+type: initiative
+status: planning
+slug: my-initiative
+---
+# My Initiative
+`)
+	env.addSpec(initDir+"/child-a.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "child-a", -1))
+	env.addSpec(initDir+"/child-b.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "child-b", -1))
+
+	// Only child-a's report exists, written under the generic filename —
+	// the layout that caused the collision before slug-scoped names.
+	writeVerifyFile(t, filepath.Join(env.heroDir, initDir, "delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "child-a", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "child-b")
+	if err == nil {
+		t.Fatalf("expected verify child-b to fail (no report of its own), got PASS:\n%s", output)
+	}
+}
+
 func TestVerify_Force(t *testing.T) {
 	env := newTestEnv(t)
 	specContent := `---
@@ -267,13 +341,14 @@ slug: signed-pass
 | # | Criterion | Status | Note |
 |---|---|---|---|
 | 1 | Do X | DONE | implemented |
-| 2 | Do Y | SKIPPED | out of scope [signed-off] |
+| 2 | Do Y | SKIPPED | [signed-off] bwheeler — out of scope |
 
 ### Exercise-the-feature check
 
 - [x] Exercised: ran the command, works
 `
 	env.addSpec("planning/features/signed-pass/spec.md", specContent)
+	env.setLedgerSigners("bwheeler@example.com")
 	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/signed-pass/delivery-audit.md"),
 		strings.Replace(auditReportShip, "test-feature", "signed-pass", -1))
 	env.indexAll()
@@ -281,6 +356,113 @@ slug: signed-pass
 	output, err := runCmd("spec", "verify", "--skip-tests", "signed-pass")
 	if err != nil {
 		t.Fatalf("verify should pass with signed-off SKIPPED: %v\noutput: %s", err, output)
+	}
+}
+
+func TestVerify_DeniedSignOffFailsGate(t *testing.T) {
+	env := newTestEnv(t)
+	specContent := `---
+title: Denied Sign Off
+type: feature
+status: delivering
+slug: denied-signoff
+---
+# Denied Sign Off
+
+## Acceptance Criteria
+
+- AC-1: Do X
+- AC-2: Do Y
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Note |
+|---|---|---|---|
+| 1 | Do X | DONE | implemented |
+| 2 | Do Y | SKIPPED | **Needs user sign-off — [signed-off] NOT yet given** |
+
+### Exercise-the-feature check
+
+- [x] Exercised: ran the command, works
+`
+	env.addSpec("planning/features/denied-signoff/spec.md", specContent)
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/denied-signoff/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "denied-signoff", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "denied-signoff")
+	if err == nil {
+		t.Fatalf("verify should fail when the note denies sign-off\noutput: %s", output)
+	}
+	if !strings.Contains(output, "sign-off marker found but rejected") {
+		t.Errorf("expected rejection reason in gate output, got:\n%s", output)
+	}
+}
+
+func TestVerify_UnknownSignerFailsGate(t *testing.T) {
+	env := newTestEnv(t)
+	specContent := `---
+title: Unknown Signer
+type: feature
+status: delivering
+slug: unknown-signer
+---
+# Unknown Signer
+
+## Acceptance Criteria
+
+- AC-1: Do X
+- AC-2: Do Y
+
+## Completion Ledger
+
+### Acceptance Criteria
+
+| # | Criterion | Status | Note |
+|---|---|---|---|
+| 1 | Do X | DONE | implemented |
+| 2 | Do Y | SKIPPED | [signed-off] waiting on owner — see thread |
+
+### Exercise-the-feature check
+
+- [x] Exercised: ran the command, works
+`
+	env.addSpec("planning/features/unknown-signer/spec.md", specContent)
+	env.setLedgerSigners("bwheeler")
+	writeVerifyFile(t, filepath.Join(env.heroDir, "planning/features/unknown-signer/delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "unknown-signer", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "unknown-signer")
+	if err == nil {
+		t.Fatalf("verify should fail for a signer that is not a known identity\noutput: %s", output)
+	}
+	if !strings.Contains(output, `signer "waiting on owner" is not a known identity`) {
+		t.Errorf("expected unknown-signer rejection in gate output, got:\n%s", output)
+	}
+}
+
+func TestKnownSigners_GitAuthorsAndConfig(t *testing.T) {
+	dir := t.TempDir()
+	for _, args := range [][]string{
+		{"init", "-q"},
+		{"-c", "user.name=Ada Lovelace", "-c", "user.email=ada@example.com", "commit", "-q", "--allow-empty", "-m", "init"},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	cfg := config.Config{Ledger: &config.LedgerConfig{Signers: []string{"Grace Hopper", "bwheeler@example.com"}}}
+	known := knownSigners(dir, cfg)
+	for _, id := range []string{"ada lovelace", "ada@example.com", "ada", "grace hopper", "bwheeler@example.com", "bwheeler"} {
+		if !known[id] {
+			t.Errorf("expected %q to be a known signer; got %v", id, known)
+		}
+	}
+	if known["waiting on owner"] {
+		t.Error("unexpected identity")
 	}
 }
 

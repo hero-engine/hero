@@ -30,6 +30,14 @@ var (
 // dead. A bare ppid change (an intermediate wrapper exited while the
 // session is still live) is a false positive and is ignored.
 //
+// onExit runs immediately before the process exits. It exists because the
+// watchdog terminates via os.Exit, which does NOT run deferred functions —
+// so Run()'s `defer release()` is skipped on this path and the singleton
+// pidfile would leak. This is the dominant real-world leak: a harness that
+// dies without closing our stdin (crash, SIGKILL, fd handed to a survivor)
+// orphans us, and the watchdog is then the ONLY thing that reaps us. Pass
+// the release func so the exit is as clean as the stdin-EOF path.
+//
 // It fires ONLY when the parent is already dead, so it can never disrupt
 // a live session.
 // The returned channel is closed when the watchdog goroutine has fully
@@ -38,7 +46,7 @@ var (
 // them while the goroutine is still mid-tick reading them is a data race
 // (-race catches it in CI). Production callers discard it: the goroutine
 // simply dies with the process.
-func startParentWatchdog(done <-chan struct{}) <-chan struct{} {
+func startParentWatchdog(done <-chan struct{}, onExit func()) <-chan struct{} {
 	armParentDeathSignal() // platform-specific; no-op on darwin
 
 	startPpid := watchdogGetppid()
@@ -60,6 +68,9 @@ func startParentWatchdog(done <-chan struct{}) <-chan struct{} {
 					// ppid change — an intermediate wrapper process exited
 					// while the session is still live — is a false positive
 					// that must NOT tear down a live session.
+					if onExit != nil {
+						onExit()
+					}
 					watchdogExit(0)
 				}
 			}

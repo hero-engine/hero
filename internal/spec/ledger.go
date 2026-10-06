@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -21,7 +22,11 @@ type LedgerRow struct {
 	Summary   string
 	Status    LedgerStatus
 	Note      string
-	SignedOff bool // true if [signed-off] annotation present in Note
+	SignedOff bool   // structured sign-off present; ResolveSigners clears it for unknown signers
+	Signer    string // normalized signer named by the sign-off marker
+	// SignOffRejected explains why a [signed-off] marker present in Note was
+	// not honored; empty when there is no marker or it was honored.
+	SignOffRejected string
 }
 
 // LedgerResult holds the parsed Completion Ledger from a spec.
@@ -211,13 +216,92 @@ func parseDataRow(cells []string, fallbackIndex int) LedgerRow {
 		row.Note = stripBold(cells[2])
 	}
 
-	// Check for signed-off annotation
-	noteLower := strings.ToLower(row.Note)
-	if strings.Contains(noteLower, "[signed-off]") || strings.Contains(noteLower, "[signed off]") {
-		row.SignedOff = true
-	}
+	row.Signer, row.SignOffRejected = parseSignOff(row.Note)
+	row.SignedOff = row.Signer != ""
 
 	return row
+}
+
+// SignOffForm is the accepted shape of a ledger sign-off, shown to authors
+// whenever a marker is rejected.
+const SignOffForm = "`[signed-off] <who> — <why>` or `[signed-off: <who>] <why>` at the start of the Note, where <who> is a git commit author (name, email, or email user) or a `ledger.signers` entry in hero.json"
+
+var signOffMarkers = []string{"[signed-off", "[signed off"}
+
+// parseSignOff extracts the signer from a structured sign-off: the note must
+// open with the marker and name the signer either inside the brackets
+// (`[signed-off: bwheeler]`) or directly after them, terminated by a dash
+// (`[signed-off] bwheeler — why`). It returns the signer, or the reason a
+// marker present in the note was rejected. Whether the signer is a real
+// identity is decided later by LedgerResult.ResolveSigners.
+func parseSignOff(note string) (signer, rejected string) {
+	lower := strings.ToLower(strings.TrimSpace(note))
+	var marker string
+	for _, m := range signOffMarkers {
+		if strings.Contains(lower, m+"]") || strings.Contains(lower, m+":") {
+			marker = m
+			break
+		}
+	}
+	if marker == "" {
+		return "", ""
+	}
+	if !strings.HasPrefix(lower, marker) {
+		return "", "the marker must open the note"
+	}
+	rest := lower[len(marker):]
+
+	switch {
+	case strings.HasPrefix(rest, ":"):
+		end := strings.Index(rest, "]")
+		if end < 0 {
+			return "", "the marker is missing its closing bracket"
+		}
+		signer = rest[1:end]
+	case strings.HasPrefix(rest, "]"):
+		rest = rest[1:]
+		dash := -1
+		for _, sep := range []string{" — ", " – ", " - "} {
+			if i := strings.Index(rest, sep); i >= 0 && (dash < 0 || i < dash) {
+				dash = i
+			}
+		}
+		if dash < 0 {
+			return "", "no signer before a dash after the marker"
+		}
+		signer = rest[:dash]
+	default:
+		return "", "the marker is malformed"
+	}
+
+	signer = NormalizeSigner(signer)
+	if signer == "" {
+		return "", "no signer is named"
+	}
+	return signer, ""
+}
+
+// NormalizeSigner canonicalizes a signer or identity for comparison:
+// lowercase, surrounding punctuation trimmed, inner whitespace collapsed.
+func NormalizeSigner(s string) string {
+	s = strings.Trim(strings.ToLower(s), " \t.,;:<>\"'`*_")
+	return strings.Join(strings.Fields(s), " ")
+}
+
+// ResolveSigners honors a structured sign-off only when its signer is a
+// known identity, so free text in the signer slot ("waiting on owner",
+// "not given") can never approve a row. Unknown signers fail closed with a
+// rejection reason.
+func (l *LedgerResult) ResolveSigners(known map[string]bool) {
+	for _, rows := range [][]LedgerRow{l.ACRows, l.ChangesRows} {
+		for i := range rows {
+			r := &rows[i]
+			if r.SignedOff && !known[r.Signer] {
+				r.SignedOff = false
+				r.SignOffRejected = fmt.Sprintf("signer %q is not a known identity", r.Signer)
+			}
+		}
+	}
 }
 
 // parseIndex extracts a numeric index from a cell like "1", "1.", "AC-1", etc.

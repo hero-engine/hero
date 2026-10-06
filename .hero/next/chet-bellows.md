@@ -2,6 +2,8 @@
 user: chet-bellows
 updated: 2026-09-30T23:30:05Z
 repo: hero-engine/hero
+updated: 2026-09-29T09:43:58Z
+repo: davidray/hero
 ---
 
 # chet-bellows's handoff
@@ -9,6 +11,7 @@ repo: hero-engine/hero
 ## Session goal
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
+> _possibly stale — 40 commit(s) since, last set 19d 8h ago_
 
 _possibly stale — 108 commit(s) since, last set 47d 7h ago_
 
@@ -23,6 +26,23 @@ _possibly stale — 9 commit(s) since, last set 5h 5m ago_
 > let's tackle E2E Onboarding Suite — Fresh Repo to Productive Workspace
 
 _Rationale: highest-priority ready work: E2E Onboarding Suite — Fresh Repo to Productive Workspace (`e2e-onboarding`)_
+_possibly stale — 1 commit(s) since, last set 6h 3m ago_
+
+## Last user ask
+
+> <system-reminder>
+> You are operating in a git worktree.
+> Worktree path: /Users/dave/code/hero/.claude/worktrees/hero-tokenomics-assessment-1d9c0b
+> Worktree name: hero-tokenomics-assessment-1d9c0b
+> </system-reminder>
+
+_possibly stale — 1 commit(s) since, last set 6h 2m ago_
+
+## Suggested next prompt
+
+> let's tackle Core / Vertical Layering — Make the Conceptual Split Physical
+
+_Rationale: highest-priority open feature: Core / Vertical Layering — Make the Conceptual Split Physical (`core-vertical-layering`)_
 
 _Source: auto-derived from open feature — `hero next suggest "..."` to override._
 

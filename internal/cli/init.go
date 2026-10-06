@@ -58,6 +58,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	cfg := config.DefaultConfig()
 	cfg.Folder = initFolder
 	cfg.PeerID = peering.MintPeerID()
+	cfg.Name = filepath.Base(projectRoot)
 
 	// Born projected: fresh workspaces never enter legacy NEXT mode, so
 	// they never hit the checkpoint migration gate. This is set only on
@@ -532,6 +533,11 @@ var managedGitignoreEntries = []string{
 	"",
 	"# Per-machine install state (host capabilities, informational)",
 	".hero/install-state.json",
+	"",
+	"# MCP daemon runtime state (per-process singleton pidfile + debug log) — ephemeral",
+	".hero/mcp-*.pid",
+	".hero/mcp-*.pid.*",
+	".hero/mcp-debug.log",
 }
 
 // ensureManagedGitignoreBlock writes (or refreshes) the marker-bounded

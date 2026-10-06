@@ -927,7 +927,7 @@ func (b *Brief) Markdown() string {
 			// Tell the model where to dig deeper. Natural-language
 			// routing — no need to know specific tool names.
 			topic := sectionRecallTopic(sec.Title)
-			fmt.Fprintf(&s, "_…+%d more — `hero recall %s` to dig deeper_\n", sec.Truncated, topic)
+			fmt.Fprintf(&s, "_…+%d more — `hero search %s` to dig deeper_\n", sec.Truncated, topic)
 		}
 		s.WriteString("\n")
 	}

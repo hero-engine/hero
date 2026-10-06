@@ -45,7 +45,15 @@ type Config struct {
 	// when missing on an older workspace. See contracts/peering for
 	// the wire-shape side. Display alias for human reading lives
 	// outside Config (registered via `hero repos add` on peers).
-	PeerID  string         `json:"peer_id,omitempty"`
+	PeerID string `json:"peer_id,omitempty"`
+	// Name is the workspace's stable short name, minted from the
+	// project root's directory name at `hero init`. Unlike a live
+	// filesystem lookup, it is a fixed, committed value — every git
+	// worktree checking out the same commit sees the same Name,
+	// regardless of that worktree's own directory name. Consumers that
+	// need a workspace-identifying label (e.g. the peer manifest)
+	// should prefer this over deriving one from the working directory.
+	Name    string         `json:"name,omitempty"`
 	Peering *PeeringConfig `json:"peering,omitempty"`
 	// Domain is the legacy scalar primary-domain field. It remains readable
 	// for compatibility; explicit domain mutations write Domains and clear it.
@@ -78,6 +86,7 @@ type Config struct {
 	Cloud                 *CloudConfig                 `json:"cloud,omitempty"`
 	Next                  *NextConfig                  `json:"next,omitempty"`
 	Snapshot              *SnapshotConfig              `json:"snapshot,omitempty"`
+	Ledger                *LedgerConfig                `json:"ledger,omitempty"`
 	Specs                 *SpecsConfig                 `json:"specs,omitempty"`
 	Delivery              *DeliveryConfig              `json:"delivery,omitempty"`
 	Verify                *VerifyConfig                `json:"verify,omitempty"`
@@ -508,6 +517,13 @@ type SnapshotConfig struct {
 	// Archive carries the archive-related sub-settings. Nil-safe:
 	// readers should call accessor methods that supply defaults.
 	Archive *SnapshotArchiveConfig `json:"archive,omitempty"`
+}
+
+// LedgerConfig governs the Completion Ledger. Signers lists identities
+// (names, emails, or handles) allowed to sign off SKIPPED/BLOCKED rows in
+// addition to the repository's git commit authors.
+type LedgerConfig struct {
+	Signers []string `json:"signers,omitempty"`
 }
 
 // SnapshotArchiveConfig controls when archives are written and how
@@ -1825,6 +1841,29 @@ func MergeLocal(base, local Config) Config {
 		}
 		for k, v := range local.MethodologyOverrides {
 			base.MethodologyOverrides[k] = v
+		}
+	}
+
+	// Repos + RepoMeta: entry-by-entry merge, local entries win on alias
+	// collision. `hero repos add --local` (and `hero admin repos add
+	// --local`) writes here specifically so a personal/gitignored
+	// directory layout doesn't leak into the shared hero.json — without
+	// this merge, peer list/show/call and mail-reply resolution (which
+	// all read cfg.Repos) never see repos registered with --local.
+	if len(local.Repos) > 0 {
+		if base.Repos == nil {
+			base.Repos = make(map[string]string)
+		}
+		for k, v := range local.Repos {
+			base.Repos[k] = v
+		}
+	}
+	if len(local.RepoMeta) > 0 {
+		if base.RepoMeta == nil {
+			base.RepoMeta = make(map[string]RepoMetaEntry)
+		}
+		for k, v := range local.RepoMeta {
+			base.RepoMeta[k] = v
 		}
 	}
 

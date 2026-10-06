@@ -64,7 +64,26 @@ You produce two things:
 
 1. **A report file on disk** — always written, regardless of verdict. Path:
    `.hero/specs/{slug}/delivery-audit.md` for archived specs, or
-   `.hero/planning/{type}/{slug}/delivery-audit.md` for in-flight specs.
+   `.hero/planning/{type}/{slug}/delivery-audit.md` for in-flight specs —
+   **when the spec owns that directory.**
+
+   A spec authored as a flat `<slug>.md` file (e.g. an initiative child
+   stored as a sibling of the initiative's `spec.md`, not yet given its
+   own subdirectory) does **not** own its directory — that folder is
+   shared with the initiative and its other children. Writing a generic
+   `delivery-audit.md` there collides with any sibling that already has
+   one: `hero spec verify` resolves the report by filename within the
+   directory, so a leftover sibling report (right filename, wrong spec)
+   would silently satisfy — or fail — the wrong spec's gate. For a spec
+   that does not own its directory, write to
+   `.hero/planning/{type}/{parent-dir}/{slug}-delivery-audit.md` instead
+   — slug-scoped, sibling-safe. Verify checks the slug-scoped name first
+   and falls back to the generic one only for specs that do own their
+   directory.
+
+   Either way, keep the report's title line as `# Delivery audit —
+   {spec-slug}` exactly — verify cross-checks that slug against the spec
+   being gated and rejects a report that names a different one.
    This is a durable artifact: paste-into-PR ready, referenced by the
    orchestrator, kept as the delivery record.
 

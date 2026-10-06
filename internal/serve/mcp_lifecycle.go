@@ -50,6 +50,11 @@ func (s *MCPServer) Run() error {
 	// cover. Same real-stdio gate so unit tests never touch the pidfile.
 	if s.input == os.Stdin {
 		ppid := os.Getppid()
+		// Sweep pidfiles stranded by earlier unclean shutdowns before
+		// claiming ours. Nothing else ever revisits a file keyed on a
+		// parent pid that is not our own, so without this they are
+		// immortal.
+		reapStaleMCPPIDFiles(s.heroDir, os.Getpid())
 		var release func()
 		if r, err := acquireMCPSingleton(mcpPIDFilePath(s.heroDir, ppid), os.Getpid(), ppid); err != nil {
 			// Non-fatal: a pidfile problem must never stop us serving.
@@ -79,8 +84,10 @@ func (s *MCPServer) Run() error {
 		done := make(chan struct{})
 		defer close(done)
 		// The goroutine dies with the process; the join channel is only
-		// needed by tests that restore the watchdog's seam vars.
-		_ = startParentWatchdog(done)
+		// needed by tests that restore the watchdog's seam vars. release
+		// is handed over so the watchdog's os.Exit path cleans up the
+		// pidfile it would otherwise strand.
+		_ = startParentWatchdog(done, release)
 	}
 
 	scanner := bufio.NewScanner(s.input)
