@@ -1,45 +1,38 @@
 # Delivery audit — work-item-model
 
-**Audited:** `git diff 73d787be~1...3f75cfd6 -- internal/workmodel/model.go internal/workmodel/revision.go internal/workmodel/model_test.go`, against the amended `read-contract-v1` (Amendments, 2026-10-06). This is re-audit round 2.
+**Audited:** `git diff 3f75cfd6...df250e73`, which covers `internal/workmodel/model.go`, the tests, and the amended `read-contract-v1`. This is re-audit round 3.
 **Verdict:** HOLD
 **Surface:** noteworthy
 
 ## Acceptance criteria
-- [✓] AC-1: one item per work spec, knowledge excluded, path order. Evidence: `IsWorkItem` and `Build` in `internal/workmodel/model.go`, and the test `TestBuildIncludesOnlyWorkSpecsInPathOrder`.
-- [✓] AC-2: one lane per item by first-match rules, with RecentDays and unmet deps.
-  - The round-1 gap is fixed: `UnmetDeps` accepts `depends-on`, raw `depends_on` and `blocks` (model.go:254).
-  - `TestEdgeCasesFromAudit` asserts `designed` for a `relations:` `kind: depends_on`, a `kind: blocks`, and a missing target. It also asserts the CompletedAt→mtime fallback (`recently_done`) and a childless initiative (`none`, progress 0/0).
-- [✓] AC-3: verify state and audit from the report, null for decisions.
-  - `VerifyOf` (model.go:342) now accepts a stale report for finished specs and never accepts a slug mismatch, as the amendment specifies.
-  - Unfinished specs still require a fresh report.
-  - `not_run` + `audit: "ship"` is now defined by the amendment.
-  - Test: `TestEdgeCasesFromAudit` (a finished spec newer than its SHIP audit still passes).
-  - Real corpus result: passed 118, partial 290, not_run 102.
-- [✓] AC-4: normalization and initiative progress. `normalizeLevel` (model.go:377-388) matches the amended synonym table exactly, including `major`→high. `TestNormalizationAndProgress` tests it.
-- [✗] AC-5: the revision should change when a related spec's status changes.
-  - `TestRevisionChangesOnlyWithInputs` passes, and the `TestEdgeCasesFromAudit` aging case shows the new derived lane/verify input working (revision.go:53).
-  - **It fails on the real corpus.** `NewCorpus` (model.go:115-123) indexes by slug with last-write-wins. Promoted intakes share their slug with the promoted spec. There are 4 such pairs in this repo, for example `planning/intake/mail-b7ca19966ac5041e6ff604dd` (intake, `promoted`) and `planning/features/mail-b7ca19966ac5041e6ff604dd` (feature, `delivering`).
-  - In this corpus the intake wins the lookup.
-  - Consequence 1: `mail-thread-foreground-read-action` `relates-to` that feature. Its revision hashes `mail-b7ca…:promoted`, which is the intake's constant status, so a change in the feature's status never moves the dependent's revision.
-  - Consequence 2: a `depends-on` edge to the feature resolves against the intake, and so does a decision's parent check.
-  - The same lookup gives the wrong next step downstream (see the next-step-engine audit).
-  - No test seeds a duplicate slug.
+- [✓] AC-1: one item per work spec, knowledge excluded, path order. Tested by `TestBuildIncludesOnlyWorkSpecsInPathOrder`. A real `hero_work` call returned 513 items with no duplicate slugs.
+- [✓] AC-2: lanes by first-match rules, with RecentDays and unmet deps. Tested by `TestLanes`, `TestRecentDaysWindow` and `TestEdgeCasesFromAudit`. `TestRound2AuditCases` adds `watcher` → `designed`, which checks that a dependency resolves to the live spec and not to the intake that shares its slug.
+- [✗] AC-3: verify state and audit, "matching `hero spec verify` Gate 1".
+  - `ledgerAllDone` (model.go:367) accepts any SKIPPED/BLOCKED row whose `ParseLedger` row has `SignedOff == true`.
+  - Gate 1 (`internal/cli/verify.go:218-221`, `checkLedger`) first calls `ledger.ResolveSigners(knownSigners(...))`. That clears the sign-off for any signer that is not a git author and not in `ledger.signers`, so the gate fails closed.
+  - The model skips this step, so it is fail-open.
+  - **Real-corpus proof:** `token-efficiency-pass` gets verify `passed` from the model, so its next step is null and clients show Delivered. Gate 1 rejects its rows 10 and 19, whose "signers" are free text such as `"explicitly lowest-priority/optional per this spec's own text …"`.
+  - This contradicts the amended contract ("rows that `hero spec verify` would not accept" → partial) and the requester's rule "only canonical delivery projects Delivered".
+  - `TestRound2AuditCases` uses a real git-author signer (`chet-bellows`), so it cannot catch this.
+- [✓] AC-4: normalization and progress. No change since round 2.
+- [✓] AC-5: revision. `NewCorpus` (model.go:117-128) now lets a non-intake spec replace a promoted intake that shares its slug; in every other collision the first spec seen wins.
+  - On the real corpus, `mail-b7ca19966ac5041e6ff604dd` now resolves to the delivering feature: `hero_work` and `hero_spec` both report `in_progress` / Continue.
+  - Ten consecutive real `hero_work` calls returned an identical revision.
 
 ## Changes
-- [✓] `internal/workmodel/model.go`: round-1 fixes present (depends_on, synonym table, finished-spec staleness, derived revision input).
-- [✓] `internal/workmodel/revision.go`: `Revision(s, c, derived)` adds `\x00derived:<lane>[:<verify>]`.
-- [✓] `internal/workmodel/model_test.go`: `TestEdgeCasesFromAudit` added.
+- [✓] `internal/workmodel/model.go`: intake-safe `NewCorpus`, and signed-off rows in `ledgerAllDone`. The latter is incomplete, see AC-3.
+- [✓] `internal/workmodel/next_test.go`: `TestRound2AuditCases` covers the intake collision, the signed-off pass, and the previously untested table rows.
 
 ## Open items
 - None in the ledger. Every row is DONE.
 
 ## Audit notes
-- **Blocker:** the `Corpus` slug index must not let a promoted `intake` (or any non-work spec) shadow a work spec with the same slug. `internal/spec/graph_ingest.go`'s `resolveTargetID` handles this same intake/promoted collision explicitly. Add a duplicate-slug fixture to the tests.
-- All round-1 blockers are resolved as described, and the decision text was amended to match.
-- **Re-run (auditor):**
-  - `go test ./internal/workmodel ./internal/install ./internal/cli -count=1` passes.
-  - `go vet ./internal/workmodel` is clean and `gofmt` reports nothing.
-  - On the real corpus (513 items), revisions are identical across two builds and Build+ApplyNext takes about 29 ms.
-- Still untested, minor: a finished spec whose ledger has non-DONE rows (→ partial), and an unfinished spec with a stale audit (→ audit null).
-- Round-1 minors are unchanged: relation targets are not passed through `normalizeRelTarget`, and `created_at`/`updated_at` are `""` rather than null when zero.
-- The working tree at audit time had uncommitted changes from the next sibling (`internal/cli/next.go`, `internal/serve/*`, `internal/nextdoc/`). They are not part of 3f75cfd6, but the `./internal/cli` test run included them.
+- **Blocker:** `ledgerAllDone` must resolve signers as Gate 1 does: git authors and emails (user part included) plus `ledger.signers` from `hero.json`, via `LedgerResult.ResolveSigners`. Without that, verify `passed` is fail-open. The open bug `ledger-signoff-substring-match-fails-open` is in the same area. Add a test whose signer is free text.
+- **Your question about the two untested minor cases:**
+  - A finished spec with non-DONE rows, and an unfinished spec with a stale audit.
+  - They are **not blocking** on their own. Both paths are one-line conditions I traced by reading the code.
+  - The AC-3 defect above sits in the first path, though. Its fix should come with the free-text-signer test and a plain unsigned-SKIPPED → partial test.
+- **Re-run (auditor):** at a clean df250e73 worktree:
+  - `go test ./internal/workmodel ./internal/serve ./internal/nextdoc ./internal/install ./internal/cli -count=1` passes.
+  - `go vet` is clean, and `gofmt` reports nothing in the new files.
+- My first local build accidentally included uncommitted `polish-and-suggested` work from the working tree. All results above come from a clean worktree at df250e73.

@@ -136,14 +136,14 @@ func TestRound2AuditCases(t *testing.T) {
 	c.write("planning/features/nope", fm("nope", "feature", "rejected", "")+designedBody)
 	c.write("planning/features/merged", fm("merged", "feature", "merged", "")+designedBody)
 	c.write("planning/initiatives/fresh", fm("fresh", "initiative", "planning", "child:\n  - stub\n"))
-	c.write("planning/initiatives/fresh/done", fm("done", "decision", "accepted", "parent: fresh\n")+"\n## Decision\n\nYes.\n")
+	c.write("planning/initiatives/init/done", fm("done", "decision", "accepted", "parent: init\n")+"\n## Decision\n\nYes.\n")
 	signed := "\n## Completion Ledger\n\n### Acceptance Criteria\n\n| # | C | Status | Note |\n|---|---|---|---|\n| 1 | AC-1 | DONE | ok |\n\n### Changes\n\n| # | I | Status | Note |\n|---|---|---|---|\n| 1 | x | SKIPPED | [signed-off] chet-bellows — out of scope |\n"
 	sp := c.write("specs/signed", fm("signed", "feature", "completed", "completed_at: 2026-10-02T00:00:00Z\n")+designedBody+signed)
 	time.Sleep(10 * time.Millisecond)
 	os.WriteFile(filepath.Join(filepath.Dir(sp), "delivery-audit.md"), []byte("# Delivery audit — signed\n\n**Verdict:** SHIP\n"), 0o644)
 
 	specs, _ := c.build()
-	items := Build(specs, Options{Now: testNow, Root: c.root})
+	items := Build(specs, Options{Now: testNow, Root: c.root, Signers: map[string]bool{"chet-bellows": true}})
 	ApplyNext(items, specs)
 	by := map[string]Item{}
 	for _, it := range items {
@@ -188,5 +188,62 @@ func TestRound2AuditCases(t *testing.T) {
 				t.Errorf("diagnosed bug offers Deliver plus a diagnose-action extra: %+v", e)
 			}
 		}
+	}
+}
+
+// Audit round 3: sign-offs resolve against Gate 1's known signers (a
+// free-text "signer" never verifies), reverse parent edges make an
+// initiative's children, and two previously untested verify paths.
+func TestRound3AuditCases(t *testing.T) {
+	c := newCorpus(t)
+	seed(c)
+	ledger := func(note string) string {
+		return "\n## Completion Ledger\n\n### Acceptance Criteria\n\n| # | C | Status | Note |\n|---|---|---|---|\n| 1 | AC-1 | DONE | ok |\n\n### Changes\n\n| # | I | Status | Note |\n|---|---|---|---|\n| 1 | x | SKIPPED | " + note + " |\n"
+	}
+	shipped := func(slug, body string) {
+		p := c.write("specs/"+slug, fm(slug, "feature", "completed", "completed_at: 2026-10-02T00:00:00Z\n")+designedBody+body)
+		time.Sleep(10 * time.Millisecond)
+		os.WriteFile(filepath.Join(filepath.Dir(p), "delivery-audit.md"), []byte("# Delivery audit — "+slug+"\n\n**Verdict:** SHIP\n"), 0o644)
+	}
+	shipped("known", ledger("[signed-off] chet-bellows — out of scope"))
+	shipped("freetext", ledger("[signed-off] the team agreed — later"))
+	shipped("undone", ledger("not done yet"))
+	stale := c.write("planning/features/stale", fm("stale", "feature", "delivering", "")+designedBody)
+	os.WriteFile(filepath.Join(filepath.Dir(stale), "delivery-audit.md"), []byte("# Delivery audit — stale\n\n**Verdict:** SHIP\n"), 0o644)
+	time.Sleep(10 * time.Millisecond)
+	os.WriteFile(stale, []byte(fm("stale", "feature", "delivering", "")+designedBody+"\nEdited after the audit.\n"), 0o644)
+	c.write("planning/initiatives/umbrella", fm("umbrella", "initiative", "planning", ""))
+	c.write("planning/features/kid1", fm("kid1", "feature", "completed", "parent: umbrella\ncompleted_at: 2026-06-01T00:00:00Z\n")+designedBody)
+	c.write("planning/features/kid2", fm("kid2", "feature", "planning", "parent: umbrella\n")+designedBody)
+	c.write("knowledge/notes/aside", fm("aside", "note", "active", "parent: umbrella\n"))
+
+	specs, _ := c.build()
+	items := Build(specs, Options{Now: testNow, Root: c.root, Signers: map[string]bool{"chet-bellows": true}})
+	ApplyNext(items, specs)
+	by := map[string]Item{}
+	for _, it := range items {
+		by[it.Slug] = it
+	}
+	for slug, want := range map[string]string{"known": VerifyPassed, "freetext": VerifyPartial, "undone": VerifyPartial, "stale": VerifyNotRun} {
+		if v := by[slug].Verify; v == nil || v.State != want {
+			t.Errorf("%s verify = %+v, want %s", slug, v, want)
+		}
+	}
+	if by["stale"].Verify.Audit != nil {
+		t.Errorf("an unfinished spec newer than its audit must not report it: %v", *by["stale"].Verify.Audit)
+	}
+	if n := by["freetext"].Next; n == nil || n.Action != ActionVerify {
+		t.Errorf("free-text signer must leave Verify offered, got %+v", n)
+	}
+	// No signer set at all fails closed.
+	bare := Build(specs, Options{Now: testNow, Root: c.root})
+	for _, it := range bare {
+		if it.Slug == "known" && it.Verify.State != VerifyPartial {
+			t.Errorf("nil Signers must not accept sign-offs, got %s", it.Verify.State)
+		}
+	}
+	u := by["umbrella"]
+	if u.Progress == nil || u.Progress.Total != 2 || u.Progress.Done != 1 || u.Lane != LaneInProgress || u.Next == nil || u.Next.Label != "Drive" {
+		t.Errorf("reverse-parent children not counted: lane %s progress %+v next %+v", u.Lane, u.Progress, u.Next)
 	}
 }

@@ -1,2 +1,3 @@
-ok  	github.com/hero-engine/hero/internal/serve	5.352s
-ok  	github.com/hero-engine/hero/internal/workmodel	0.743s
+ok  	github.com/hero-engine/hero/internal/serve	4.773s
+ok  	github.com/hero-engine/hero/internal/workmodel	0.368s
+ok  	github.com/hero-engine/hero/internal/cli	91.373s

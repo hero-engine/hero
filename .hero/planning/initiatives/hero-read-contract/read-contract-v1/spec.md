@@ -26,7 +26,7 @@ This decision records the Hero-side semantics for the read contract that hero-ha
 **Designed.**
 - feature/enhancement: has a `## Changes` section and at least one acceptance criterion.
 - bug: has a `## Root Cause` (or `## Root Cause Analysis`) section and a `## Changes` / `## Fix` / `## Suggested Fix Approach` section.
-- initiative: has at least one declared child.
+- initiative: has at least one child: declared in frontmatter or a children table, or a work spec naming it as `parent`.
 - decision: has a `## Decision` section.
 
 **Unmet dependency.** An outgoing `depends-on` or `blocks` edge to a target that is not finished (`spec.IsFinished`). This is the same rule `internal/projection` uses for NEXT.md.
@@ -39,7 +39,7 @@ This decision records the Hero-side semantics for the read contract that hero-ha
 | `designed` | Status `planning` / `proposed`, designed, with an unmet dependency |
 | `none` | Everything else: undesigned stubs, older finished work, superseded/rejected/merged |
 
-`progress` for initiatives is declared children finished / declared children total. It is `null` for other types.
+`progress` for initiatives is children finished / children total, using the same children as "designed" (declared plus work specs that name it as parent). It is `null` for other types.
 
 `priority` / `severity` normalization:
 - `critical`: p0, critical, blocker, highest.
@@ -125,7 +125,7 @@ Polish covers `recently_done` items only.
 
 ### `hero_handoff`
 
-Returns the NEXT.md projection that `hero next` prints, as `markdown`, with `updated_at` from its frontmatter.
+Returns the handoff file `hero next` shows (team mode: `.hero/next/<user>.md`, else `.hero/NEXT.md`) as `markdown`, with `updated_at` from its frontmatter block. Per-machine local notes, which `hero next` appends, are excluded: they are not shared state.
 
 ### Versioning
 
@@ -152,3 +152,7 @@ Returns the NEXT.md projection that `hero next` prints, as `markdown`, with `upd
   - The diagnosed-bug extra uses action `challenge`.
   - The handed-off reason is generic.
   - A promoted intake never shadows the spec that shares its slug.
+- **2026-10-06 (cold audit, round 3):**
+  - Ledger sign-offs count toward `passed` only when the signer resolves against `hero spec verify` Gate 1's known signers (`spec.KnownSigners`: git authors plus `ledger.signers`). With no signer set, no sign-off counts.
+  - Initiative children include work specs whose `parent` names the initiative.
+  - `hero_handoff` excludes per-machine local notes.

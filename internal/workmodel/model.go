@@ -104,11 +104,16 @@ type Options struct {
 	RecentDays int
 	// Root is the project root; item paths are made relative to it.
 	Root string
+	// Signers are the identities whose ledger sign-offs count, exactly as
+	// `hero spec verify` Gate 1 resolves them (spec.KnownSigners). Nil
+	// accepts no sign-off: unresolved sign-offs never count as verified.
+	Signers map[string]bool
 }
 
 // Corpus indexes specs by slug for relation lookups.
 type Corpus struct {
-	bySlug map[string]*spec.Spec
+	bySlug   map[string]*spec.Spec
+	children map[string][]string // parent slug -> work specs declaring it as parent
 }
 
 // NewCorpus indexes specs by slug. Slugs can collide across kinds: a
@@ -127,7 +132,30 @@ func NewCorpus(specs []*spec.Spec) *Corpus {
 		}
 		c.bySlug[s.Slug] = s
 	}
+	c.children = map[string][]string{}
+	for _, s := range specs {
+		if slugRank(s) != 0 || c.bySlug[s.Slug] != s {
+			continue
+		}
+		if p := ParentSlug(s); p != "" {
+			c.children[p] = append(c.children[p], s.Slug)
+		}
+	}
 	return c
+}
+
+// Children returns an initiative's children: the slugs it declares, then
+// work specs that name it as their parent, each once, in that order.
+func (c *Corpus) Children(s *spec.Spec) []string {
+	seen := map[string]bool{s.Slug: true}
+	var out []string
+	for _, slug := range append(spec.DeclaredChildren(s), c.children[s.Slug]...) {
+		if !seen[slug] {
+			seen[slug] = true
+			out = append(out, slug)
+		}
+	}
+	return out
 }
 
 func slugRank(s *spec.Spec) int {
@@ -221,7 +249,7 @@ func buildItem(s *spec.Spec, c *Corpus, opts Options) Item {
 	if s.TrackerID != "" {
 		it.Tracker = &Tracker{ID: s.TrackerID}
 	}
-	it.Verify = VerifyOf(s)
+	it.Verify = VerifyOf(s, opts.Signers)
 	// Lane and verify state can change with time alone (recently_done ages
 	// out), so they are part of the revision too.
 	derived := it.Lane
@@ -243,7 +271,7 @@ func ParentSlug(s *spec.Spec) string {
 }
 
 // Designed reports whether s carries a design per read-contract-v1.
-func Designed(s *spec.Spec) bool {
+func Designed(s *spec.Spec, c *Corpus) bool {
 	has := func(names ...string) bool {
 		for _, n := range names {
 			if strings.TrimSpace(s.Sections[n]) != "" {
@@ -256,7 +284,7 @@ func Designed(s *spec.Spec) bool {
 	case "bug":
 		return has("root cause", "root cause analysis") && has("changes", "fix", "suggested fix approach")
 	case "initiative":
-		return len(spec.DeclaredChildren(s)) > 0
+		return len(c.Children(s)) > 0
 	case "decision":
 		return has("decision")
 	default:
@@ -315,7 +343,7 @@ func Lane(s *spec.Spec, c *Corpus, opts Options) string {
 		return LaneInProgress
 	}
 	if s.Status == spec.StatusPlanning || s.Status == spec.StatusProposed {
-		if !Designed(s) {
+		if !Designed(s, c) {
 			return LaneNone
 		}
 		if len(UnmetDeps(s, c)) > 0 {
@@ -327,7 +355,7 @@ func Lane(s *spec.Spec, c *Corpus, opts Options) string {
 }
 
 func initiativeStarted(s *spec.Spec, c *Corpus) bool {
-	for _, slug := range spec.DeclaredChildren(s) {
+	for _, slug := range c.Children(s) {
 		if ch := c.Lookup(slug); ch != nil && (ch.IsFinished() || inProgressStatuses[ch.Status]) {
 			return true
 		}
@@ -336,7 +364,7 @@ func initiativeStarted(s *spec.Spec, c *Corpus) bool {
 }
 
 func initiativeProgress(s *spec.Spec, c *Corpus) *Progress {
-	children := spec.DeclaredChildren(s)
+	children := c.Children(s)
 	p := &Progress{Total: len(children)}
 	for _, slug := range children {
 		if ch := c.Lookup(slug); ch != nil && ch.IsFinished() {
@@ -349,7 +377,7 @@ func initiativeProgress(s *spec.Spec, c *Corpus) *Progress {
 // VerifyOf derives verify state from files on disk: the spec's own
 // validated audit report, its Completion Ledger, and its status. It is nil
 // for types that do not verify (decision).
-func VerifyOf(s *spec.Spec) *Verify {
+func VerifyOf(s *spec.Spec, signers map[string]bool) *Verify {
 	if s.Type == spec.TypeDecision {
 		return nil
 	}
@@ -368,7 +396,7 @@ func VerifyOf(s *spec.Spec) *Verify {
 	case s.Status == spec.StatusRegressed || (v.Audit != nil && *v.Audit == "hold"):
 		v.State = VerifyFailed
 	case s.IsFinished():
-		if v.Audit != nil && *v.Audit == "ship" && ledgerAllDone(s) {
+		if v.Audit != nil && *v.Audit == "ship" && ledgerAllDone(s, signers) {
 			v.State = VerifyPassed
 		} else {
 			v.State = VerifyPartial
@@ -377,8 +405,14 @@ func VerifyOf(s *spec.Spec) *Verify {
 	return v
 }
 
-func ledgerAllDone(s *spec.Spec) bool {
+func ledgerAllDone(s *spec.Spec, signers map[string]bool) bool {
 	ledger := spec.ParseLedger(s)
+	// Resolve sign-offs exactly as Gate 1 does: an unknown signer clears
+	// SignedOff, so free-text "signers" never pass.
+	if signers == nil {
+		signers = map[string]bool{}
+	}
+	ledger.ResolveSigners(signers)
 	if !ledger.Found || len(ledger.ACRows) == 0 {
 		return false
 	}

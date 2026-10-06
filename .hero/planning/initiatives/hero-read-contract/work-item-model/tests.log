@@ -9,7 +9,7 @@
 === RUN   TestNormalizationAndProgress
 --- PASS: TestNormalizationAndProgress (0.01s)
 === RUN   TestRevisionChangesOnlyWithInputs
---- PASS: TestRevisionChangesOnlyWithInputs (0.02s)
+--- PASS: TestRevisionChangesOnlyWithInputs (0.03s)
 === RUN   TestEdgeCasesFromAudit
 --- PASS: TestEdgeCasesFromAudit (0.02s)
 === RUN   TestNextStepTable
@@ -18,5 +18,11 @@
 --- PASS: TestNextStepInvariants (0.01s)
 === RUN   TestRound2AuditCases
 --- PASS: TestRound2AuditCases (0.02s)
+=== RUN   TestRound3AuditCases
+--- PASS: TestRound3AuditCases (0.06s)
+=== RUN   TestPolishKinds
+--- PASS: TestPolishKinds (0.01s)
+=== RUN   TestSuggested
+--- PASS: TestSuggested (0.01s)
 PASS
-ok  	github.com/hero-engine/hero/internal/workmodel	0.239s
+ok  	github.com/hero-engine/hero/internal/workmodel	0.305s

@@ -73,7 +73,7 @@ func (s *MCPServer) toolSpec(args map[string]interface{}) (string, error) {
 	if target == nil {
 		return "", fmt.Errorf("no spec with slug %q", slug)
 	}
-	item, ok := workmodel.BuildOne(target, specs, workmodel.Options{Root: s.projectRoot, Now: readContractNow()})
+	item, ok := workmodel.BuildOne(target, specs, workmodel.Options{Root: s.projectRoot, Now: readContractNow(), Signers: s.ledgerSigners()})
 	if !ok {
 		return "", fmt.Errorf("%q is a %s, not a work spec (hero_spec serves features, bugs, enhancements, initiatives, epics and initiative decisions)", slug, target.Type)
 	}
@@ -116,15 +116,15 @@ func (s *MCPServer) toolHandoff(map[string]interface{}) (string, error) {
 
 // specBody returns the Markdown with its YAML frontmatter removed.
 func specBody(raw string) string {
-	if !strings.HasPrefix(raw, "---\n") {
+	norm := strings.ReplaceAll(raw, "\r\n", "\n")
+	if !strings.HasPrefix(norm, "---\n") {
 		return raw
 	}
-	end := strings.Index(raw[4:], "\n---")
+	end := strings.Index(norm[4:], "\n---")
 	if end < 0 {
 		return raw
 	}
-	rest := raw[4+end+4:]
-	return strings.TrimLeft(rest, "\r\n")
+	return strings.TrimLeft(norm[4+end+4:], "\n")
 }
 
 // frontmatterValue returns a scalar from the first `---`-delimited block,
@@ -184,15 +184,10 @@ func specRelations(target *spec.Spec, specs []*spec.Spec, c *workmodel.Corpus) S
 			add(&rel.Related, r.Target)
 		}
 	}
-	if target.Type == spec.TypeInitiative {
-		for _, slug := range spec.DeclaredChildren(target) {
-			add(&rel.Children, slug)
-		}
-	}
-	for _, s := range specs {
-		if workmodel.ParentSlug(s) == target.Slug {
-			add(&rel.Children, s.Slug)
-		}
+	// Declared children plus work specs naming it as their parent (the same
+	// set the model counts for progress); knowledge entries are not children.
+	for _, slug := range c.Children(target) {
+		add(&rel.Children, slug)
 	}
 	return rel
 }
@@ -274,7 +269,7 @@ func (s *MCPServer) toolWork(args map[string]interface{}) (string, error) {
 		return "", fmt.Errorf("discovering specs: %w", err)
 	}
 	now := readContractNow()
-	items := workmodel.Build(specs, workmodel.Options{Now: now, RecentDays: recentDays, Root: s.projectRoot})
+	items := workmodel.Build(specs, workmodel.Options{Now: now, RecentDays: recentDays, Root: s.projectRoot, Signers: s.ledgerSigners()})
 	workmodel.ApplyNext(items, specs)
 	if items == nil {
 		items = []workmodel.Item{}
@@ -310,4 +305,13 @@ func workRevision(w HeroWork) string {
 	}{w.Polish, w.Suggested})
 	h.Write(tail)
 	return hex.EncodeToString(h.Sum(nil))[:16]
+}
+
+// ledgerSigners is Gate 1's signer set for this project.
+func (s *MCPServer) ledgerSigners() map[string]bool {
+	var configured []string
+	if cfg, err := config.Load(s.projectRoot); err == nil && cfg.Ledger != nil {
+		configured = cfg.Ledger.Signers
+	}
+	return spec.KnownSigners(s.projectRoot, configured)
 }

@@ -84,7 +84,7 @@ func NextFor(it Item, s *spec.Spec, c *Corpus) *NextStep {
 
 	switch typ {
 	case "initiative", "epic":
-		if len(spec.DeclaredChildren(s)) == 0 {
+		if len(c.Children(s)) == 0 {
 			return step(ActionDesign, "Compose", "/compose "+slug, "Planning", PhaseReady, nil, nil)
 		}
 		label, state := "Planning", PhaseReady
@@ -95,13 +95,13 @@ func NextFor(it Item, s *spec.Spec, c *Corpus) *NextStep {
 	case "decision":
 		return step(ActionDesign, "Decide", "/decide "+slug, "Proposed", PhaseReady, nil, nil)
 	case "bug":
-		if !Designed(s) {
+		if !Designed(s, c) {
 			return step(ActionDiagnose, "Diagnose", "/diagnose "+slug, "Reported", PhaseReady, nil, nil)
 		}
 		extras := []Extra{{Action: ActionChallenge, Label: "Challenge diagnosis", Command: "/challenge " + slug}}
 		return gateOnDeps(step(ActionDeliver, "Fix", "/deliver "+slug, "Diagnosed", PhaseReady, nil, extras), s, c)
 	default: // feature, enhancement
-		if !Designed(s) {
+		if !Designed(s, c) {
 			return step(ActionDesign, "Design", "/design "+slug, "Planning", PhaseReady, nil,
 				[]Extra{{Action: ActionDesign, Label: "Split", Command: "/split " + slug}})
 		}

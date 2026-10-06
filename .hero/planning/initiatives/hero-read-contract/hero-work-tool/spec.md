@@ -56,7 +56,7 @@ Add read-only MCP tool `hero_work {recent_days?: integer = 14}` → `HeroWork {s
 | 2 | AC-2: revision stable vs content | DONE | `TestToolWorkRevision`: the same revision with `generated_at` an hour later; it changes after a spec edit |
 | 3 | AC-3: recent_days validation | DONE | `TestToolWorkRecentDays`: 0, -1, 1.5 and "7" are rejected; 30 is accepted |
 | 4 | AC-4: read-only, no writes | DONE | `TestToolWorkWritesNothing` |
-| 5 | AC-5: real-repo latency and stability | DONE | `real-exercise.log`: 5 real `hero mcp` calls on this repo return 513 items with the identical revision every time. The model build measured ~20-30 ms in the workmodel probes; the end-to-end call includes the stale-index check |
+| 5 | AC-5: real-repo latency and stability | DONE | `real-exercise.log`: 10 calls in one `hero mcp` session take first 243 ms, median 276 ms and max 306 ms, with one revision. That is well under the 2 s budget, and matches the auditor's independent 0.24–0.40 s |
 
 ### Changes
 
