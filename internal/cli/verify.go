@@ -138,7 +138,7 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	result := VerifyResult{Slug: target.Slug}
 
 	// Gate 1: Completion Ledger
-	gate1 := checkLedger(target)
+	gate1 := checkLedger(target, knownSigners(projectRoot, cfg))
 	result.Gates = append(result.Gates, gate1)
 
 	// Gate 2: Delivery Audit
@@ -215,9 +215,10 @@ func runVerify(cmd *cobra.Command, args []string) error {
 }
 
 // checkLedger verifies Gate 1: Completion Ledger present and clean.
-func checkLedger(s *spec.Spec) GateResult {
+func checkLedger(s *spec.Spec, signers map[string]bool) GateResult {
 	gate := GateResult{Name: "Completion Ledger"}
 	ledger := spec.ParseLedger(s)
+	ledger.ResolveSigners(signers)
 
 	if !ledger.Found {
 		gate.Result = "FAIL"
@@ -239,8 +240,14 @@ func checkLedger(s *spec.Spec) GateResult {
 				doneCount++
 			} else {
 				allDone = false
-				gate.Details = append(gate.Details,
-					fmt.Sprintf("AC-%d is %s (not signed-off): %s", row.Index, row.Status, row.Note))
+				if row.SignOffRejected != "" {
+					gate.Details = append(gate.Details,
+						fmt.Sprintf("AC-%d is %s (sign-off marker found but rejected: %s; write %s): %s",
+							row.Index, row.Status, row.SignOffRejected, spec.SignOffForm, row.Note))
+				} else {
+					gate.Details = append(gate.Details,
+						fmt.Sprintf("AC-%d is %s (not signed-off): %s", row.Index, row.Status, row.Note))
+				}
 			}
 		case spec.LedgerPartial:
 			allDone = false
@@ -262,8 +269,14 @@ func checkLedger(s *spec.Spec) GateResult {
 	for _, row := range ledger.ChangesRows {
 		if row.Status != spec.LedgerDone && !(row.SignedOff && (row.Status == spec.LedgerSkipped || row.Status == spec.LedgerBlocked)) {
 			allDone = false
-			gate.Details = append(gate.Details,
-				fmt.Sprintf("Changes item %d is %s: %s", row.Index, row.Status, row.Note))
+			if row.SignOffRejected != "" {
+				gate.Details = append(gate.Details,
+					fmt.Sprintf("Changes item %d is %s (sign-off marker found but rejected: %s; write %s): %s",
+						row.Index, row.Status, row.SignOffRejected, spec.SignOffForm, row.Note))
+			} else {
+				gate.Details = append(gate.Details,
+					fmt.Sprintf("Changes item %d is %s: %s", row.Index, row.Status, row.Note))
+			}
 		}
 	}
 	if len(ledger.ChangesRows) > 0 {
@@ -692,4 +705,33 @@ func normalizeVerifyParentTarget(target string) string {
 	}
 	dir := filepath.Dir(target)
 	return filepath.Base(dir)
+}
+
+// knownSigners returns the identities allowed to sign off ledger rows: every
+// git commit author's name, email, and email user, plus hero.json
+// ledger.signers entries (with the email user of any email entry).
+func knownSigners(projectRoot string, cfg config.Config) map[string]bool {
+	known := map[string]bool{}
+	add := func(id string) {
+		id = spec.NormalizeSigner(id)
+		if id == "" {
+			return
+		}
+		known[id] = true
+		if user, _, ok := strings.Cut(id, "@"); ok && user != "" {
+			known[user] = true
+		}
+	}
+	if cfg.Ledger != nil {
+		for _, id := range cfg.Ledger.Signers {
+			add(id)
+		}
+	}
+	out, err := exec.Command("git", "-C", projectRoot, "log", "--format=%an%n%ae").Output()
+	if err == nil {
+		for _, line := range strings.Split(string(out), "\n") {
+			add(line)
+		}
+	}
+	return known
 }

@@ -151,8 +151,8 @@ status: delivering
 | # | Criterion | Status | Note |
 |---|---|---|---|
 | 1 | Do X | DONE | implemented |
-| 2 | Do Y | SKIPPED | out of scope [signed-off] |
-| 3 | Do Z | BLOCKED | upstream dep [signed off] |
+| 2 | Do Y | SKIPPED | [signed-off] bwheeler — out of scope |
+| 3 | Do Z | BLOCKED | [signed off: bwheeler] upstream dep |
 
 ### Exercise-the-feature check
 
@@ -329,5 +329,68 @@ func TestParseLedger_NilSpec(t *testing.T) {
 	ledger := ParseLedger(nil)
 	if ledger.Found {
 		t.Error("expected ledger to not be found for nil spec")
+	}
+}
+
+func TestParseSignOff(t *testing.T) {
+	cases := []struct {
+		note, wantSigner string
+		wantReject       bool
+	}{
+		// Structured forms yield the normalized signer.
+		{"[signed-off] bwheeler — accepted the descope", "bwheeler", false},
+		{"[SIGNED OFF] Brian Wheeler - deferred to phase 2", "brian wheeler", false},
+		{"[signed-off: bwheeler] accepted the descope", "bwheeler", false},
+		{"[signed off: dave@example.com]", "dave@example.com", false},
+		{"[signed-off] Jean-Luc O'Brien – accepted", "jean-luc o'brien", false},
+		{"implemented", "", false},
+		// Structurally rejected: not leading, no dash-terminated signer, empty.
+		{"Needs user sign-off — [signed-off] NOT yet given", "", true},
+		{"needs [signed-off] before shipping", "", true},
+		{"awaiting [signed off] from owner", "", true},
+		{"blocked pending [signed-off]", "", true},
+		{"owner has not given [signed-off]", "", true},
+		{"out of scope [signed-off]", "", true},
+		{"[signed-off] NOT yet given", "", true},
+		{"[signed-off] was never given", "", true},
+		{"[signed-off]: denied", "", true},
+		{"[signed-off: ] fine", "", true},
+		{"[signed-off] Explicitly optional per this spec's own text.", "", true},
+	}
+	for _, c := range cases {
+		signer, reason := parseSignOff(c.note)
+		if signer != c.wantSigner || (reason != "") != c.wantReject {
+			t.Errorf("parseSignOff(%q) = %q, %q; want %q, rejected=%v", c.note, signer, reason, c.wantSigner, c.wantReject)
+		}
+	}
+}
+
+func TestResolveSigners(t *testing.T) {
+	notes := []string{
+		"[signed-off] bwheeler — accepted",
+		"[signed-off: Brian Wheeler] accepted",
+		// Denials shaped like a signer fail because no such identity exists.
+		"[signed-off] waiting on owner — see thread",
+		"[signed-off] not-yet — x",
+		"[signed-off: pending]",
+		"[signed-off] hasn't — x",
+		"[signed-off] N/A — n/a",
+	}
+	l := &LedgerResult{}
+	for i, n := range notes {
+		r := LedgerRow{Index: i + 1, Status: LedgerSkipped, Note: n}
+		r.Signer, r.SignOffRejected = parseSignOff(n)
+		r.SignedOff = r.Signer != ""
+		l.ACRows = append(l.ACRows, r)
+	}
+	l.ResolveSigners(map[string]bool{"bwheeler": true, "brian wheeler": true})
+	for i, r := range l.ACRows {
+		want := i < 2
+		if r.SignedOff != want {
+			t.Errorf("%q: SignedOff = %v, want %v", r.Note, r.SignedOff, want)
+		}
+		if !want && r.SignOffRejected == "" {
+			t.Errorf("%q: expected a rejection reason", r.Note)
+		}
 	}
 }

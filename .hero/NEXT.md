@@ -5,8 +5,8 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-09-16T00:08:42Z
-repo: hero-engine/hero
+updated: 2026-09-29T09:43:58Z
+repo: davidray/hero
 ---
 
 ## Just finished
@@ -15,9 +15,9 @@ Run `git log --oneline -10` for recent commits.
 
 ## Next
 
-- **E2E Onboarding Suite — Fresh Repo to Productive Workspace** (`e2e-onboarding`, P0, planning)
+- **Core / Vertical Layering — Make the Conceptual Split Physical** (`core-vertical-layering`, P0, planning)
 
-→ `/deliver e2e-onboarding`
+→ `/deliver core-vertical-layering`
 
 ## Blocked on
 
@@ -31,9 +31,6 @@ Run `git log --oneline -10` for recent commits.
 - **hero-launch-playbook** ← waiting on `hero-distribution` (planning)
 - **hero-launch-playbook** ← waiting on `hero-landing-page` (delivering)
 - **hero-team-server** ← waiting on `hero-runner` (planning)
-- **hihcp-agent-loop-error-recovery** ← waiting on `hihcp-mcp-auto-reconnect` (handed_off)
-- **hihcp-agent-loop-error-recovery** ← waiting on `hihcp-mcp-first-turn-readiness` (handed_off)
-- **hihcp-agents-md-harness-agnostic** ← waiting on `hihcp-skill-run-tool` (handed_off)
 - **timely-briefs** ← waiting on `retrieval-contradiction-detection` (delivering)
 - **wire-checks-to-boundaries** ← waiting on `spec-contract-enums-unified` (planning)
 
