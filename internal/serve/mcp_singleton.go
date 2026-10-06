@@ -116,6 +116,42 @@ func coexistRelease(path string, self, ppid int) (func(), error) {
 	}, nil
 }
 
+// reapStaleMCPPIDFiles removes MCP singleton pidfiles in heroDir whose
+// recorded holder process is no longer alive.
+//
+// Without this, a workspace accumulates one dead pidfile per unclean
+// shutdown, forever: acquireMCPSingleton only ever looks at the single
+// file matching ITS OWN parent pid, so a file keyed on any other (now
+// dead) parent is never examined again by anyone. Every path that skips
+// the deferred release — SIGKILL, a panic in the harness, the machine
+// losing power — strands a file permanently.
+//
+// Only files whose holder is confirmed dead are removed, so a live
+// daemon's record (including a coexisting one) is never disturbed. A
+// file we cannot parse is left alone rather than guessed at, and our own
+// record is skipped so a concurrent startup can't delete itself.
+func reapStaleMCPPIDFiles(heroDir string, self int) {
+	// Primary records are mcp-<ppid>.pid; coexisting daemons add a
+	// ".<pid>" suffix (see coexistRelease), so both shapes must be swept.
+	var paths []string
+	for _, pattern := range []string{"mcp-*.pid", "mcp-*.pid.*"} {
+		matches, err := filepath.Glob(filepath.Join(heroDir, pattern))
+		if err != nil {
+			continue
+		}
+		paths = append(paths, matches...)
+	}
+	for _, path := range paths {
+		rec := readMCPPIDRecord(path)
+		if rec == nil || rec.PID == self {
+			continue
+		}
+		if !singletonIsAlive(rec.PID) {
+			_ = os.Remove(path)
+		}
+	}
+}
+
 // readMCPPIDRecord reads and parses the MCP pidfile at path. Returns nil
 // when the file is missing or unparseable — callers treat nil as "no
 // live incumbent", which is the safe default (worst case: one extra

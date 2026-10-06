@@ -268,3 +268,47 @@ func stubSingletonSeams(t *testing.T) func() {
 		singletonSignal = origSignal
 	}
 }
+
+// TestReapStaleMCPPIDFiles verifies the startup sweep removes pidfiles whose
+// holder is dead while leaving live holders, our own record, and unparseable
+// files untouched. Without the sweep a workspace accumulates one dead file
+// per unclean shutdown forever, since acquireMCPSingleton only ever inspects
+// the single file keyed on its own parent pid.
+func TestReapStaleMCPPIDFiles(t *testing.T) {
+	restore := stubSingletonSeams(t)
+	defer restore()
+
+	dir := t.TempDir()
+	const self, liveHolder, deadHolder, deadCoexist = 100, 200, 300, 400
+
+	aliveSet[self] = true
+	aliveSet[liveHolder] = true
+
+	own := filepath.Join(dir, "mcp-10.pid")
+	live := filepath.Join(dir, "mcp-20.pid")
+	dead := filepath.Join(dir, "mcp-30.pid")
+	coexist := filepath.Join(dir, "mcp-40.pid.400")
+	garbage := filepath.Join(dir, "mcp-50.pid")
+
+	for path, pid := range map[string]int{own: self, live: liveHolder, dead: deadHolder, coexist: deadCoexist} {
+		if err := writeMCPPIDRecord(path, pid, 1); err != nil {
+			t.Fatalf("seed %s: %v", path, err)
+		}
+	}
+	if err := os.WriteFile(garbage, []byte("not json"), 0o644); err != nil {
+		t.Fatalf("seed garbage: %v", err)
+	}
+
+	reapStaleMCPPIDFiles(dir, self)
+
+	for _, path := range []string{own, live, garbage} {
+		if _, err := os.Stat(path); err != nil {
+			t.Errorf("reaper removed a file it must preserve (%s): %v", filepath.Base(path), err)
+		}
+	}
+	for _, path := range []string{dead, coexist} {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Errorf("reaper left stale file %s in place (err=%v)", filepath.Base(path), err)
+		}
+	}
+}
