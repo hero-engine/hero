@@ -4,6 +4,7 @@ slug: hero-read-contract
 type: initiative
 status: planning
 priority: high
+autonomy: autonomous
 domain: engineering
 size: large
 created: 2026-10-06
