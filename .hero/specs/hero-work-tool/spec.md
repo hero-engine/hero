@@ -2,7 +2,7 @@
 title: "hero_work MCP tool — the work picture with lanes and next steps"
 slug: hero-work-tool
 type: feature
-status: delivering
+status: completed
 priority: high
 domain: engineering
 size: small
@@ -12,6 +12,7 @@ depends-on: [next-step-engine]
 relations:
   - target: hero-spec-handoff-tools
     kind: conflicts-with
+completed_at: 2026-10-06T23:50:07Z
 ---
 
 # hero_work

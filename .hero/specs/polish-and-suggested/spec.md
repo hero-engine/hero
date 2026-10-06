@@ -2,13 +2,14 @@
 title: "Polish and suggested lists in hero_work"
 slug: polish-and-suggested
 type: feature
-status: delivering
+status: completed
 priority: medium
 domain: engineering
 size: small
 created: 2026-10-06
 parent: hero-read-contract
 depends-on: [hero-work-tool]
+completed_at: 2026-10-06T23:50:10Z
 ---
 
 # Polish and suggested

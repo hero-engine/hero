@@ -2,13 +2,14 @@
 title: "Next-step engine — one deterministic primary action per work item"
 slug: next-step-engine
 type: feature
-status: delivering
+status: completed
 priority: high
 domain: engineering
 size: small
 created: 2026-10-06
 parent: hero-read-contract
 depends-on: [work-item-model]
+completed_at: 2026-10-06T23:42:59Z
 ---
 
 # Next-step engine

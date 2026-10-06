@@ -2,7 +2,7 @@
 title: "Work-item model — one WorkItem for every read tool"
 slug: work-item-model
 type: feature
-status: delivering
+status: completed
 priority: critical
 domain: engineering
 size: medium
@@ -10,6 +10,7 @@ created: 2026-10-06
 parent: hero-read-contract
 depends-on: [read-contract-v1]
 delivery_method: manual
+completed_at: 2026-10-06T23:49:59Z
 ---
 
 # Work-item model

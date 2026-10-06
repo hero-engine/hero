@@ -2,8 +2,8 @@
 """Export read contract v1 replies from a real `hero mcp` as fixture JSON.
 
 Writes hero_work.json, hero_handoff.json and hero_spec/<slug>.json (one per
-work item) into OUT_DIR, plus manifest.json recording the Hero version,
-revision and source commit. Clients (e.g. hero-harness's fixture server)
+work item) into OUT_DIR, plus manifest.json recording the replying Hero's version, the
+revision, and the exported project's commit (not Hero's source commit). Clients (e.g. hero-harness's fixture server)
 serve these instead of running Hero in tests.
 
 Usage: scripts/export-read-contract-fixture.py [--hero PATH] [--project DIR] OUT_DIR
@@ -65,7 +65,7 @@ def main():
             json.dump(value, f, indent=2)
     commit = subprocess.run(["git", "-C", args.project, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     manifest = {"schema_version": work["schema_version"], "hero_version": work["hero_version"],
-                "revision": work["revision"], "source_commit": commit or None,
+                "revision": work["revision"], "project_commit": commit or None,
                 "items": len(work["items"]), "generated_at": work["generated_at"]}
     with open(os.path.join(args.out_dir, "manifest.json"), "w") as f:
         json.dump(manifest, f, indent=2)

@@ -53,16 +53,16 @@ Then reply to hero-harness with the Hero commit to pin. Test with `go test ./int
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | AC-1: additive-only golden | DONE | 151 paths, covering polish, suggested (including `slug:null`), nulls, extras and relations. Falsified: renaming `lane` fails with exactly `hero_work.items[].lane:string` and `hero_spec.item.lane:string` |
+| 1 | AC-1: additive-only golden | DONE | Round 1 HOLD fixed: the fixture now covers an audited, sized, verified item (`verify.audit:string`, `size:string`, `next:null`), a decision child (`verify:null`), a `blocks` edge and initiative children (element shapes), an empty handoff (`updated_at:null`), and a separate thin-backlog call for Explore (`suggested[].slug:null`). The golden grew 151 → 182 lines, purely additive (31 added, 0 removed). While enriching, the guard itself caught the vanished `slug:null`. Falsified: renaming `lane` fails with exactly `hero_work.items[].lane:string` and `hero_spec.item.lane:string` |
 | 2 | AC-2: fixture export | DONE | Ran on this repo: 513 `hero_spec` files plus work, handoff and manifest (`fixture-manifest.json`, `real-exercise.log`). The first run found an explainer sharing a feature's slug; fixed in `NewCorpus`, with a regression case in `TestRound2AuditCases` |
-| 3 | AC-3: docs | DONE | New "Read contract v1" section. Docs unit tests and `mkdocs build --strict` pass |
+| 3 | AC-3: docs | DONE | New "Read contract v1" section. Round 1: the wording now says the tools never write under `watch_globs` (runtime index/graph files may refresh). Docs unit tests and `mkdocs build --strict` pass (`docs-build.log`) |
 
 ### Changes
 
 | # | Changes item (abbreviated) | Status | Note |
 |---|---|---|---|
 | 1 | golden schema test | DONE | — |
-| 2 | export script | DONE | — |
+| 2 | export script | DONE | Round 1: the manifest key is now `project_commit` (the exported project's HEAD), not a Hero source commit |
 | 3 | docs | DONE | — |
 | 4 | slug ranking fix | DONE | `workmodel/model.go` `slugRank` |
 

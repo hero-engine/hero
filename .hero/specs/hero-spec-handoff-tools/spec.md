@@ -2,7 +2,7 @@
 title: "hero_spec and hero_handoff MCP tools"
 slug: hero-spec-handoff-tools
 type: feature
-status: delivering
+status: completed
 priority: high
 domain: engineering
 size: small
@@ -12,6 +12,7 @@ depends-on: [next-step-engine]
 relations:
   - target: hero-work-tool
     kind: conflicts-with
+completed_at: 2026-10-06T23:50:03Z
 ---
 
 # hero_spec and hero_handoff

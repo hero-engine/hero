@@ -48,7 +48,8 @@ safety annotations.
 
 Three read-only tools give any client Hero's interpretation of the work as
 stable JSON, so clients never parse `.hero` files. Each one is
-`readOnlyHint: true`, re-indexes when stale, and writes nothing.
+`readOnlyHint: true` and re-indexes when stale. It never writes under
+`watch_globs`. Only Hero's runtime index and graph files may refresh.
 
 | Tool | Returns |
 |---|---|
