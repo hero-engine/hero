@@ -7,6 +7,20 @@
     "auto_context": true,
     "nudge_level": "gentle"
   },
+  "integrations": {
+    "default": "morph-jira",
+    "connections": {
+      "morph-jira": {
+        "provider": "jira",
+        "settings": {
+          "base_url": "https://hpe.atlassian.net",
+          "project": "MORPH",
+          "user_email": "REPLACE_WITH_YOUR_HPE_EMAIL"
+        },
+        "auth": {}
+      }
+    }
+  },
   "sync": {
     "target": "none",
     "auto": false
@@ -69,6 +83,15 @@
   },
   "next": {
     "projected": true
+  },
+  "repos": {
+    "hero-harness": "../hero-harness"
+  },
+  "repo_meta": {
+    "hero-harness": {
+      "peer_id": "7a99c2ba-d28d-49eb-8011-67912ee26055",
+      "scanned_at": "2026-10-06T22:36:33Z"
+    }
   },
   "content": {
     "agents_path": "agents",

@@ -137,3 +137,36 @@ func TestEnsureManagedGitignoreBlock_RefreshesUpdatedEntries(t *testing.T) {
 		}
 	}
 }
+
+// MCP pidfiles (incl. coexist .pid.<n>) are in the managed block, and
+// upgrade refreshes an existing block without ever creating one.
+func TestManagedGitignoreCoversMCPPidfilesAndUpgradeRefresh(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, ".gitignore")
+	stale := "user-entry\n" + gitignoreMarkerStart + "\n.hero/graph.db\n" + gitignoreMarkerEnd + "\n"
+	if err := os.WriteFile(path, []byte(stale), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := refreshManagedGitignoreIfPresent(root, true); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(path); string(got) != stale {
+		t.Fatal("dry-run refreshed .gitignore")
+	}
+	if err := refreshManagedGitignoreIfPresent(root, false); err != nil {
+		t.Fatal(err)
+	}
+	got, _ := os.ReadFile(path)
+	for _, want := range []string{"user-entry", ".hero/mcp-*.pid\n", ".hero/mcp-*.pid.*\n", ".hero/mcp-debug.log\n"} {
+		if !strings.Contains(string(got), want) {
+			t.Errorf("refreshed .gitignore missing %q:\n%s", want, got)
+		}
+	}
+	bare := t.TempDir()
+	if err := refreshManagedGitignoreIfPresent(bare, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(bare, ".gitignore")); !os.IsNotExist(err) {
+		t.Fatal("upgrade created a .gitignore that init never wrote")
+	}
+}
