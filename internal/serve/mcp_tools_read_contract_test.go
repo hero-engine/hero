@@ -198,10 +198,11 @@ func TestToolWorkShape(t *testing.T) {
 	if slugs["feat"] != "designed" || slugs["base"] != "in_progress" || slugs["init"] != "ready" {
 		t.Errorf("lanes = %v", slugs)
 	}
-	for _, key := range []string{`"polish":[]`, `"suggested":[]`} {
-		if !strings.Contains(raw, key) {
-			t.Errorf("missing %s", key)
-		}
+	if w.Polish == nil || w.Suggested == nil || !strings.Contains(raw, `"polish":[`) || !strings.Contains(raw, `"suggested":[`) {
+		t.Errorf("polish/suggested must be lists: %s", raw)
+	}
+	if len(w.Suggested) == 0 || w.Suggested[len(w.Suggested)-1].Next == nil || w.Suggested[len(w.Suggested)-1].Next.Command != "/discover" {
+		t.Errorf("thin backlog should end suggested with Explore: %+v", w.Suggested)
 	}
 }
 

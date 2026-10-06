@@ -253,23 +253,11 @@ type HeroWork struct {
 	Suggested     []SuggestedItem  `json:"suggested"`
 }
 
-// PolishItem is recently delivered work with a loose end.
-type PolishItem struct {
-	Slug   string              `json:"slug"`
-	Title  string              `json:"title"`
-	Kind   string              `json:"kind"`
-	Reason string              `json:"reason"`
-	Next   *workmodel.NextStep `json:"next"`
-}
-
-// SuggestedItem is a deterministic "what next" pick.
-type SuggestedItem struct {
-	Slug   *string             `json:"slug"`
-	Title  string              `json:"title"`
-	Reason string              `json:"reason"`
-	Source string              `json:"source"`
-	Next   *workmodel.NextStep `json:"next"`
-}
+// PolishItem and SuggestedItem are defined by the work model.
+type (
+	PolishItem    = workmodel.PolishItem
+	SuggestedItem = workmodel.SuggestedItem
+)
 
 func (s *MCPServer) toolWork(args map[string]interface{}) (string, error) {
 	recentDays := workmodel.DefaultRecentDays
@@ -297,8 +285,8 @@ func (s *MCPServer) toolWork(args map[string]interface{}) (string, error) {
 		HeroVersion:   s.version,
 		WatchGlobs:    WatchGlobs,
 		Items:         items,
-		Polish:        []PolishItem{},
-		Suggested:     []SuggestedItem{},
+		Polish:        workmodel.Polish(items, specs),
+		Suggested:     workmodel.Suggested(items),
 	}
 	work.Revision = workRevision(work)
 	data, err := json.Marshal(work)
