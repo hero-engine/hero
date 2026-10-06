@@ -111,13 +111,19 @@ type Corpus struct {
 	bySlug map[string]*spec.Spec
 }
 
-// NewCorpus indexes specs by slug.
+// NewCorpus indexes specs by slug. A promoted Mail intake shares its slug
+// with the spec it became; the real spec always wins that collision, and
+// otherwise the first spec seen keeps the slug (Discover order is stable).
 func NewCorpus(specs []*spec.Spec) *Corpus {
 	c := &Corpus{bySlug: make(map[string]*spec.Spec, len(specs))}
 	for _, s := range specs {
-		if s.Slug != "" {
-			c.bySlug[s.Slug] = s
+		if s.Slug == "" {
+			continue
 		}
+		if prev, ok := c.bySlug[s.Slug]; ok && !(prev.Type == spec.TypeIntake && s.Type != spec.TypeIntake) {
+			continue
+		}
+		c.bySlug[s.Slug] = s
 	}
 	return c
 }
@@ -363,9 +369,12 @@ func ledgerAllDone(s *spec.Spec) bool {
 	if !ledger.Found || len(ledger.ACRows) == 0 {
 		return false
 	}
+	// Same acceptance as `hero spec verify` Gate 1: DONE, or a structured
+	// sign-off on a SKIPPED/BLOCKED row.
 	for _, rows := range [][]spec.LedgerRow{ledger.ACRows, ledger.ChangesRows} {
 		for _, r := range rows {
-			if r.Status != spec.LedgerDone {
+			signedSkip := r.SignedOff && (r.Status == spec.LedgerSkipped || r.Status == spec.LedgerBlocked)
+			if r.Status != spec.LedgerDone && !signedSkip {
 				return false
 			}
 		}

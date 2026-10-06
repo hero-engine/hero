@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func writeContractSpec(t *testing.T, heroDir, rel, content string) {
@@ -157,4 +158,98 @@ func snapshotTree(t *testing.T, root string) map[string]string {
 		return nil
 	})
 	return out
+}
+
+func callWork(t *testing.T, srv *MCPServer, args map[string]interface{}) HeroWork {
+	t.Helper()
+	result := callTool(t, srv, "hero_work", args)
+	if result.IsError {
+		t.Fatalf("hero_work error: %s", result.Content[0].Text)
+	}
+	var w HeroWork
+	if err := json.Unmarshal([]byte(result.Content[0].Text), &w); err != nil {
+		t.Fatalf("not JSON: %v", err)
+	}
+	return w
+}
+
+// hero-work-tool AC-1: the HeroWork shape.
+func TestToolWorkShape(t *testing.T) {
+	srv, _ := readContractWorkspace(t)
+	result := callTool(t, srv, "hero_work", map[string]interface{}{})
+	raw := result.Content[0].Text
+	w := callWork(t, srv, map[string]interface{}{})
+	if w.SchemaVersion != 1 || len(w.Revision) != 16 || w.GeneratedAt == "" || w.HeroVersion != "1.0.0" {
+		t.Errorf("header = %+v", w)
+	}
+	if strings.Join(w.WatchGlobs, ",") != strings.Join(WatchGlobs, ",") {
+		t.Errorf("watch_globs = %v", w.WatchGlobs)
+	}
+	slugs := map[string]string{}
+	for _, it := range w.Items {
+		slugs[it.Slug] = it.Lane
+		if it.Slug == "feat" && (it.Next == nil || it.Next.Command != "/deliver feat") {
+			t.Errorf("feat next = %+v", it.Next)
+		}
+	}
+	if _, ok := slugs["naming"]; ok {
+		t.Error("knowledge spec listed as work")
+	}
+	if slugs["feat"] != "designed" || slugs["base"] != "in_progress" || slugs["init"] != "ready" {
+		t.Errorf("lanes = %v", slugs)
+	}
+	for _, key := range []string{`"polish":[]`, `"suggested":[]`} {
+		if !strings.Contains(raw, key) {
+			t.Errorf("missing %s", key)
+		}
+	}
+}
+
+// hero-work-tool AC-2: revision ignores generated_at and tracks content.
+func TestToolWorkRevision(t *testing.T) {
+	srv, heroDir := readContractWorkspace(t)
+	orig := readContractNow
+	defer func() { readContractNow = orig }()
+	first := callWork(t, srv, map[string]interface{}{})
+	readContractNow = func() time.Time { return time.Now().Add(time.Hour) }
+	second := callWork(t, srv, map[string]interface{}{})
+	if first.Revision != second.Revision || first.GeneratedAt == second.GeneratedAt {
+		t.Fatalf("revision moved with time alone: %s vs %s", first.Revision, second.Revision)
+	}
+	writeContractSpec(t, heroDir, "planning/features/base", "---\ntitle: Base\nslug: base\ntype: feature\nstatus: completed\n---\n# Base\n")
+	third := callWork(t, srv, map[string]interface{}{})
+	if third.Revision == second.Revision {
+		t.Error("revision unchanged after a spec changed")
+	}
+}
+
+// hero-work-tool AC-3: recent_days is validated.
+func TestToolWorkRecentDays(t *testing.T) {
+	srv, _ := readContractWorkspace(t)
+	for _, bad := range []interface{}{0, -1, 1.5, "7"} {
+		result := callTool(t, srv, "hero_work", map[string]interface{}{"recent_days": bad})
+		if !result.IsError || !strings.Contains(result.Content[0].Text, "recent_days") {
+			t.Errorf("recent_days=%v accepted", bad)
+		}
+	}
+	callWork(t, srv, map[string]interface{}{"recent_days": 30})
+}
+
+// hero-work-tool AC-4: read-only, writes nothing.
+func TestToolWorkWritesNothing(t *testing.T) {
+	srv, heroDir := readContractWorkspace(t)
+	before := snapshotTree(t, heroDir)
+	callWork(t, srv, map[string]interface{}{})
+	after := snapshotTree(t, heroDir)
+	for path, mod := range after {
+		for _, dir := range []string{"planning", "specs", "knowledge", "next"} {
+			if strings.HasPrefix(path, dir+string(filepath.Separator)) && before[path] != mod {
+				t.Errorf("hero_work wrote %s", path)
+			}
+		}
+	}
+	ann := annotationsForSafety(toolSafetyClasses()["hero_work"])
+	if ann.ReadOnlyHint == nil || !*ann.ReadOnlyHint {
+		t.Error("hero_work must be readOnlyHint=true")
+	}
 }

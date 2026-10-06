@@ -37,7 +37,7 @@ Implement `workmodel.NextFor` / `ApplyNext` from `read-contract-v1`'s next-step 
 
 1. `internal/workmodel/next.go` with `next_test.go`.
 2. `core/commands/verify.md`.
-3. `domains/engineering/routing.md` and the regenerated `domains/engineering/AGENTS.md`; prompt baselines regenerated (one more command file installed).
+3. `domains/engineering/routing.md` (routing is rendered into installed instruction files, not the pack `AGENTS.md`); prompt baselines regenerated (one more command file installed).
 
 ## Completion Ledger
 
@@ -45,10 +45,10 @@ Implement `workmodel.NextFor` / `ApplyNext` from `read-contract-v1`'s next-step 
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | AC-1: every table row, including nulls | DONE | `TestNextStepTable`: 17 cases covering stub, ready, blocked, delivering, HOLD attention, undiagnosed/diagnosed/blocked bug, regressed, handed-off, initiative with and without children, decision, recent unverified (Verify), old unverified (null), verified (null) and superseded (null) |
+| 1 | AC-1: every table row, including nulls | DONE | Round 2: `TestRound2AuditCases` adds in-review, awaiting_peer, handed_back, rejected, merged, an accepted decision, an unstarted initiative with children, and a live feature whose slug is shared with a promoted intake (it previously got Design). `TestNextStepTable`: 17 cases covering stub, ready, blocked, delivering, HOLD attention, undiagnosed/diagnosed/blocked bug, regressed, handed-off, initiative with and without children, decision, recent unverified (Verify), old unverified (null), verified (null) and superseded (null) |
 | 2 | AC-2: disabled with "waits on" | DONE | The `blocked` and `blockedbug` cases assert `enabled=false`, the reason, and `waiting` |
-| 3 | AC-3: invariants | DONE | `TestNextStepInvariants` runs over every seeded item |
-| 4 | AC-4: /verify for every target | DONE | `core/commands/verify.md`. The canonical routing-reference test resolves `/verify` against real surfaces. The roster test (`TestEngineeringAgentsMdRosterComplete`) and the all-target install, contract and routing matrices pass. Prompt baselines regenerated |
+| 3 | AC-3: invariants | DONE | `TestNextStepInvariants` runs over every seeded item. Round 2: it now flags any `diagnose` extra beside Deliver. The diagnosed-bug extra uses action `challenge` |
+| 4 | AC-4: /verify for every target | DONE | `core/commands/verify.md`. Round 2: it accepts the same signed-off rows as `hero spec verify` and explains the already-completed case. The canonical routing-reference test resolves `/verify` against real surfaces. The roster test (`TestEngineeringAgentsMdRosterComplete`) and the all-target install, contract and routing matrices pass. Prompt baselines regenerated |
 
 ### Changes
 
@@ -56,7 +56,7 @@ Implement `workmodel.NextFor` / `ApplyNext` from `read-contract-v1`'s next-step 
 |---|---|---|---|
 | 1 | next.go + tests | DONE | Real-corpus probe: 513 items with build and next steps in ~20 ms |
 | 2 | verify.md | DONE | Independent-reviewer gate and no unasked `--force` |
-| 3 | routing, pack AGENTS.md, baselines | DONE | Pack regenerated via `HERO_REGEN_PACK_AGENTS=1`; baselines via `-update-baseline` |
+| 3 | routing, baselines | DONE | Baselines via `-update-baseline`. Round-1 correction: the pack `AGENTS.md` needs no regeneration; `routing.md` reaches installed instruction files directly |
 
 ### Exercise-the-feature check
 

@@ -58,7 +58,7 @@ There is one source of truth: files on disk. It never comes from `events.log`, s
 
 `verify.state`:
 - `passed`: finished, audit `ship`, and every ledger row `DONE`.
-- `partial`: finished, but the audit is missing or not SHIP, or the ledger is missing or has rows other than DONE.
+- `partial`: finished, but the audit is missing or not SHIP, or the ledger is missing or has rows that `hero spec verify` would not accept. It accepts DONE, or SKIPPED/BLOCKED with a structured sign-off.
 - `failed`: audit `hold`, or status `regressed`.
 - `not_run`: not finished (an unfinished spec may still report `audit: "ship"` from an earlier round; the verify gate has not run).
 
@@ -83,7 +83,7 @@ These rules are kept from the requester:
 | initiative | no children | design / Compose / `/compose <slug>` | Planning, ready | true |
 | initiative | has unfinished children | drive / Drive / `/drive <slug>` | Driving (if in_progress) or Planning, active or ready | true |
 | decision | not accepted | design / Decide / `/decide <slug>` | Proposed, ready | true |
-| any work type | handed_off, awaiting_peer | deliver / Deliver / `/deliver <slug>` | With peer, waiting | false, "with peer <alias>" when known |
+| any work type | handed_off, awaiting_peer | deliver / Deliver / `/deliver <slug>` | With peer, waiting | false, "handed off to a peer" (specs do not record the peer alias today) |
 | any work type | finished, verify `passed` | `next: null` (clients show **Delivered** from `verify.state = passed`) | — | — |
 | feature, bug, enhancement | finished within `recently_done`, verify not `passed` | verify / Verify / `/verify <slug>` | Delivered?, attention | true |
 | feature, bug, enhancement | finished before the window, verify not `passed` | `next: null` (historical work; not re-verified) | — | — |
@@ -147,3 +147,8 @@ Returns the NEXT.md projection that `hero next` prints, as `markdown`, with `upd
   - The "unknown AC results → partial" clause is dropped; it conflicted with "files on disk only".
   - The revision includes the derived lane and verify state.
   - Verify is offered only within `recently_done`. Otherwise 258 historical specs, which predate audits, would show Verify.
+- **2026-10-06 (next-step-engine and work-item-model cold audit, round 2):**
+  - `verify.passed` accepts signed-off SKIPPED/BLOCKED ledger rows, matching `hero spec verify` Gate 1, so `/verify` never dead-ends.
+  - The diagnosed-bug extra uses action `challenge`.
+  - The handed-off reason is generic.
+  - A promoted intake never shadows the spec that shares its slug.

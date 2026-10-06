@@ -1,13 +1,13 @@
 === RUN   TestBuildIncludesOnlyWorkSpecsInPathOrder
 --- PASS: TestBuildIncludesOnlyWorkSpecsInPathOrder (0.01s)
 === RUN   TestLanes
---- PASS: TestLanes (0.00s)
+--- PASS: TestLanes (0.01s)
 === RUN   TestRecentDaysWindow
---- PASS: TestRecentDaysWindow (0.00s)
+--- PASS: TestRecentDaysWindow (0.01s)
 === RUN   TestVerifyState
---- PASS: TestVerifyState (0.02s)
+--- PASS: TestVerifyState (0.03s)
 === RUN   TestNormalizationAndProgress
---- PASS: TestNormalizationAndProgress (0.00s)
+--- PASS: TestNormalizationAndProgress (0.01s)
 === RUN   TestRevisionChangesOnlyWithInputs
 --- PASS: TestRevisionChangesOnlyWithInputs (0.02s)
 === RUN   TestEdgeCasesFromAudit
@@ -15,6 +15,8 @@
 === RUN   TestNextStepTable
 --- PASS: TestNextStepTable (0.03s)
 === RUN   TestNextStepInvariants
---- PASS: TestNextStepInvariants (0.00s)
+--- PASS: TestNextStepInvariants (0.01s)
+=== RUN   TestRound2AuditCases
+--- PASS: TestRound2AuditCases (0.02s)
 PASS
-ok  	github.com/hero-engine/hero/internal/workmodel	0.254s
+ok  	github.com/hero-engine/hero/internal/workmodel	0.239s

@@ -447,6 +447,18 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 		{
+			Name:        "hero_work",
+			Category:    CategorySearchAndKnowledge,
+			Tier:        TierDeferrable,
+			Description: "Read contract v1 (read-only JSON): the whole work picture as {schema_version, revision, generated_at, hero_version, watch_globs, items, polish, suggested}. Each item is a WorkItem with lane (designed|ready|in_progress|recently_done|none), progress, verify state and next step (one primary slash command). revision changes only when content does; re-read when files matching watch_globs change.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"recent_days": {Type: "integer", Description: "Window for the recently_done lane and polish (default 14)"},
+				},
+			},
+		},
+		{
 			Name:        "hero_spec",
 			Category:    CategorySearchAndKnowledge,
 			Tier:        TierDeferrable,

@@ -1,6 +1,8 @@
 package serve
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -225,3 +227,99 @@ func (s *MCPServer) specACs(target *spec.Spec) []SpecAC {
 
 // readContractNow is the clock the read tools use; tests pin it.
 var readContractNow = time.Now
+
+// WatchGlobs are the repo-relative paths whose change means "read
+// hero_work again". Hero's own runtime files (indexes, graph, events.log,
+// cache, sessions, pidfiles, QUEUE.md, SNAPSHOT.md) are never included, so
+// a read can never trigger another read.
+var WatchGlobs = []string{
+	".hero/planning/**",
+	".hero/specs/**",
+	".hero/knowledge/**",
+	".hero/NEXT.md",
+	".hero/next/**",
+	".hero/hero.json",
+}
+
+// HeroWork is hero_work's reply.
+type HeroWork struct {
+	SchemaVersion int              `json:"schema_version"`
+	Revision      string           `json:"revision"`
+	GeneratedAt   string           `json:"generated_at"`
+	HeroVersion   string           `json:"hero_version"`
+	WatchGlobs    []string         `json:"watch_globs"`
+	Items         []workmodel.Item `json:"items"`
+	Polish        []PolishItem     `json:"polish"`
+	Suggested     []SuggestedItem  `json:"suggested"`
+}
+
+// PolishItem is recently delivered work with a loose end.
+type PolishItem struct {
+	Slug   string              `json:"slug"`
+	Title  string              `json:"title"`
+	Kind   string              `json:"kind"`
+	Reason string              `json:"reason"`
+	Next   *workmodel.NextStep `json:"next"`
+}
+
+// SuggestedItem is a deterministic "what next" pick.
+type SuggestedItem struct {
+	Slug   *string             `json:"slug"`
+	Title  string              `json:"title"`
+	Reason string              `json:"reason"`
+	Source string              `json:"source"`
+	Next   *workmodel.NextStep `json:"next"`
+}
+
+func (s *MCPServer) toolWork(args map[string]interface{}) (string, error) {
+	recentDays := workmodel.DefaultRecentDays
+	if v, ok := args["recent_days"]; ok {
+		n, ok := v.(float64)
+		if !ok || n < 1 || n != float64(int(n)) {
+			return "", fmt.Errorf("recent_days must be a positive integer")
+		}
+		recentDays = int(n)
+	}
+	s.ensureFreshIndex()
+	specs, err := spec.Discover(s.heroDir)
+	if err != nil {
+		return "", fmt.Errorf("discovering specs: %w", err)
+	}
+	now := readContractNow()
+	items := workmodel.Build(specs, workmodel.Options{Now: now, RecentDays: recentDays, Root: s.projectRoot})
+	workmodel.ApplyNext(items, specs)
+	if items == nil {
+		items = []workmodel.Item{}
+	}
+	work := HeroWork{
+		SchemaVersion: 1,
+		GeneratedAt:   now.UTC().Format(time.RFC3339),
+		HeroVersion:   s.version,
+		WatchGlobs:    WatchGlobs,
+		Items:         items,
+		Polish:        []PolishItem{},
+		Suggested:     []SuggestedItem{},
+	}
+	work.Revision = workRevision(work)
+	data, err := json.Marshal(work)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// workRevision fingerprints everything in the reply except generated_at, so
+// it changes exactly when the content does.
+func workRevision(w HeroWork) string {
+	h := sha256.New()
+	fmt.Fprintf(h, "v%d\x00%s", w.SchemaVersion, w.HeroVersion)
+	for _, it := range w.Items {
+		fmt.Fprintf(h, "\x00%s=%s", it.Slug, it.Revision)
+	}
+	tail, _ := json.Marshal(struct {
+		P []PolishItem
+		S []SuggestedItem
+	}{w.Polish, w.Suggested})
+	h.Write(tail)
+	return hex.EncodeToString(h.Sum(nil))[:16]
+}

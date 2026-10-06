@@ -98,7 +98,7 @@ func TestNextStepInvariants(t *testing.T) {
 			if !strings.HasPrefix(e.Command, "/") {
 				t.Errorf("%s extra command %q", it.Slug, e.Command)
 			}
-			if e.Action == ActionDeliver || (e.Action == ActionDiagnose && e.Label == "Diagnose") {
+			if e.Action == ActionDeliver || e.Action == ActionDiagnose {
 				acts[e.Action] = true
 			}
 		}
@@ -114,6 +114,74 @@ func TestNextStepInvariants(t *testing.T) {
 		}
 		if n.Extras == nil {
 			t.Errorf("%s extras must be [] not null", it.Slug)
+		}
+	}
+}
+
+// Audit round 2: a promoted intake sharing a slug must not shadow the live
+// spec; signed-off skips count as verified like `hero spec verify`; and the
+// table rows the first pass left untested.
+func TestRound2AuditCases(t *testing.T) {
+	c := newCorpus(t)
+	seed(c)
+	// Intake written after the feature so a naive last-wins index picks it.
+	c.write("planning/features/mailfeat", fm("mailfeat", "feature", "delivering", "")+designedBody)
+	c.write("planning/intake/mailfeat", fm("mailfeat", "intake", "promoted", ""))
+	c.write("planning/features/watcher", fm("watcher", "feature", "planning", "depends-on: [mailfeat]\n")+designedBody)
+	c.write("planning/features/review", fm("review", "feature", "in-review", "")+designedBody)
+	c.write("planning/features/waiting", fm("waiting", "feature", "awaiting_peer", "")+designedBody)
+	c.write("planning/features/back", fm("back", "feature", "handed_back", "")+designedBody)
+	c.write("planning/features/nope", fm("nope", "feature", "rejected", "")+designedBody)
+	c.write("planning/features/merged", fm("merged", "feature", "merged", "")+designedBody)
+	c.write("planning/initiatives/fresh", fm("fresh", "initiative", "planning", "child:\n  - stub\n"))
+	c.write("planning/initiatives/fresh/done", fm("done", "decision", "accepted", "parent: fresh\n")+"\n## Decision\n\nYes.\n")
+	signed := "\n## Completion Ledger\n\n### Acceptance Criteria\n\n| # | C | Status | Note |\n|---|---|---|---|\n| 1 | AC-1 | DONE | ok |\n\n### Changes\n\n| # | I | Status | Note |\n|---|---|---|---|\n| 1 | x | SKIPPED | [signed-off] chet-bellows — out of scope |\n"
+	sp := c.write("specs/signed", fm("signed", "feature", "completed", "completed_at: 2026-10-02T00:00:00Z\n")+designedBody+signed)
+	time.Sleep(10 * time.Millisecond)
+	os.WriteFile(filepath.Join(filepath.Dir(sp), "delivery-audit.md"), []byte("# Delivery audit — signed\n\n**Verdict:** SHIP\n"), 0o644)
+
+	specs, _ := c.build()
+	items := Build(specs, Options{Now: testNow, Root: c.root})
+	ApplyNext(items, specs)
+	by := map[string]Item{}
+	for _, it := range items {
+		if _, dup := by[it.Slug]; dup {
+			t.Errorf("slug %s emitted twice", it.Slug)
+		}
+		by[it.Slug] = it
+	}
+	if n := by["mailfeat"].Next; n == nil || n.Label != "Continue" || by["mailfeat"].Lane != LaneInProgress {
+		t.Errorf("live feature shadowed by its intake: lane %s next %+v", by["mailfeat"].Lane, n)
+	}
+	if by["watcher"].Lane != LaneDesigned {
+		t.Errorf("dependency on the live feature must resolve to it (unfinished): lane %s", by["watcher"].Lane)
+	}
+	if v := by["signed"].Verify; v == nil || v.State != VerifyPassed || by["signed"].Next != nil {
+		t.Errorf("signed-off skip should pass verify like hero spec verify: %+v next %+v", v, by["signed"].Next)
+	}
+	for slug, label := range map[string]string{"review": "Continue", "back": "Continue"} {
+		if n := by[slug].Next; n == nil || n.Label != label {
+			t.Errorf("%s next = %+v, want %s", slug, n, label)
+		}
+	}
+	if n := by["waiting"].Next; n == nil || n.Enabled || n.Phase.Label != "With peer" {
+		t.Errorf("awaiting_peer next = %+v", n)
+	}
+	for _, slug := range []string{"nope", "merged", "done"} {
+		if by[slug].Next != nil {
+			t.Errorf("%s should have no next step, got %+v", slug, by[slug].Next)
+		}
+	}
+	if n := by["fresh"].Next; n == nil || n.Label != "Drive" || n.Phase.Label != "Planning" || n.Phase.State != PhaseReady {
+		t.Errorf("unstarted initiative with children = %+v", n)
+	}
+	if n := by["diagnosed"].Next; n == nil {
+		t.Fatal("diagnosed bug lost its next step")
+	} else {
+		for _, e := range n.Extras {
+			if e.Action == ActionDiagnose {
+				t.Errorf("diagnosed bug offers Deliver plus a diagnose-action extra: %+v", e)
+			}
 		}
 	}
 }

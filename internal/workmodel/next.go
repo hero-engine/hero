@@ -16,6 +16,9 @@ const (
 	ActionReview   = "review"
 	ActionPolish   = "polish"
 	ActionDiscover = "discover"
+	// ActionChallenge is an extra on a diagnosed bug. It is deliberately not
+	// "diagnose": a step never offers Diagnose and Deliver together.
+	ActionChallenge = "challenge"
 )
 
 // Phase states.
@@ -95,7 +98,7 @@ func NextFor(it Item, s *spec.Spec, c *Corpus) *NextStep {
 		if !Designed(s) {
 			return step(ActionDiagnose, "Diagnose", "/diagnose "+slug, "Reported", PhaseReady, nil, nil)
 		}
-		extras := []Extra{{Action: ActionDiagnose, Label: "Challenge diagnosis", Command: "/challenge " + slug}}
+		extras := []Extra{{Action: ActionChallenge, Label: "Challenge diagnosis", Command: "/challenge " + slug}}
 		return gateOnDeps(step(ActionDeliver, "Fix", "/deliver "+slug, "Diagnosed", PhaseReady, nil, extras), s, c)
 	default: // feature, enhancement
 		if !Designed(s) {
