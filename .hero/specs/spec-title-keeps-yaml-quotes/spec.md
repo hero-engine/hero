@@ -2,7 +2,7 @@
 title: "Spec titles keep their YAML quotes in hero_list and hero list"
 slug: spec-title-keeps-yaml-quotes
 type: bug
-status: delivering
+status: completed
 priority: P2
 severity: low
 root_cause_class: code
@@ -11,6 +11,7 @@ size: trivial
 created: 2026-10-06
 tags: [spec, parser, mcp, peer-request]
 delivery_method: manual
+completed_at: 2026-10-06T23:08:18Z
 ---
 
 # Spec titles keep their YAML quotes

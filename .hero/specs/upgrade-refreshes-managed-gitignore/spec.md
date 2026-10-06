@@ -2,7 +2,7 @@
 title: "hero upgrade never refreshes the managed .gitignore block, so new entries miss existing workspaces"
 slug: upgrade-refreshes-managed-gitignore
 type: bug
-status: delivering
+status: completed
 priority: P2
 severity: low
 root_cause_class: code
@@ -10,6 +10,7 @@ domain: engineering
 size: trivial
 created: 2026-10-06
 tags: [gitignore, upgrade, mcp, peer-request]
+completed_at: 2026-10-06T23:08:21Z
 ---
 
 # hero upgrade refreshes the managed .gitignore block

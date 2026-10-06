@@ -606,3 +606,7 @@
 {"ts":"2026-09-29T11:35:30.585351Z","type":"spec.status_changed","agent":"human/david-christiansen","slug":"resume-emits-dead-recall-command","message":"status -\u003e completed"}
 {"ts":"2026-09-29T10:01:12.628878Z","type":"delivery_complete","agent":"human/david-christiansen","slug":"ledger-signoff-substring-match-fails-open","message":"\"Completion Ledger sign-off gate fails open — any note mentioning [signed-off] self-approves\""}
 {"ts":"2026-09-29T10:01:12.629022Z","type":"spec.status_changed","agent":"human/david-christiansen","slug":"ledger-signoff-substring-match-fails-open","message":"status -\u003e completed"}
+{"ts":"2026-10-06T23:08:21.183714Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"spec-title-keeps-yaml-quotes","message":"Spec titles keep their YAML quotes in hero_list and hero list"}
+{"ts":"2026-10-06T23:08:21.183832Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"spec-title-keeps-yaml-quotes","message":"status -\u003e completed"}
+{"ts":"2026-10-06T23:08:23.676082Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"upgrade-refreshes-managed-gitignore","message":"hero upgrade never refreshes the managed .gitignore block, so new entries miss existing workspaces"}
+{"ts":"2026-10-06T23:08:23.676184Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"upgrade-refreshes-managed-gitignore","message":"status -\u003e completed"}
