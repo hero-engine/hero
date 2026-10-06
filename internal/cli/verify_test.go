@@ -189,6 +189,78 @@ func TestVerify_HoldAudit(t *testing.T) {
 	}
 }
 
+// TestVerify_FlatSiblingSpecs_EachResolvesOwnAuditReport covers two
+// flat-named specs (initiative children stored as sibling <slug>.md files,
+// not yet given their own subdirectory — see flat-named-spec-discovery)
+// that share an initiative folder. Each has its own slug-scoped audit
+// report; verify must resolve the correct one for each spec despite the
+// shared directory.
+func TestVerify_FlatSiblingSpecs_EachResolvesOwnAuditReport(t *testing.T) {
+	env := newTestEnv(t)
+	initDir := "planning/initiatives/my-initiative"
+
+	env.addSpec(initDir+"/spec.md", `---
+title: My Initiative
+type: initiative
+status: planning
+slug: my-initiative
+---
+# My Initiative
+`)
+	env.addSpec(initDir+"/child-a.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "child-a", -1))
+	env.addSpec(initDir+"/child-b.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "child-b", -1))
+
+	writeVerifyFile(t, filepath.Join(env.heroDir, initDir, "child-a-delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "child-a", -1))
+	writeVerifyFile(t, filepath.Join(env.heroDir, initDir, "child-b-delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "child-b", -1))
+	env.indexAll()
+
+	for _, slug := range []string{"child-a", "child-b"} {
+		output, err := runCmd("spec", "verify", "--skip-tests", slug)
+		if err != nil {
+			t.Fatalf("verify %s failed: %v\noutput: %s", slug, err, output)
+		}
+		if !strings.Contains(output, "PASS") {
+			t.Errorf("verify %s: expected PASS in output, got:\n%s", slug, output)
+		}
+	}
+}
+
+// TestVerify_FlatSpec_RejectsSiblingsLeftoverAuditReport reproduces the
+// directory-sharing false positive directly: child-a has already been
+// audited and left a generic delivery-audit.md behind in the shared
+// initiative folder (the pre-fix convention). child-b, a different flat
+// sibling in the same folder, has no audit report of its own yet. Gate 2
+// for child-b must FAIL — it must not silently pick up child-a's report
+// just because it sits at the conventional filename in the same directory.
+func TestVerify_FlatSpec_RejectsSiblingsLeftoverAuditReport(t *testing.T) {
+	env := newTestEnv(t)
+	initDir := "planning/initiatives/my-initiative"
+
+	env.addSpec(initDir+"/spec.md", `---
+title: My Initiative
+type: initiative
+status: planning
+slug: my-initiative
+---
+# My Initiative
+`)
+	env.addSpec(initDir+"/child-a.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "child-a", -1))
+	env.addSpec(initDir+"/child-b.md", strings.Replace(specWithLedgerAndAudit, "test-feature", "child-b", -1))
+
+	// Only child-a's report exists, written under the generic filename —
+	// the layout that caused the collision before slug-scoped names.
+	writeVerifyFile(t, filepath.Join(env.heroDir, initDir, "delivery-audit.md"),
+		strings.Replace(auditReportShip, "test-feature", "child-a", -1))
+	env.indexAll()
+
+	output, err := runCmd("spec", "verify", "--skip-tests", "child-b")
+	if err == nil {
+		t.Fatalf("expected verify child-b to fail (no report of its own), got PASS:\n%s", output)
+	}
+}
+
 func TestVerify_Force(t *testing.T) {
 	env := newTestEnv(t)
 	specContent := `---

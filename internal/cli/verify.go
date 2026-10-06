@@ -302,6 +302,22 @@ func checkAudit(s *spec.Spec) GateResult {
 	gate := GateResult{Name: "Delivery Audit"}
 	audit := spec.FindAuditReport(s)
 
+	if audit.SlugMismatch {
+		gate.Result = "FAIL"
+		gate.Details = append(gate.Details, fmt.Sprintf(
+			"audit report at %s is for a different spec (%q) — this looks like a leftover report from a sibling spec sharing this directory",
+			audit.Path, audit.ReportSlug))
+		return gate
+	}
+
+	if audit.Stale {
+		gate.Result = "FAIL"
+		gate.Details = append(gate.Details, fmt.Sprintf(
+			"audit report at %s predates the spec's last modification — it does not cover the current delivery, re-run the audit",
+			audit.Path))
+		return gate
+	}
+
 	if !audit.Found {
 		gate.Result = "FAIL"
 		gate.Details = append(gate.Details, "no audit report found (expected delivery-audit.md in spec directory)")
