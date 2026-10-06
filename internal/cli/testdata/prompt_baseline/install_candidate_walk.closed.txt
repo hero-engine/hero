@@ -3,7 +3,7 @@ stdin-condition: closed
 exit: 0
 --- stdout ---
   CLAUDE.md -> CLAUDE.md (create)
-Installed 122 files, merged 2 config(s)
+Installed 123 files, merged 2 config(s)
 
 NEXT.md handoff: wired into Stop + PreCompact hooks in settings.json.
 It refreshes automatically every turn — no further setup needed.

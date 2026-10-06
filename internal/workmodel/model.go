@@ -203,7 +203,13 @@ func buildItem(s *spec.Spec, c *Corpus, opts Options) Item {
 		it.Tracker = &Tracker{ID: s.TrackerID}
 	}
 	it.Verify = VerifyOf(s)
-	it.Revision = Revision(s, c)
+	// Lane and verify state can change with time alone (recently_done ages
+	// out), so they are part of the revision too.
+	derived := it.Lane
+	if it.Verify != nil {
+		derived += ":" + it.Verify.State
+	}
+	it.Revision = Revision(s, c, derived)
 	return it
 }
 
@@ -245,7 +251,7 @@ func UnmetDeps(s *spec.Spec, c *Corpus) []string {
 	var out []string
 	seen := map[string]bool{}
 	for _, r := range s.Relations {
-		if r.Kind != "depends-on" && r.Kind != "blocks" {
+		if r.Kind != "depends-on" && r.Kind != "depends_on" && r.Kind != "blocks" {
 			continue
 		}
 		if seen[r.Target] {
@@ -330,7 +336,10 @@ func VerifyOf(s *spec.Spec) *Verify {
 	}
 	v := &Verify{State: VerifyNotRun}
 	audit := spec.FindAuditReport(s)
-	if audit.Found {
+	// `hero spec verify` rewrites a spec's status after its audit, so a
+	// finished spec is always newer than its own report: staleness only
+	// means something for unfinished work. A slug mismatch never counts.
+	if audit.Found || (audit.Stale && !audit.SlugMismatch && s.IsFinished()) {
 		verdict := strings.ToLower(audit.Verdict)
 		if verdict == "ship" || verdict == "hold" {
 			v.Audit = &verdict
@@ -366,10 +375,12 @@ func ledgerAllDone(s *spec.Spec) bool {
 
 func normalizeLevel(v string) *string {
 	var out string
+	// The mapping read-contract-v1 defines, including common tracker
+	// synonyms; anything else is null.
 	switch strings.ToLower(strings.TrimSpace(v)) {
 	case "p0", "critical", "blocker", "highest":
 		out = "critical"
-	case "p1", "high":
+	case "p1", "high", "major":
 		out = "high"
 	case "p2", "medium", "moderate", "normal":
 		out = "medium"

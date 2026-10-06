@@ -33,12 +33,12 @@ All of it uses `internal/spec` (sections, relations, `IsFinished`, `DeclaredChil
 - `type Item` mirrors `WorkItem`: `slug, title, revision, type, status, priority, severity, size, path (repo-relative), parent, progress {done,total}|null, lane, created_at, updated_at, completed_at|null, tracker {id,url}|null, verify {state,audit}|null, next *NextStep` (the `NextStep` struct is defined here; the engine fills it).
 - **Work types:** feature, bug, enhancement, initiative, epic, plus decisions whose parent is an initiative.
 - **Normalization:**
-  - priority `P0|critical`→critical, `P1|high`→high, `P2|medium|moderate`→medium, `P3|low`→low, anything else null; severity the same.
+  - priority and severity via `read-contract-v1`'s synonym table (e.g. `P1`/`major`→high, `moderate`→medium); anything else null.
   - `updated_at` is the file mtime; `completed_at` is `CompletedAt`, else null.
   - `tracker` is `{id, url:null}` when a `TrackerID` exists.
-- **Designed, unmet dependencies and lanes:** exactly the `read-contract-v1` rules. Relation kinds `depends-on`/`depends_on` and `blocks` count as dependency edges. A missing target counts as unmet.
-- **Verify state:** per `read-contract-v1`, from `FindAuditReport` (validated), `ParseLedger`, and finished status. It is `null` for decisions.
-- **Revision:** 16 hex characters of SHA-256 over the raw file bytes, the sorted `slug:status` of every related or declared-child spec, and the audit verdict plus report mtime.
+- **Designed, unmet dependencies and lanes:** exactly the `read-contract-v1` rules. Relation kinds `depends-on`, raw `depends_on` (from `relations:` blocks) and `blocks` count as dependency edges. A missing target counts as unmet.
+- **Verify state:** per `read-contract-v1`, from `FindAuditReport` (slug-validated; staleness ignored for finished specs, since verify rewrites them after the audit), `ParseLedger`, and finished status. It is `null` for decisions.
+- **Revision:** 16 hex characters of SHA-256 over the raw file bytes, the sorted `slug:status` of every related or declared-child spec, the audit verdict plus report mtime, and the derived lane and verify state.
 - **Helpers exported for the engine:** `Designed`, `UnmetDeps`, plus an index lookup.
 - Deterministic output order: `path` ascending.
 
@@ -63,10 +63,10 @@ All of it uses `internal/spec` (sections, relations, `IsFinished`, `DeclaredChil
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
 | 1 | AC-1: one item per work spec, knowledge excluded, path order | DONE | `IsWorkItem` and `Build` in `model.go`. `TestBuildIncludesOnlyWorkSpecsInPathOrder`: 11 work specs including an initiative-child decision; a convention and a parentless decision are excluded; path order; decoded title; repo-relative path |
-| 2 | AC-2: one lane per item by first-match rules, with RecentDays and unmet deps | DONE | `Lane`, `UnmetDeps`, `Designed`. `TestLanes` covers all five lanes (stub, ready, blocked, in-progress, undiagnosed/diagnosed bug, recent/old/superseded, started initiative, decision). `TestRecentDaysWindow` |
-| 3 | AC-3: verify state and audit from the validated report; null for decisions | DONE | `VerifyOf` uses `spec.FindAuditReport` and `ParseLedger`. `TestVerifyState` covers passed, partial (no audit), failed (HOLD and regressed), not_run, and a null decision |
-| 4 | AC-4: priority/severity normalization; initiative progress | DONE | `normalizeLevel`, `initiativeProgress`. `TestNormalizationAndProgress`: P1→high, moderate→medium, unset→null, tracker `{id, url:null}`, progress 1/3, parent, and JSON nulls serialized as `null` |
-| 5 | AC-5: revision changes with file, related status, audit; otherwise stable | DONE | `revision.go`. `TestRevisionChangesOnlyWithInputs`: stable across builds and 16 characters; a dependency's status change moves the dependent; its own edit moves it; an unrelated item is unchanged; a new audit moves it |
+| 2 | AC-2: one lane per item by first-match rules, with RecentDays and unmet deps | DONE | `Lane`, `UnmetDeps`, `Designed`. `TestLanes` covers all five lanes. `TestRecentDaysWindow`. Audit round 1: `TestEdgeCasesFromAudit` covers raw `depends_on`, `blocks`, a missing target, the CompletedAt→mtime fallback, and a childless initiative |
+| 3 | AC-3: verify state and audit from the validated report; null for decisions | DONE | `VerifyOf`. `TestVerifyState` covers passed, partial, failed, not_run, and a null decision. Audit round 1: a finished spec newer than its SHIP audit still passes (`TestEdgeCasesFromAudit`). On the real 513-spec corpus, passed went from 4 to 118 |
+| 4 | AC-4: priority/severity normalization; initiative progress | DONE | `normalizeLevel` implements `read-contract-v1`'s amended synonym table exactly. `TestNormalizationAndProgress`: P1→high, moderate→medium, unset→null, tracker, progress 1/3, parent, JSON nulls |
+| 5 | AC-5: revision changes with file, related status, audit; otherwise stable | DONE | `revision.go`. `TestRevisionChangesOnlyWithInputs`. Audit round 1: the revision moves when an item ages out of `recently_done` (`TestEdgeCasesFromAudit`) |
 
 ### Changes
 

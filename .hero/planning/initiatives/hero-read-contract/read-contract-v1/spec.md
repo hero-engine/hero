@@ -41,17 +41,26 @@ This decision records the Hero-side semantics for the read contract that hero-ha
 
 `progress` for initiatives is declared children finished / declared children total. It is `null` for other types.
 
+`priority` / `severity` normalization:
+- `critical`: p0, critical, blocker, highest.
+- `high`: p1, high, major.
+- `medium`: p2, medium, moderate, normal.
+- `low`: p3, p4, low, lowest, minor, trivial.
+- Anything else: `null`.
+
+`depends-on`, `depends_on` and `blocks` edges all count as dependencies.
+
 ### Verify state
 
 There is one source of truth: files on disk. It never comes from `events.log`, so reads cannot depend on write-only logs.
 
-`verify.audit` is the verdict of the spec's own audit report (`spec.FindAuditReport`, which validates the slug and staleness): `ship`, `hold`, or `null`.
+`verify.audit` is the verdict of the spec's own audit report (`spec.FindAuditReport`, which validates the slug and staleness): `ship`, `hold`, or `null`. For a **finished** spec the staleness check is ignored, because `hero spec verify` rewrites the status after the audit, so a finished spec is always newer than its report. A slug mismatch never counts.
 
 `verify.state`:
 - `passed`: finished, audit `ship`, and every ledger row `DONE`.
-- `partial`: finished, but the audit is missing, or ledger rows are signed-off SKIPPED/BLOCKED, or some AC results are unknown.
+- `partial`: finished, but the audit is missing or not SHIP, or the ledger is missing or has rows other than DONE.
 - `failed`: audit `hold`, or status `regressed`.
-- `not_run`: not finished, with no audit.
+- `not_run`: not finished (an unfinished spec may still report `audit: "ship"` from an earlier round; the verify gate has not run).
 
 `verify` is `null` for types that don't verify (decision).
 
@@ -75,8 +84,9 @@ These rules are kept from the requester:
 | initiative | has unfinished children | drive / Drive / `/drive <slug>` | Driving (if in_progress) or Planning, active or ready | true |
 | decision | not accepted | design / Decide / `/decide <slug>` | Proposed, ready | true |
 | any work type | handed_off, awaiting_peer | deliver / Deliver / `/deliver <slug>` | With peer, waiting | false, "with peer <alias>" when known |
-| any work type | finished, verify `passed` | `next: null` | Delivered, done | — |
-| feature, bug, enhancement | finished, verify not `passed` | verify / Verify / `/verify <slug>` | Delivered?, attention | true |
+| any work type | finished, verify `passed` | `next: null` (clients show **Delivered** from `verify.state = passed`) | — | — |
+| feature, bug, enhancement | finished within `recently_done`, verify not `passed` | verify / Verify / `/verify <slug>` | Delivered?, attention | true |
+| feature, bug, enhancement | finished before the window, verify not `passed` | `next: null` (historical work; not re-verified) | — | — |
 | any | superseded, rejected, merged, accepted decision | `next: null` | Closed, done | — |
 
 `/verify <slug>` is a new thin slash workflow, shipped to every harness target by `next-step-engine`. It runs the cold delivery audit if it is missing or stale, then `hero spec verify <slug>`.
@@ -88,7 +98,7 @@ These rules are kept from the requester:
 
 ### Revisions and watch globs
 
-- **Item revision:** the first 16 hex characters of the SHA-256 of the spec file bytes, plus each related spec's `slug:status` (sorted), plus the audit verdict and its file mtime.
+- **Item revision:** the first 16 hex characters of the SHA-256 of the spec file bytes, plus each related spec's `slug:status` (sorted), plus the audit verdict and its file mtime, plus the derived lane and verify state. The derived part is included because time alone can move an item out of `recently_done`.
 - **Global revision:** the first 16 hex characters of the SHA-256 of the sorted item revisions, polish, suggested, and `hero_version`. The whole corpus is recomputed per read in v1. Budget: p95 under 2 s on this repo (~400 specs), measured by `hero-work-tool`. Incremental computation only if the budget is missed.
 - **`watch_globs`:** `.hero/planning/**`, `.hero/specs/**`, `.hero/knowledge/**`, `.hero/NEXT.md`, `.hero/next/**`, `.hero/hero.json`. They never include Hero's runtime files (index/graph DBs, `events.log`, `cache/`, `sessions/`, pidfiles, `QUEUE.md`, `SNAPSHOT.md`).
 
@@ -127,3 +137,13 @@ Returns the NEXT.md projection that `hero next` prints, as `markdown`, with `upd
 - One shared model (`work-item-model`) and one rule table (`next-step-engine`) feed all three tools. `hero list` / `hero_queue` should later converge on it.
 - `/verify` becomes a new slash workflow for all eight harness targets, so the `harness-changes-cover-all-targets` tripwire applies.
 - hero-harness can build against these semantics now.
+
+## Amendments
+
+- **2026-10-06 (work-item-model cold audit):**
+  - Explicit priority/severity synonyms.
+  - `depends_on` edges count.
+  - Staleness is ignored for finished specs' audits; on the real corpus it would otherwise reject 164 valid audits.
+  - The "unknown AC results → partial" clause is dropped; it conflicted with "files on disk only".
+  - The revision includes the derived lane and verify state.
+  - Verify is offered only within `recently_done`. Otherwise 258 historical specs, which predate audits, would show Verify.

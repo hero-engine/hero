@@ -254,3 +254,48 @@ func TestRevisionChangesOnlyWithInputs(t *testing.T) {
 		t.Error("active revision unchanged after an audit report appeared")
 	}
 }
+
+// Audit round 1: every dependency spelling, missing targets, the CompletedAt
+// fallback, a childless initiative, stale audits on finished specs, and a
+// revision that moves when the lane ages out.
+func TestEdgeCasesFromAudit(t *testing.T) {
+	c := newCorpus(t)
+	seed(c)
+	c.write("planning/features/rawdep", fm("rawdep", "feature", "planning", "relations:\n  - target: active\n    kind: depends_on\n")+designedBody)
+	c.write("planning/features/blocker", fm("blocker", "feature", "planning", "relations:\n  - target: active\n    kind: blocks\n")+designedBody)
+	c.write("planning/features/ghostdep", fm("ghostdep", "feature", "planning", "depends-on: [no-such-spec]\n")+designedBody)
+	c.write("planning/initiatives/lonely", fm("lonely", "initiative", "planning", ""))
+	nodate := c.write("specs/nodate", fm("nodate", "feature", "completed", "")+designedBody)
+	ledger := "\n## Completion Ledger\n\n### Acceptance Criteria\n\n| # | C | Status | Note |\n|---|---|---|---|\n| 1 | AC-1 | DONE | ok |\n"
+	done := c.write("specs/stalepass", fm("stalepass", "feature", "completed", "completed_at: 2026-10-01T00:00:00Z\n")+designedBody+ledger)
+	os.WriteFile(filepath.Join(filepath.Dir(done), "delivery-audit.md"), []byte("# Delivery audit — stalepass\n\n**Verdict:** SHIP\n"), 0o644)
+	time.Sleep(10 * time.Millisecond)
+	// Verify flips status after the audit, so the spec is newer.
+	os.WriteFile(done, []byte(fm("stalepass", "feature", "completed", "completed_at: 2026-10-02T00:00:00Z\n")+designedBody+ledger), 0o644)
+	os.Chtimes(nodate, testNow.Add(-24*time.Hour), testNow.Add(-24*time.Hour))
+
+	_, items := c.build()
+	for _, slug := range []string{"rawdep", "blocker", "ghostdep"} {
+		if items[slug].Lane != LaneDesigned {
+			t.Errorf("%s lane = %s, want designed (unmet dependency)", slug, items[slug].Lane)
+		}
+	}
+	if items["lonely"].Lane != LaneNone || items["lonely"].Progress == nil || items["lonely"].Progress.Total != 0 {
+		t.Errorf("childless initiative = lane %s progress %+v", items["lonely"].Lane, items["lonely"].Progress)
+	}
+	if items["nodate"].Lane != LaneRecentlyDone || items["nodate"].CompletedAt != nil {
+		t.Errorf("finished without completed_at should use mtime: lane %s", items["nodate"].Lane)
+	}
+	if v := items["stalepass"].Verify; v == nil || v.State != VerifyPassed {
+		t.Errorf("finished spec newer than its SHIP audit must still pass, got %+v", v)
+	}
+
+	specs, _ := c.build()
+	soon := Build(specs, Options{Now: testNow, RecentDays: 14, Root: c.root})
+	later := Build(specs, Options{Now: testNow.AddDate(0, 0, 30), RecentDays: 14, Root: c.root})
+	for i := range soon {
+		if soon[i].Slug == "recent" && soon[i].Revision == later[i].Revision {
+			t.Error("revision unchanged after recent aged out of recently_done")
+		}
+	}
+}

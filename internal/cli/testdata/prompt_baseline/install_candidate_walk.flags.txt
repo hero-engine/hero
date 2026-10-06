@@ -262,6 +262,10 @@ exit: 0
         "dest": ".claude/commands/sprint.md"
       },
       {
+        "source": "commands/verify.md",
+        "dest": ".claude/commands/verify.md"
+      },
+      {
         "source": "commands/why.md",
         "dest": ".claude/commands/why.md"
       },
