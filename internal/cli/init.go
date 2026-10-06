@@ -533,6 +533,11 @@ var managedGitignoreEntries = []string{
 	"",
 	"# Per-machine install state (host capabilities, informational)",
 	".hero/install-state.json",
+	"",
+	"# MCP daemon runtime state (per-process singleton pidfile + debug log) — ephemeral",
+	".hero/mcp-*.pid",
+	".hero/mcp-*.pid.*",
+	".hero/mcp-debug.log",
 }
 
 // ensureManagedGitignoreBlock writes (or refreshes) the marker-bounded
