@@ -111,21 +111,34 @@ type Corpus struct {
 	bySlug map[string]*spec.Spec
 }
 
-// NewCorpus indexes specs by slug. A promoted Mail intake shares its slug
-// with the spec it became; the real spec always wins that collision, and
-// otherwise the first spec seen keeps the slug (Discover order is stable).
+// NewCorpus indexes specs by slug. Slugs can collide across kinds: a
+// promoted Mail intake shares its slug with the spec it became, and a
+// knowledge entry (e.g. an explainer) can share one with the feature it
+// explains. Work specs win, then other specs, then intakes; within a rank
+// the first spec seen keeps the slug (Discover order is stable).
 func NewCorpus(specs []*spec.Spec) *Corpus {
 	c := &Corpus{bySlug: make(map[string]*spec.Spec, len(specs))}
 	for _, s := range specs {
 		if s.Slug == "" {
 			continue
 		}
-		if prev, ok := c.bySlug[s.Slug]; ok && !(prev.Type == spec.TypeIntake && s.Type != spec.TypeIntake) {
+		if prev, ok := c.bySlug[s.Slug]; ok && slugRank(prev) <= slugRank(s) {
 			continue
 		}
 		c.bySlug[s.Slug] = s
 	}
 	return c
+}
+
+func slugRank(s *spec.Spec) int {
+	switch string(s.Type) {
+	case "feature", "bug", "enhancement", "initiative", "epic", "decision":
+		return 0
+	case string(spec.TypeIntake):
+		return 2
+	default:
+		return 1
+	}
 }
 
 // Lookup returns the spec with the given slug, or nil.

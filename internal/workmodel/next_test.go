@@ -127,6 +127,8 @@ func TestRound2AuditCases(t *testing.T) {
 	// Intake written after the feature so a naive last-wins index picks it.
 	c.write("planning/features/mailfeat", fm("mailfeat", "feature", "delivering", "")+designedBody)
 	c.write("planning/intake/mailfeat", fm("mailfeat", "intake", "promoted", ""))
+	// A knowledge explainer sharing a work spec's slug, discovered first.
+	c.write("knowledge/explainers/active", fm("active", "explainer", "active", ""))
 	c.write("planning/features/watcher", fm("watcher", "feature", "planning", "depends-on: [mailfeat]\n")+designedBody)
 	c.write("planning/features/review", fm("review", "feature", "in-review", "")+designedBody)
 	c.write("planning/features/waiting", fm("waiting", "feature", "awaiting_peer", "")+designedBody)
@@ -152,6 +154,9 @@ func TestRound2AuditCases(t *testing.T) {
 	}
 	if n := by["mailfeat"].Next; n == nil || n.Label != "Continue" || by["mailfeat"].Lane != LaneInProgress {
 		t.Errorf("live feature shadowed by its intake: lane %s next %+v", by["mailfeat"].Lane, n)
+	}
+	if n := by["active"].Next; n == nil || n.Label != "Continue" {
+		t.Errorf("work spec shadowed by a same-slug explainer: next %+v", n)
 	}
 	if by["watcher"].Lane != LaneDesigned {
 		t.Errorf("dependency on the live feature must resolve to it (unfinished): lane %s", by["watcher"].Lane)

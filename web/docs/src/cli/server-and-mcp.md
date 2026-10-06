@@ -44,6 +44,36 @@ Narrative documentation does not freeze a mutable tool count. See
 [MCP tool metadata](../serve/mcp-tool-metadata.md) for category, tier, and
 safety annotations.
 
+### Read contract v1
+
+Three read-only tools give any client Hero's interpretation of the work as
+stable JSON, so clients never parse `.hero` files. Each one is
+`readOnlyHint: true`, re-indexes when stale, and writes nothing.
+
+| Tool | Returns |
+|---|---|
+| `hero_work {recent_days?}` | `{schema_version, revision, generated_at, hero_version, watch_globs, items, polish, suggested}` |
+| `hero_spec {slug}` | `{item, body, relations, acs}` for one work spec |
+| `hero_handoff {}` | `{markdown, updated_at}`: the briefing `hero next` shows |
+
+- **Work items.** Every work item carries a lane: `designed`, `ready`,
+  `in_progress`, `recently_done` or `none`. It also carries a verify state:
+  `passed`, `partial`, `failed` or `not_run`.
+- **Next step.** Each item's `next` is exactly one primary action as a slash
+  command, such as `/design`, `/deliver`, `/diagnose`, `/drive`, `/decide`
+  or `/verify`. Diagnose and Deliver are never offered together.
+- **Revisions.** `revision` changes only when content does. Re-read
+  `hero_work` when a file matching `watch_globs` changes. Hero's own runtime
+  files are never in that list, so a read cannot trigger another read.
+- **Schema changes.** The schema is additive-only within
+  `schema_version: 1`. `internal/serve/testdata/read_contract_v1.golden`
+  fails the build if a field disappears or changes type.
+
+To export fixture JSON for client tests, run
+`scripts/export-read-contract-fixture.py OUT_DIR`. It writes
+`hero_work.json`, `hero_handoff.json` and `hero_spec/<slug>.json` from a
+real `hero mcp`. The full semantics are in the `read-contract-v1` decision.
+
 ### Tool filtering
 
 `serve.tool_filter.allow` exposes only named tools, `deny` removes named tools,
