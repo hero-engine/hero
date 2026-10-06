@@ -8,6 +8,7 @@ import (
 	"github.com/hero-engine/hero/internal/attention/projection"
 	attentionstate "github.com/hero-engine/hero/internal/attention/state"
 	"github.com/hero-engine/hero/internal/attention/suggestion"
+	"github.com/hero-engine/hero/internal/config"
 	"github.com/hero-engine/hero/internal/projectregistry"
 )
 
@@ -103,7 +104,11 @@ func (s *MCPServer) attentionProjectionService() (*projection.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	mailSource, err := projection.NewRegistryMailSource(root, registry)
+	cfg, err := config.Load(s.projectRoot)
+	if err != nil {
+		return nil, err
+	}
+	mailSource, err := projection.NewRegistryMailSource(root, registry, cfg.PeerID)
 	if err != nil {
 		return nil, err
 	}
