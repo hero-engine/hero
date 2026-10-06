@@ -45,7 +45,15 @@ type Config struct {
 	// when missing on an older workspace. See contracts/peering for
 	// the wire-shape side. Display alias for human reading lives
 	// outside Config (registered via `hero repos add` on peers).
-	PeerID  string         `json:"peer_id,omitempty"`
+	PeerID string `json:"peer_id,omitempty"`
+	// Name is the workspace's stable short name, minted from the
+	// project root's directory name at `hero init`. Unlike a live
+	// filesystem lookup, it is a fixed, committed value — every git
+	// worktree checking out the same commit sees the same Name,
+	// regardless of that worktree's own directory name. Consumers that
+	// need a workspace-identifying label (e.g. the peer manifest)
+	// should prefer this over deriving one from the working directory.
+	Name    string         `json:"name,omitempty"`
 	Peering *PeeringConfig `json:"peering,omitempty"`
 	// Domain is the legacy scalar primary-domain field. It remains readable
 	// for compatibility; explicit domain mutations write Domains and clear it.

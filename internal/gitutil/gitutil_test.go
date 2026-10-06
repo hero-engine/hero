@@ -344,6 +344,53 @@ func TestIsRepo_NonGitDir(t *testing.T) {
 	}
 }
 
+func TestRepoRoot_PlainRepo(t *testing.T) {
+	dir := initGitRepo(t)
+	got, err := filepath.EvalSymlinks(RepoRoot(dir))
+	if err != nil {
+		t.Fatalf("EvalSymlinks(%q): %v", RepoRoot(dir), err)
+	}
+	want, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		t.Fatalf("EvalSymlinks(%q): %v", dir, err)
+	}
+	if got != want {
+		t.Errorf("RepoRoot(%q) = %q, want %q", dir, got, want)
+	}
+}
+
+// TestRepoRoot_LinkedWorktree is the regression case: `hero index` run
+// from inside a linked worktree whose directory name is unrelated to the
+// project (e.g. a session ID) must still resolve to the main checkout's
+// directory, not the worktree's own basename.
+func TestRepoRoot_LinkedWorktree(t *testing.T) {
+	mainDir := initGitRepo(t)
+	worktreeDir := filepath.Join(t.TempDir(), "some-unrelated-session-id")
+	run(t, mainDir, "worktree", "add", "-b", "wt-branch", worktreeDir)
+
+	got, err := filepath.EvalSymlinks(RepoRoot(worktreeDir))
+	if err != nil {
+		t.Fatalf("EvalSymlinks(%q): %v", RepoRoot(worktreeDir), err)
+	}
+	want, err := filepath.EvalSymlinks(mainDir)
+	if err != nil {
+		t.Fatalf("EvalSymlinks(%q): %v", mainDir, err)
+	}
+	if got != want {
+		t.Errorf("RepoRoot(%q) = %q, want main checkout %q", worktreeDir, got, want)
+	}
+	if filepath.Base(got) == filepath.Base(worktreeDir) {
+		t.Errorf("RepoRoot(%q) leaked the worktree's own basename: %q", worktreeDir, got)
+	}
+}
+
+func TestRepoRoot_NonGitDir(t *testing.T) {
+	dir := t.TempDir()
+	if got := RepoRoot(dir); got != dir {
+		t.Errorf("RepoRoot(%q) = %q, want fallback to dir itself", dir, got)
+	}
+}
+
 // run is a test helper that executes a git command.
 func run(t *testing.T, dir string, args ...string) {
 	t.Helper()
