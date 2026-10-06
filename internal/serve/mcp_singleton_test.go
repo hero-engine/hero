@@ -230,7 +230,7 @@ func TestMCPSingleton_OrphanWatchdogStillFires(t *testing.T) {
 
 	done := make(chan struct{})
 	defer close(done)
-	startParentWatchdog(done)
+	startParentWatchdog(done, nil)
 
 	select {
 	case code := <-exited:
