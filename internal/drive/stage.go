@@ -12,7 +12,7 @@ import (
 type Stage int
 
 const (
-	StageDone          Stage = iota // completed / superseded
+	StageDone          Stage = iota // finished per spec.Spec.IsFinished (type-appropriate terminal status, or superseded)
 	StageReadyDeliver               // designed + adequately scored, not yet completed
 	StageNeedsDesign                // discoverable but not yet designed (stub)
 	StageNeedsScaffold              // declared by the initiative but no spec on disk
