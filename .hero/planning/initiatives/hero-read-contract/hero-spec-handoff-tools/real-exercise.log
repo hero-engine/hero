@@ -1,0 +1,3 @@
+hero_spec: hero-work-tool | lane none | next Design True None | parent hero-read-contract | depends_on ['next-step-engine:delivering'] | acs 0
+hero_handoff: markdown 1830 chars | updated_at None
+hero_handoff: markdown 1830 chars | updated_at 2026-09-30T23:30:05Z

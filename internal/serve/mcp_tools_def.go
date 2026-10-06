@@ -447,6 +447,26 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 		{
+			Name:        "hero_spec",
+			Category:    CategorySearchAndKnowledge,
+			Tier:        TierDeferrable,
+			Description: "Read contract v1 (read-only JSON): one work spec as {item: WorkItem with lane, verify state and next step, body: Markdown without frontmatter, relations: {parent, children, depends_on, blocks, related} as {slug,title,type,status}, acs: [{id, text, state: pass|fail|unknown}]}. Serves features, bugs, enhancements, initiatives, epics and initiative decisions.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"slug": {Type: "string", Description: "The work spec's slug"},
+				},
+				Required: []string{"slug"},
+			},
+		},
+		{
+			Name:        "hero_handoff",
+			Category:    CategorySearchAndKnowledge,
+			Tier:        TierDeferrable,
+			Description: "Read contract v1 (read-only JSON): the handoff briefing `hero next` shows, as {markdown, updated_at}. Empty markdown and null updated_at when no briefing exists yet.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{}},
+		},
+		{
 			Name:        "hero_ask",
 			Category:    CategorySearchAndKnowledge,
 			Tier:        TierDeferrable,

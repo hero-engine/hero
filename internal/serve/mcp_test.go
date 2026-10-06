@@ -444,7 +444,7 @@ func TestMCP_ToolsList(t *testing.T) {
 		t.Fatalf("decode result: %v", err)
 	}
 
-	if want := 65 + len(codehostbroker.Operations()); len(result.Tools) != want {
+	if want := 67 + len(codehostbroker.Operations()); len(result.Tools) != want {
 		t.Errorf("expected %d tools, got %d", want, len(result.Tools))
 	}
 
@@ -454,6 +454,7 @@ func TestMCP_ToolsList(t *testing.T) {
 		"hero_queue": true, "hero_kickoff": true,
 		"hero_goal":      true,
 		"hero_knowledge": true, "hero_read_spec": true,
+		"hero_spec": true, "hero_handoff": true,
 		"hero_ask": true, "hero_anchor": true,
 		"hero_pulse": true, "hero_skill_run": true,
 		"hero_claim": true, "hero_velocity": true,
