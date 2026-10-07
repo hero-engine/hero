@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-10-07T15:13:10Z · 82 ready specs_
+_Generated: 2026-10-07T17:09:30Z · 82 ready specs_
 
 ## mail-thread-foreground-read-action — Mail Thread Foreground Read Action
 _feature · delivering · horizon: now_

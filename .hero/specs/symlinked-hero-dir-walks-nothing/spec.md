@@ -2,7 +2,7 @@
 title: "A hero folder that is a symlink is walked as empty — Hero finds no specs"
 slug: symlinked-hero-dir-walks-nothing
 type: bug
-status: delivering
+status: completed
 priority: P1
 severity: moderate
 root_cause_class: logic
@@ -10,6 +10,7 @@ domain: engineering
 size: small
 created: 2026-10-07
 tags: [filesystem, discover, watch, release-blocker]
+completed_at: 2026-10-07T17:09:19Z
 ---
 
 # A symlinked hero folder is walked as empty
