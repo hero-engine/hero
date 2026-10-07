@@ -111,3 +111,19 @@ func TestArchivedSpecIsExemptFromStaleness(t *testing.T) {
 		t.Fatalf("archived completed spec must keep its audit: %+v", r)
 	}
 }
+
+// Pre-release sweep: the archive exemption does not depend on the hero
+// folder being named ".hero".
+func TestArchivedPathIgnoresFolderName(t *testing.T) {
+	for path, want := range map[string]bool{
+		"/repo/.hero/specs/x/spec.md":               true,
+		"/repo/.workspace/specs/x/spec.md":          true,
+		"/repo/.hero/specs/init/child/spec.md":      true,
+		"/repo/.hero/planning/features/x/spec.md":   false,
+		"/work/specs/repo/.hero/planning/x/spec.md": false,
+	} {
+		if got := isArchivedPath(path); got != want {
+			t.Errorf("isArchivedPath(%q) = %v, want %v", path, got, want)
+		}
+	}
+}

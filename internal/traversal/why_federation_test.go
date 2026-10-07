@@ -30,9 +30,9 @@ func TestResolveTarget_FederatedPeerCopyDoesNotShadowLocal(t *testing.T) {
 
 	// Local copy live → resolves to the local node.
 	localID := seedNode(t, store, "Feature", slug, "Local Team OAuth", localRepo)
-	hop, gotID, err := resolveTarget(store, localRepo, slug)
+	hop, gotID, err := ResolveTarget(store, localRepo, slug)
 	if err != nil {
-		t.Fatalf("resolveTarget(local) with a live local node: %v", err)
+		t.Fatalf("ResolveTarget(local) with a live local node: %v", err)
 	}
 	if gotID != localID {
 		t.Fatalf("resolved id = %d, want local id %d", gotID, localID)
@@ -50,7 +50,7 @@ func TestResolveTarget_FederatedPeerCopyDoesNotShadowLocal(t *testing.T) {
 	// The local node must still be live and still be what a local query
 	// resolves to. Before repo-scoped identity the sibling ingest tombstoned
 	// it and this query failed outright.
-	hop, gotID, err = resolveTarget(store, localRepo, slug)
+	hop, gotID, err = ResolveTarget(store, localRepo, slug)
 	if err != nil {
 		t.Fatalf("a sibling ingest tombstoned the local node: %v", err)
 	}
@@ -62,8 +62,8 @@ func TestResolveTarget_FederatedPeerCopyDoesNotShadowLocal(t *testing.T) {
 	}
 
 	// The peer repo, of course, still resolves its own copy.
-	if _, _, err := resolveTarget(store, peerRepo, slug); err != nil {
-		t.Errorf("resolveTarget(peer) should resolve the peer's own live copy: %v", err)
+	if _, _, err := ResolveTarget(store, peerRepo, slug); err != nil {
+		t.Errorf("ResolveTarget(peer) should resolve the peer's own live copy: %v", err)
 	}
 }
 
@@ -87,12 +87,12 @@ func TestResolveTarget_PeerOnlyNodeDoesNotAnswerLocalQuery(t *testing.T) {
 	store := openStore(t)
 	seedNode(t, store, "Feature", slug, "Peer Only Spec", peerRepo)
 
-	if _, _, err := resolveTarget(store, localRepo, slug); err == nil {
-		t.Error("resolveTarget(local) returned a peer-only node as if it were local; " +
+	if _, _, err := ResolveTarget(store, localRepo, slug); err == nil {
+		t.Error("ResolveTarget(local) returned a peer-only node as if it were local; " +
 			"a federated copy must not shadow the local partition")
 	}
 	// And the peer's own query still finds it.
-	if _, _, err := resolveTarget(store, peerRepo, slug); err != nil {
-		t.Errorf("resolveTarget(peer) should resolve its own node: %v", err)
+	if _, _, err := ResolveTarget(store, peerRepo, slug); err != nil {
+		t.Errorf("ResolveTarget(peer) should resolve its own node: %v", err)
 	}
 }

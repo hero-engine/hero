@@ -232,10 +232,17 @@ func extractHeaderValue(line, key string) (string, bool) {
 // report. A spec merely marked completed while still in planning/ keeps the
 // check — that is exactly the hand-flipped status this gate must catch.
 func auditCutoff(s *Spec) time.Time {
-	if s.IsFinished() && strings.Contains(filepath.ToSlash(s.Path), "/.hero/specs/") {
+	if s.IsFinished() && isArchivedPath(s.Path) {
 		return time.Time{}
 	}
 	return s.ModifiedAt
+}
+
+// isArchivedPath reports whether a spec file lives in the workspace's
+// archive (<hero folder>/specs/...), whatever the hero folder is named.
+func isArchivedPath(path string) bool {
+	slash := filepath.ToSlash(path)
+	return strings.Contains(slash, "/specs/") && !strings.Contains(slash, "/planning/")
 }
 
 // committedAuditIsCurrent settles an mtime-based "stale" verdict with git.

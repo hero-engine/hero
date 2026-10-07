@@ -75,7 +75,7 @@ func Polish(items []Item, specs []*spec.Spec) []PolishItem {
 			}
 			if other.Type == "bug" {
 				bugs = append(bugs, other)
-			} else if !os.CreatedAt.IsZero() && !done.CompletedAt.IsZero() && !os.CreatedAt.Before(dayStart(done.CompletedAt)) {
+			} else if doneAt := completionTime(done); !os.CreatedAt.IsZero() && !doneAt.IsZero() && !os.CreatedAt.Before(dayStart(doneAt)) {
 				followups = append(followups, other)
 			}
 		}
@@ -104,6 +104,15 @@ func related(a, b *spec.Spec) bool {
 		}
 	}
 	return false
+}
+
+// completionTime is when a finished spec was done: completed_at, else its
+// file time — the same fallback Lane uses to place it in recently_done.
+func completionTime(s *spec.Spec) time.Time {
+	if !s.CompletedAt.IsZero() {
+		return s.CompletedAt
+	}
+	return s.ModifiedAt
 }
 
 // dayStart is midnight UTC of t's day: `created:` is usually a bare date,

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hero-engine/hero/internal/graph"
 	"time"
 )
 
@@ -243,14 +245,66 @@ func TestToolWorkWritesNothing(t *testing.T) {
 	callWork(t, srv, map[string]interface{}{})
 	after := snapshotTree(t, heroDir)
 	for path, mod := range after {
+		watched := path == "NEXT.md" || path == "hero.json"
 		for _, dir := range []string{"planning", "specs", "knowledge", "next"} {
-			if strings.HasPrefix(path, dir+string(filepath.Separator)) && before[path] != mod {
-				t.Errorf("hero_work wrote %s", path)
-			}
+			watched = watched || strings.HasPrefix(path, dir+string(filepath.Separator))
+		}
+		if watched && before[path] != mod {
+			t.Errorf("hero_work wrote %s (under watch_globs)", path)
 		}
 	}
 	ann := annotationsForSafety(toolSafetyClasses()["hero_work"])
 	if ann.ReadOnlyHint == nil || !*ann.ReadOnlyHint {
 		t.Error("hero_work must be readOnlyHint=true")
+	}
+}
+
+// Pre-release sweep (audit test gaps): CRLF frontmatter, a knowledge entry
+// pointing at an initiative (not a child), recorded pass/fail AC states,
+// and an initiative's verify null at the tool level.
+func TestReadContractSweepGaps(t *testing.T) {
+	srv, heroDir := readContractWorkspace(t)
+	crlf := strings.ReplaceAll("---\ntitle: Crlf\nslug: crlf\ntype: feature\nstatus: planning\nparent: init\n---\n\n# Crlf\n\nBody here.\n\n## Changes\n\n1. x\n\n## Acceptance Criteria\n\n- **AC-1:** THE SYSTEM SHALL one.\n- **AC-2:** THE SYSTEM SHALL two.\n", "\n", "\r\n")
+	writeContractSpec(t, heroDir, "planning/features/crlf", crlf)
+	writeContractSpec(t, heroDir, "knowledge/notes/aside", "---\ntitle: Aside\nslug: aside\ntype: note\nstatus: active\nparent: init\n---\n# Aside\n")
+
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for ac, status := range map[string]string{"AC-1": "passing", "AC-2": "failing"} {
+		if _, err := store.UpsertNode(&graph.Node{Type: "Criterion", Domain: "engineering", Key: "crlf:" + ac,
+			Props: map[string]any{"ac_id": ac, "status": status, "parent": "crlf"}, ContentHash: ac + status}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	store.Close()
+
+	var got HeroSpec
+	result := callTool(t, srv, "hero_spec", map[string]interface{}{"slug": "crlf"})
+	if result.IsError {
+		t.Fatal(result.Content[0].Text)
+	}
+	json.Unmarshal([]byte(result.Content[0].Text), &got)
+	if strings.Contains(got.Body, "---") || strings.Contains(got.Body, "slug: crlf") || !strings.Contains(got.Body, "Body here.") {
+		t.Errorf("CRLF frontmatter not stripped: %q", got.Body)
+	}
+	states := map[string]string{}
+	for _, ac := range got.ACs {
+		states[ac.ID] = ac.State
+	}
+	if states["AC-1"] != "pass" || states["AC-2"] != "fail" {
+		t.Errorf("recorded AC states = %v, want AC-1 pass, AC-2 fail", states)
+	}
+
+	var init HeroSpec
+	json.Unmarshal([]byte(callTool(t, srv, "hero_spec", map[string]interface{}{"slug": "init"}).Content[0].Text), &init)
+	for _, ch := range init.Relations.Children {
+		if ch.Slug == "aside" {
+			t.Error("a knowledge note pointing at an initiative must not be a child")
+		}
+	}
+	if init.Item.Verify != nil {
+		t.Errorf("initiative verify must be null at the tool level, got %+v", init.Item.Verify)
 	}
 }
