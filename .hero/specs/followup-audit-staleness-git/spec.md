@@ -2,7 +2,7 @@
 title: "Delivery-audit staleness misfires after checkout or clone because it compares file mtimes"
 slug: followup-audit-staleness-git
 type: bug
-status: delivering
+status: completed
 priority: P2
 severity: moderate
 root_cause_class: design
@@ -10,6 +10,7 @@ domain: engineering
 size: small
 created: 2026-10-07
 tags: [verify, audit, gate2, git]
+completed_at: 2026-10-07T02:08:57Z
 ---
 
 # Audit staleness: commit order beats mtimes

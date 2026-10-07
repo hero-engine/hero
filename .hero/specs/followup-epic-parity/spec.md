@@ -2,7 +2,7 @@
 title: "Work model treats epics inconsistently and gives containers a misleading verify state"
 slug: followup-epic-parity
 type: bug
-status: delivering
+status: completed
 priority: P3
 severity: low
 root_cause_class: code
@@ -10,6 +10,7 @@ domain: engineering
 size: trivial
 created: 2026-10-07
 tags: [workmodel, read-contract, epic]
+completed_at: 2026-10-07T02:09:02Z
 ---
 
 # Epic parity and container verify

@@ -2,7 +2,7 @@
 title: "hero serve takes 5s to stop and exits with an error when a client holds an idle connection"
 slug: followup-serve-shutdown
 type: bug
-status: delivering
+status: completed
 priority: P3
 severity: low
 root_cause_class: code
@@ -10,6 +10,7 @@ domain: engineering
 size: small
 created: 2026-10-07
 tags: [serve, shutdown, http]
+completed_at: 2026-10-07T02:08:59Z
 ---
 
 # hero serve shutdown: drain promptly
