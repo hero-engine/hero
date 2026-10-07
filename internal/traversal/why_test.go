@@ -293,3 +293,39 @@ func TestWhy_WalksSupersedesEdge(t *testing.T) {
 		t.Errorf("polish-v1 not surfaced via supersedes walk; chains=%+v", trace.Chains)
 	}
 }
+
+// A promoted Mail intake shares its slug with the spec it became. `hero why`
+// must start from the spec (and walk spec -> intake -> mail), whichever node
+// was ingested last; ingested_at has one-second resolution, so the old
+// "newest wins" order made the start node — and the chain — nondeterministic.
+func TestWhy_PromotedSpecWinsSlugTieWithItsIntake(t *testing.T) {
+	store := openStore(t)
+	specID := seedNode(t, store, "Feature", "promoted", "Promoted", "repo-x")
+	intakeID := seedNode(t, store, "Intake", "promoted", "promoted", "repo-x")
+	mailID := seedNode(t, store, "MailSource", "mail_1", "mail_1", "repo-x")
+	seedEdge(t, store, specID, intakeID, "derived_from")
+	seedEdge(t, store, intakeID, mailID, "mail_source")
+	// The intake is ingested one second after its spec (stored format is
+	// RFC 3339), the order promotion produces.
+	for id, at := range map[int64]string{specID: "2026-10-07T03:00:00Z", intakeID: "2026-10-07T03:00:01Z"} {
+		if _, err := store.DB().Exec(`UPDATE nodes SET ingested_at = ? WHERE id = ?`, at, id); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	trace, err := Why(store, "repo-x", "promoted", DefaultDepth)
+	if err != nil {
+		t.Fatalf("Why: %v", err)
+	}
+	if trace.Target.NodeType != "Feature" {
+		t.Fatalf("start node = %s, want the promoted Feature", trace.Target.NodeType)
+	}
+	var derived, mail bool
+	for _, hop := range trace.Chains {
+		derived = derived || hop.EdgeType == "derived_from"
+		mail = mail || hop.EdgeType == "mail_source"
+	}
+	if !derived || !mail {
+		t.Fatalf("chain missing provenance hops: %#v", trace.Chains)
+	}
+}
