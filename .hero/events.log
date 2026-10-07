@@ -630,3 +630,5 @@
 {"ts":"2026-10-07T02:09:02.356835Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"followup-serve-shutdown","message":"status -\u003e completed"}
 {"ts":"2026-10-07T02:09:04.727393Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"followup-epic-parity","message":"Work model treats epics inconsistently and gives containers a misleading verify state"}
 {"ts":"2026-10-07T02:09:04.727497Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"followup-epic-parity","message":"status -\u003e completed"}
+{"ts":"2026-10-07T03:16:27.712751Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"why-intake-slug-tie","message":"hero why starts from a promoted intake instead of its spec when both share a slug"}
+{"ts":"2026-10-07T03:16:27.712926Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"why-intake-slug-tie","message":"status -\u003e completed"}

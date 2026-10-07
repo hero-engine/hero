@@ -2,7 +2,7 @@
 title: "hero why starts from a promoted intake instead of its spec when both share a slug"
 slug: why-intake-slug-tie
 type: bug
-status: delivering
+status: completed
 priority: P2
 severity: moderate
 root_cause_class: code
@@ -10,6 +10,7 @@ domain: engineering
 size: trivial
 created: 2026-10-07
 tags: [why, traversal, intake, mail, flaky-test]
+completed_at: 2026-10-07T03:16:23Z
 ---
 
 # hero why: promoted spec wins the slug tie
