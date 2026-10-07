@@ -5,10 +5,8 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-09-30T23:30:05Z
+updated: 2026-10-06T23:43:42Z
 repo: hero-engine/hero
-updated: 2026-09-29T09:43:58Z
-repo: davidray/hero
 ---
 
 ## Just finished
@@ -17,9 +15,9 @@ Run `git log --oneline -10` for recent commits.
 
 ## Next
 
-- **Core / Vertical Layering — Make the Conceptual Split Physical** (`core-vertical-layering`, P0, planning)
+- **E2E Onboarding Suite — Fresh Repo to Productive Workspace** (`e2e-onboarding`, P0, planning)
 
-→ `/deliver core-vertical-layering`
+→ `/deliver e2e-onboarding`
 
 ## Blocked on
 
@@ -32,7 +30,17 @@ Run `git log --oneline -10` for recent commits.
 - **hero-launch-playbook** ← waiting on `hero-demo-content` (planning)
 - **hero-launch-playbook** ← waiting on `hero-distribution` (planning)
 - **hero-launch-playbook** ← waiting on `hero-landing-page` (delivering)
+- **hero-spec-handoff-tools** ← waiting on `next-step-engine` (planning)
 - **hero-team-server** ← waiting on `hero-runner` (planning)
+- **hero-work-tool** ← waiting on `next-step-engine` (planning)
+- **hihcp-agent-loop-error-recovery** ← waiting on `hihcp-mcp-auto-reconnect` (handed_off)
+- **hihcp-agent-loop-error-recovery** ← waiting on `hihcp-mcp-first-turn-readiness` (handed_off)
+- **hihcp-agents-md-harness-agnostic** ← waiting on `hihcp-skill-run-tool` (handed_off)
+- **next-step-engine** ← waiting on `work-item-model` (planning)
+- **polish-and-suggested** ← waiting on `hero-work-tool` (planning)
+- **read-contract-conformance** ← waiting on `hero-spec-handoff-tools` (planning)
+- **read-contract-conformance** ← waiting on `hero-work-tool` (planning)
+- **read-contract-conformance** ← waiting on `polish-and-suggested` (planning)
 - **timely-briefs** ← waiting on `retrieval-contradiction-detection` (delivering)
 - **wire-checks-to-boundaries** ← waiting on `spec-contract-enums-unified` (planning)
 
@@ -42,9 +50,9 @@ Nothing this session.
 
 ## Context to carry forward
 
-- "Always-On Runtime" — `always-on-runtime`
+- Always-On Runtime — `always-on-runtime`
 - Get Back on Track — Mission-First V2 Recovery — `get-back-on-track`
 - Pre-Launch Hardening — Federation Polish, Security, Observability — `pre-launch-hardening`
-- "Basic Chat Sheds Research — Extract the Research Apparatus to a Dormant Hero Research Seed" — `chat-sheds-research-to-seed`
+- Basic Chat Sheds Research — Extract the Research Apparatus to a Dormant Hero Research Seed — `chat-sheds-research-to-seed`
 - Launch Readiness — Telemetry, Deploy, and Public-Use Polish — `launch-readiness`
 

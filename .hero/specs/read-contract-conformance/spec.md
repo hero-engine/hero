@@ -2,13 +2,14 @@
 title: "Read contract conformance — golden schemas, peer fixture, docs"
 slug: read-contract-conformance
 type: feature
-status: delivering
+status: completed
 priority: low
 domain: engineering
 size: small
 created: 2026-10-06
 parent: hero-read-contract
 depends-on: [hero-spec-handoff-tools, hero-work-tool, polish-and-suggested]
+completed_at: 2026-10-07T00:01:00Z
 ---
 
 # Read contract conformance
