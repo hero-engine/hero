@@ -333,11 +333,7 @@ func Lane(s *spec.Spec, c *Corpus, opts Options) string {
 		if s.Status == spec.StatusSuperseded {
 			return LaneNone
 		}
-		done := s.CompletedAt
-		if done.IsZero() {
-			done = s.ModifiedAt
-		}
-		if !done.IsZero() && opts.Now.Sub(done) <= time.Duration(opts.RecentDays)*24*time.Hour {
+		if done := completionTime(s); !done.IsZero() && opts.Now.Sub(done) <= time.Duration(opts.RecentDays)*24*time.Hour {
 			return LaneRecentlyDone
 		}
 		return LaneNone

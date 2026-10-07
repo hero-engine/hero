@@ -487,19 +487,13 @@ func runWhy(cmd *cobra.Command, args []string) error {
 // for users who want a flat dump of every adjacent edge rather than
 // the recursive origin trace.
 func runWhyEdges(store *graph.Store, repoKey, target string) error {
-	var (
-		nodeType string
-		nodeID   int64
-		title    string
-	)
-	err := store.DB().QueryRow(
-		`SELECT type, id, COALESCE(json_extract(props, '$.title'), key)
-		   FROM nodes WHERE key = ? AND repo = ? AND valid_to IS NULL LIMIT 1`,
-		target, repoKey,
-	).Scan(&nodeType, &nodeID, &title)
+	// Same start node as the recursive trace: a promoted spec beats its
+	// same-slug intake, and ties are broken deterministically.
+	root, nodeID, err := traversal.ResolveTarget(store, repoKey, target)
 	if err != nil {
-		return fmt.Errorf("no node with key %q in repo %s", target, repoKey)
+		return err
 	}
+	nodeType, title := root.NodeType, root.NodeTitle
 
 	fmt.Printf("# %s `%s` (%s)\n\n", title, target, nodeType)
 

@@ -232,7 +232,7 @@ func extractHeaderValue(line, key string) (string, bool) {
 // report. A spec merely marked completed while still in planning/ keeps the
 // check — that is exactly the hand-flipped status this gate must catch.
 func auditCutoff(s *Spec) time.Time {
-	if s.IsFinished() && strings.Contains(filepath.ToSlash(s.Path), "/.hero/specs/") {
+	if s.IsFinished() && s.Archived {
 		return time.Time{}
 	}
 	return s.ModifiedAt

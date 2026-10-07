@@ -92,22 +92,62 @@ func TestAuditStalenessUsesCommitOrderForCommittedFiles(t *testing.T) {
 	}
 }
 
-// followup-audit-staleness-git AC-3: only archived specs (.hero/specs/) are
-// exempt, since verify rewrites and moves them after their audit.
+// followup-audit-staleness-git AC-3: only archived specs (<hero dir>/specs/)
+// are exempt, since verify rewrites and moves them after their audit.
+// Pre-release sweep: "archived" is decided against the hero dir Discover
+// was given, so a custom hero folder, a repo beneath a planning/ or specs/
+// directory, and spec folders with either name are classified correctly.
 func TestArchivedSpecIsExemptFromStaleness(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), ".hero", "specs", "y")
-	os.MkdirAll(dir, 0o755)
-	specPath := filepath.Join(dir, "spec.md")
-	os.WriteFile(filepath.Join(dir, "delivery-audit.md"), []byte("# Delivery audit — y\n\n**Verdict:** SHIP\n"), 0o644)
-	time.Sleep(10 * time.Millisecond)
-	os.WriteFile(specPath, []byte("---\ntitle: Y\nslug: y\ntype: feature\nstatus: completed\n---\n# Y\n"), 0o644)
-	data, _ := os.ReadFile(specPath)
-	info, _ := os.Stat(specPath)
-	s, err := Parse(string(data), specPath, info.ModTime())
+	root := filepath.Join(t.TempDir(), "planning", "specs", "repo")
+	write := func(rel, content string) {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	completed := func(slug string) string {
+		return "---\ntitle: T\nslug: " + slug + "\ntype: feature\nstatus: completed\n---\n# T\n"
+	}
+	audit := func(slug string) string { return "# Delivery audit — " + slug + "\n\n**Verdict:** SHIP\n" }
+	// A custom hero folder (config "folder": "work"), as config.Load resolves
+	// it. Every spec is edited after its audit; explicit mtimes keep the
+	// ordering independent of filesystem timestamp resolution.
+	auditTime := time.Now().Add(-time.Hour)
+	for _, dir := range []string{"specs/y", "specs/planning", "planning/features/z", "planning/features/specs"} {
+		slug := filepath.Base(dir)
+		write("work/"+dir+"/delivery-audit.md", audit(slug))
+		write("work/"+dir+"/spec.md", completed(slug))
+		if err := os.Chtimes(filepath.Join(root, "work", dir, "delivery-audit.md"), auditTime, auditTime); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	specs, err := Discover(filepath.Join(root, "work"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r := FindAuditReport(s); !r.Found || r.Stale {
-		t.Fatalf("archived completed spec must keep its audit: %+v", r)
+	want := map[string]bool{"y": true, "planning": true, "z": false, "specs": false}
+	for _, s := range specs {
+		w, ok := want[s.Slug]
+		if !ok {
+			continue
+		}
+		delete(want, s.Slug)
+		if s.Archived != w {
+			t.Errorf("%s: Archived = %v, want %v", s.Slug, s.Archived, w)
+		}
+		r := FindAuditReport(s)
+		if w && (!r.Found || r.Stale) {
+			t.Errorf("%s: archived completed spec must keep its audit: %+v", s.Slug, r)
+		}
+		if !w && !r.Stale {
+			t.Errorf("%s: unarchived spec edited after its audit must be stale: %+v", s.Slug, r)
+		}
+	}
+	if len(want) != 0 {
+		t.Fatalf("not discovered: %v", want)
 	}
 }

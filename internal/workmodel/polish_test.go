@@ -1,8 +1,10 @@
 package workmodel
 
 import (
+	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func polishFixture(t *testing.T) ([]Item, []PolishItem, []SuggestedItem) {
@@ -88,4 +90,25 @@ func TestSuggested(t *testing.T) {
 			t.Error("Explore suggested while the backlog is not thin")
 		}
 	}
+}
+
+// Pre-release sweep: an item that is recently_done only through the mtime
+// fallback (no completed_at) still collects open_followups.
+func TestOpenFollowupsUseLaneCompletionFallback(t *testing.T) {
+	c := newCorpus(t)
+	seed(c)
+	nodate := c.write("specs/nodate", fm("nodate", "feature", "completed", "")+designedBody)
+	if err := os.Chtimes(nodate, testNow.Add(-48*time.Hour), testNow.Add(-48*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	c.write("planning/features/after", "---\ntitle: After\nslug: after\ntype: feature\nstatus: planning\ncreated: 2026-10-05\nrelations:\n  - target: nodate\n    kind: related\n---\n# A\n")
+	specs, _ := c.build()
+	items := Build(specs, Options{Now: testNow, Root: c.root})
+	ApplyNext(items, specs)
+	for _, p := range Polish(items, specs) {
+		if p.Slug == "nodate" && p.Kind == PolishOpenFollowups {
+			return
+		}
+	}
+	t.Fatal("follow-up on an mtime-fallback recently_done item was not reported")
 }
