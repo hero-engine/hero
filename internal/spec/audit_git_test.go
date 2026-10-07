@@ -92,69 +92,61 @@ func TestAuditStalenessUsesCommitOrderForCommittedFiles(t *testing.T) {
 	}
 }
 
-// followup-audit-staleness-git AC-3: only archived specs (.hero/specs/) are
-// exempt, since verify rewrites and moves them after their audit.
+// followup-audit-staleness-git AC-3: only archived specs (<hero dir>/specs/)
+// are exempt, since verify rewrites and moves them after their audit.
+// Pre-release sweep: "archived" is decided against the hero dir Discover
+// was given, so a custom hero folder, a repo beneath a planning/ or specs/
+// directory, and spec folders with either name are classified correctly.
 func TestArchivedSpecIsExemptFromStaleness(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), ".hero", "specs", "y")
-	os.MkdirAll(dir, 0o755)
-	specPath := filepath.Join(dir, "spec.md")
-	os.WriteFile(filepath.Join(dir, "delivery-audit.md"), []byte("# Delivery audit — y\n\n**Verdict:** SHIP\n"), 0o644)
+	root := filepath.Join(t.TempDir(), "planning", "specs", "repo")
+	write := func(rel, content string) {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	completed := func(slug string) string {
+		return "---\ntitle: T\nslug: " + slug + "\ntype: feature\nstatus: completed\n---\n# T\n"
+	}
+	audit := func(slug string) string { return "# Delivery audit — " + slug + "\n\n**Verdict:** SHIP\n" }
+	// A custom hero folder (config "folder": "work"), as config.Load resolves it.
+	for _, slug := range []string{"y", "planning"} {
+		write("work/specs/"+slug+"/delivery-audit.md", audit(slug))
+	}
+	write("work/planning/features/z/delivery-audit.md", audit("z"))
+	write("work/planning/features/specs/delivery-audit.md", audit("specs"))
 	time.Sleep(10 * time.Millisecond)
-	os.WriteFile(specPath, []byte("---\ntitle: Y\nslug: y\ntype: feature\nstatus: completed\n---\n# Y\n"), 0o644)
-	data, _ := os.ReadFile(specPath)
-	info, _ := os.Stat(specPath)
-	s, err := Parse(string(data), specPath, info.ModTime())
+	write("work/specs/y/spec.md", completed("y"))
+	write("work/specs/planning/spec.md", completed("planning"))
+	write("work/planning/features/z/spec.md", completed("z"))
+	write("work/planning/features/specs/spec.md", completed("specs"))
+
+	specs, err := Discover(filepath.Join(root, "work"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r := FindAuditReport(s); !r.Found || r.Stale {
-		t.Fatalf("archived completed spec must keep its audit: %+v", r)
-	}
-}
-
-// Pre-release sweep: the archive exemption does not depend on the hero
-// folder's name, and only the directory under the hero folder decides.
-func TestArchivedPathIgnoresFolderName(t *testing.T) {
-	root := t.TempDir()
-	writeConfig := func(dir string) {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			t.Fatal(err)
+	want := map[string]bool{"y": true, "planning": true, "z": false, "specs": false}
+	for _, s := range specs {
+		w, ok := want[s.Slug]
+		if !ok {
+			continue
 		}
-		if err := os.WriteFile(filepath.Join(dir, "hero.json"), []byte("{}"), 0o644); err != nil {
-			t.Fatal(err)
+		delete(want, s.Slug)
+		if s.Archived != w {
+			t.Errorf("%s: Archived = %v, want %v", s.Slug, s.Archived, w)
+		}
+		r := FindAuditReport(s)
+		if w && (!r.Found || r.Stale) {
+			t.Errorf("%s: archived completed spec must keep its audit: %+v", s.Slug, r)
+		}
+		if !w && !r.Stale {
+			t.Errorf("%s: unarchived spec edited after its audit must be stale: %+v", s.Slug, r)
 		}
 	}
-	workspace := func(rel string) string {
-		dir := filepath.Join(root, filepath.FromSlash(rel))
-		writeConfig(dir)
-		return dir
-	}
-	custom := workspace("a/.workspace")
-	underPlanning := workspace("planning/repo/.hero")
-	underSpecs := workspace("specs/repo/.hero")
-	noConfig := filepath.Join(root, "bare", ".hero")
-	// A .hero without hero.json beneath a directory that holds one.
-	writeConfig(filepath.Join(root, "outer"))
-	nested := filepath.Join(root, "outer", "repo", ".hero")
-	// A stray hero.json inside an archived spec folder.
-	writeConfig(filepath.Join(custom, "specs", "stray"))
-	for path, want := range map[string]bool{
-		filepath.Join(custom, "specs", "x", "spec.md"):                true,
-		filepath.Join(custom, "specs", "init", "child", "spec.md"):    true,
-		filepath.Join(custom, "specs", "planning", "spec.md"):         true,
-		filepath.Join(custom, "planning", "features", "x", "spec.md"): false,
-		filepath.Join(custom, "planning", "x", "specs", "spec.md"):    false,
-		filepath.Join(underPlanning, "specs", "x", "spec.md"):         true,
-		filepath.Join(underSpecs, "planning", "x", "spec.md"):         false,
-		filepath.Join(noConfig, "specs", "x", "spec.md"):              true,
-		filepath.Join(noConfig, "planning", "x", "spec.md"):           false,
-		filepath.Join(nested, "specs", "x", "spec.md"):                true,
-		filepath.Join(nested, "planning", "x", "spec.md"):             false,
-		filepath.Join(custom, "specs", "stray", "spec.md"):            true,
-		filepath.Join(root, "elsewhere", "specs", "x", "spec.md"):     false,
-	} {
-		if got := isArchivedPath(path); got != want {
-			t.Errorf("isArchivedPath(%q) = %v, want %v", path, got, want)
-		}
+	if len(want) != 0 {
+		t.Fatalf("not discovered: %v", want)
 	}
 }

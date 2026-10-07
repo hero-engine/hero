@@ -232,34 +232,10 @@ func extractHeaderValue(line, key string) (string, bool) {
 // report. A spec merely marked completed while still in planning/ keeps the
 // check — that is exactly the hand-flipped status this gate must catch.
 func auditCutoff(s *Spec) time.Time {
-	if s.IsFinished() && isArchivedPath(s.Path) {
+	if s.IsFinished() && s.Archived {
 		return time.Time{}
 	}
 	return s.ModifiedAt
-}
-
-// isArchivedPath reports whether a spec file lives in the workspace's
-// archive (<hero folder>/specs/...), whatever the hero folder is named. The
-// hero folder is the nearest ancestor that is a workspace (holds hero.json
-// or is named .hero) and whose child on the path is planning/ or specs/, so
-// a repo beneath a "planning" or "specs" directory, a spec folder with
-// either name, a hero.json further up, or a stray hero.json inside a spec
-// folder cannot misplace it.
-func isArchivedPath(path string) bool {
-	for dir := filepath.Dir(path); ; dir = filepath.Dir(dir) {
-		if rel, err := filepath.Rel(dir, path); err == nil {
-			first, _, _ := strings.Cut(filepath.ToSlash(rel), "/")
-			if first == "specs" || first == "planning" {
-				_, err := os.Stat(filepath.Join(dir, "hero.json"))
-				if err == nil || filepath.Base(dir) == ".hero" {
-					return first == "specs"
-				}
-			}
-		}
-		if filepath.Dir(dir) == dir {
-			return false
-		}
-	}
 }
 
 // committedAuditIsCurrent settles an mtime-based "stale" verdict with git.
