@@ -42,7 +42,8 @@ type MigrationPlan struct {
 	FilesIgnored []string
 }
 
-// ErrLinkedNestedHero refuses migrating a nested .hero that is a symlink:
+// ErrLinkedNestedHero refuses migrating a nested .hero that is a symlink
+// (or a Windows junction):
 // its files live in another directory (often another checkout's live
 // workspace), and migration would move them out of it and delete only the
 // link.
@@ -59,7 +60,9 @@ func PlanMigration(rootDir, nestedRel string) (*MigrationPlan, error) {
 	}
 	satAbs := filepath.Join(rootAbs, filepath.FromSlash(nestedRel))
 	nestedHero := filepath.Join(satAbs, ".hero")
-	if info, err := os.Lstat(nestedHero); err == nil && info.Mode()&os.ModeSymlink != 0 {
+	// ModeIrregular covers Windows directory junctions, which Go (1.23+)
+	// no longer reports as symlinks.
+	if info, err := os.Lstat(nestedHero); err == nil && info.Mode()&(os.ModeSymlink|os.ModeIrregular) != 0 {
 		target, _ := os.Readlink(nestedHero)
 		return nil, fmt.Errorf("%w (-> %s); its files live elsewhere, so Hero will not move them — migrate it manually", ErrLinkedNestedHero, target)
 	}

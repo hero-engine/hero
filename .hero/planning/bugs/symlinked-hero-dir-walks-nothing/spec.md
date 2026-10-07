@@ -47,7 +47,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 - **AC-2:** WHEN the hero folder is a symlink THE SYSTEM SHALL include its files in the watch snapshot, spec-source validation and last-touched time.
 - **AC-3:** WHEN the walk root is not a symlink, or is a broken symlink, THE SYSTEM SHALL behave exactly like `filepath.Walk`/`WalkDir`.
 - **AC-5:** WHEN a nested workspace's `.hero` is a symlink to a directory THE SYSTEM SHALL list it in the nested-workspace migration hint. A `.hero` that links to a file or dangles SHALL NOT be listed.
-- **AC-6:** WHEN a nested `.hero` is a symlink THE SYSTEM SHALL refuse to plan or apply its migration (`ErrLinkedNestedHero`, naming the link target), leave the target and the link untouched, and still migrate the other nested workspaces.
+- **AC-6:** WHEN a nested `.hero` is a symlink THE SYSTEM SHALL refuse to plan or apply its migration (`ErrLinkedNestedHero`, naming the link target; a Windows junction, reported as `ModeIrregular`, is refused the same way), leave the target and the link untouched, and still migrate the other nested workspaces.
 - **AC-4:** WHEN a user runs `hero list` in a project whose `.hero` is a symlink THE SYSTEM SHALL list its specs.
 
 ## Changes
