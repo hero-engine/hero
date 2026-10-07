@@ -610,3 +610,17 @@
 {"ts":"2026-10-06T23:08:21.183832Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"spec-title-keeps-yaml-quotes","message":"status -\u003e completed"}
 {"ts":"2026-10-06T23:08:23.676082Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"upgrade-refreshes-managed-gitignore","message":"hero upgrade never refreshes the managed .gitignore block, so new entries miss existing workspaces"}
 {"ts":"2026-10-06T23:08:23.676184Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"upgrade-refreshes-managed-gitignore","message":"status -\u003e completed"}
+{"ts":"2026-10-06T23:43:02.535656Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-step-engine","message":"Next-step engine — one deterministic primary action per work item"}
+{"ts":"2026-10-06T23:43:02.535826Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-step-engine","message":"status -\u003e completed"}
+{"ts":"2026-10-06T23:50:03.582147Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"work-item-model","message":"Work-item model — one WorkItem for every read tool"}
+{"ts":"2026-10-06T23:50:03.582302Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"work-item-model","message":"status -\u003e completed"}
+{"ts":"2026-10-06T23:50:06.857219Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-spec-handoff-tools","message":"hero_spec and hero_handoff MCP tools"}
+{"ts":"2026-10-06T23:50:06.85733Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-spec-handoff-tools","message":"status -\u003e completed"}
+{"ts":"2026-10-06T23:50:10.117115Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-work-tool","message":"hero_work MCP tool — the work picture with lanes and next steps"}
+{"ts":"2026-10-06T23:50:10.117222Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-work-tool","message":"status -\u003e completed"}
+{"ts":"2026-10-06T23:50:13.834752Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"polish-and-suggested","message":"Polish and suggested lists in hero_work"}
+{"ts":"2026-10-06T23:50:13.834963Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"polish-and-suggested","message":"status -\u003e completed"}
+{"ts":"2026-10-07T00:01:05.29901Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"read-contract-conformance","message":"Read contract conformance — golden schemas, peer fixture, docs"}
+{"ts":"2026-10-07T00:01:05.29926Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"read-contract-conformance","message":"status -\u003e completed"}
+{"ts":"2026-10-07T00:01:09.913326Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-read-contract","message":"Hero read contract — hero_work, hero_spec, hero_handoff for every Hero client"}
+{"ts":"2026-10-07T00:01:09.913517Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-read-contract","message":"status -\u003e completed"}

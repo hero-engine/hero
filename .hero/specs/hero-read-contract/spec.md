@@ -2,7 +2,7 @@
 title: "Hero read contract — hero_work, hero_spec, hero_handoff for every Hero client"
 slug: hero-read-contract
 type: initiative
-status: planning
+status: completed
 priority: high
 autonomy: autonomous
 domain: engineering
@@ -17,6 +17,7 @@ child:
   - hero-work-tool
   - polish-and-suggested
   - read-contract-conformance
+completed_at: 2026-10-07T00:01:05Z
 ---
 
 # Hero read contract

@@ -1,0 +1,2 @@
+   5 items 513 rev b8965fed29b6fa04 lanes {'in_progress': 23, 'none': 471, 'ready': 8, 'recently_done': 11}
+latency over 10 calls in one session: first 243 ms, median 276 ms, max 306 ms; distinct revisions: 1

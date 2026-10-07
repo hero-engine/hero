@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hero-engine/hero/internal/config"
+	"github.com/hero-engine/hero/internal/nextdoc"
 	"github.com/spf13/cobra"
 )
 
@@ -91,25 +92,13 @@ func init() {
 // nextUserSlug returns the current user's slug for personal next files.
 // Priority: hero.local.json tracking.defaultAgent > hero.json tracking.defaultAgent > git user.name.
 func nextUserSlug(cfg config.Config) string {
-	if cfg.Tracking != nil && cfg.Tracking.DefaultAgent != "" {
-		agent := cfg.Tracking.DefaultAgent
-		// Strip "human/" prefix if present
-		if strings.HasPrefix(agent, "human/") {
-			agent = strings.TrimPrefix(agent, "human/")
-		}
-		return agent
-	}
-	return gitUserName()
+	return nextdoc.UserSlug(cfg)
 }
 
 // resolveNextPath returns the path the agent should read from and write to,
 // based on the configured mode.
 func resolveNextPath(heroDir string, cfg config.Config) string {
-	if cfg.NextMode() == "team" {
-		user := nextUserSlug(cfg)
-		return filepath.Join(heroDir, nextDirName, user+".md")
-	}
-	return filepath.Join(heroDir, nextFileName)
+	return nextdoc.HandoffPath(heroDir, cfg)
 }
 
 func runNextShow(cmd *cobra.Command, args []string) error {

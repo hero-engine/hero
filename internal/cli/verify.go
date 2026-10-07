@@ -711,27 +711,9 @@ func normalizeVerifyParentTarget(target string) string {
 // git commit author's name, email, and email user, plus hero.json
 // ledger.signers entries (with the email user of any email entry).
 func knownSigners(projectRoot string, cfg config.Config) map[string]bool {
-	known := map[string]bool{}
-	add := func(id string) {
-		id = spec.NormalizeSigner(id)
-		if id == "" {
-			return
-		}
-		known[id] = true
-		if user, _, ok := strings.Cut(id, "@"); ok && user != "" {
-			known[user] = true
-		}
-	}
+	var configured []string
 	if cfg.Ledger != nil {
-		for _, id := range cfg.Ledger.Signers {
-			add(id)
-		}
+		configured = cfg.Ledger.Signers
 	}
-	out, err := exec.Command("git", "-C", projectRoot, "log", "--format=%an%n%ae").Output()
-	if err == nil {
-		for _, line := range strings.Split(string(out), "\n") {
-			add(line)
-		}
-	}
-	return known
+	return spec.KnownSigners(projectRoot, configured)
 }

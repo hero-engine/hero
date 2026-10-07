@@ -1,0 +1,6 @@
+polish 1 {'weak_verify': 1}
+   next-projection-accuracy-and-freshness weak_verify - verify is partial -> /verify next-projection-accuracy-and-freshness
+suggested 3
+   tracker-backed-diagnosis-publication-contract-broken - ready to fix, critical priority -> /deliver tracker-backed-diagnosis-publication-contract-broken
+   always-on-runtime - ready to drive, critical priority -> /drive always-on-runtime
+   machine-checkable-acs - ready to deliver, high priority -> /deliver machine-checkable-acs

@@ -7,6 +7,7 @@ When the user describes what they want in natural language, route to the appropr
 | Bug, error, broken, fix, investigate, diagnose | `/diagnose` |
 | New feature, build, design, add, plan | `/design` |
 | Implement, deliver, ship, code, execute | `/deliver` |
+| Verify a delivered spec, re-run the closing gate, "is X really done?" | `/verify` |
 | Autopilot/run a whole initiative, "put X on autopilot", "drive the initiative", keep working autonomously | `/drive <initiative>` |
 | Review, PR, pull request, code review | `/review` |
 | Break down, decompose, epic, sequence | `/compose` |
@@ -89,7 +90,7 @@ not manufacture an action from status or display text.
 | Surface | Commands |
 |---|---|
 | **Slash-only** (no `hero <name>` equivalent) | `/capture`, `/challenge`, `/compose`, `/convention`, `/decide`, `/discover`, `/drive`, `/mock`, `/release`, `/retro`, `/review`, `/roadmap-review`, `/scrub`, `/split` |
-| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/hero` ("which command do I use" meta-help; CLI equivalent `hero do <request>`), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/why` |
+| **Both slash and CLI** | `/blocked`, `/check`, `/deliver`, `/design`, `/diagnose`, `/docs`, `/handoff` (slash = NEXT.md refresh; CLI `hero handoff <spec> <alias>` = cross-repo drop to a peer), `/hero` ("which command do I use" meta-help; CLI equivalent `hero do <request>`), `/import` (slash = tracker import via `hero sync import`; root `hero import` is unrelated knowledge-base ingestion), `/note`, `/peer`, `/resume`, `/scan`, `/sprint`, `/verify` (slash = audit-if-needed then verify; CLI `hero spec verify <slug>` = the gate alone), `/why` |
 | **CLI-only** (see CLI Commands in the root instructions) | `hero status`, `hero search`, `hero ask`, `hero list`, `hero queue`, `hero spec verify`, `hero spec score`, `hero diff`, `hero drift`, etc. |
 
 **Mockup routing.** Any request to mock, wireframe, prototype, or visualize a screen — including casual questions like "what would this look like?" or "is that a swift mock?" — routes to `/mock`. **Never hand-generate a mockup outside that workflow, and never pick the format yourself.** `/mock` runs `hero spec mock detect`, which chooses the renderer (HTML vs. native SwiftUI) deterministically from the repo's stack and announces it before generating. There is **no "HTML-first, then port to SwiftUI" workflow**. In a native app produce a native SwiftUI mockup directly; in a web app produce HTML. Always end with the clickable file inventory `/mock` surfaces.

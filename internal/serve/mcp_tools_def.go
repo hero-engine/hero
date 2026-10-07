@@ -447,6 +447,38 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			},
 		},
 		{
+			Name:        "hero_work",
+			Category:    CategorySearchAndKnowledge,
+			Tier:        TierDeferrable,
+			Description: "Read contract v1 (read-only JSON): the whole work picture as {schema_version, revision, generated_at, hero_version, watch_globs, items, polish, suggested}. Each item is a WorkItem with lane (designed|ready|in_progress|recently_done|none), progress, verify state and next step (one primary slash command). revision changes only when content does; re-read when files matching watch_globs change.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"recent_days": {Type: "integer", Description: "Window for the recently_done lane and polish (default 14)"},
+				},
+			},
+		},
+		{
+			Name:        "hero_spec",
+			Category:    CategorySearchAndKnowledge,
+			Tier:        TierDeferrable,
+			Description: "Read contract v1 (read-only JSON): one work spec as {item: WorkItem with lane, verify state and next step, body: Markdown without frontmatter, relations: {parent, children, depends_on, blocks, related} as {slug,title,type,status}, acs: [{id, text, state: pass|fail|unknown}]}. Serves features, bugs, enhancements, initiatives, epics and initiative decisions.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]PropSchema{
+					"slug": {Type: "string", Description: "The work spec's slug"},
+				},
+				Required: []string{"slug"},
+			},
+		},
+		{
+			Name:        "hero_handoff",
+			Category:    CategorySearchAndKnowledge,
+			Tier:        TierDeferrable,
+			Description: "Read contract v1 (read-only JSON): the handoff briefing `hero next` shows, as {markdown, updated_at}. Empty markdown and null updated_at when no briefing exists yet.",
+			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{}},
+		},
+		{
 			Name:        "hero_ask",
 			Category:    CategorySearchAndKnowledge,
 			Tier:        TierDeferrable,
