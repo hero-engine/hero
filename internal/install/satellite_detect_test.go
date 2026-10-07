@@ -110,3 +110,29 @@ func TestFindNestedHeroDirs(t *testing.T) {
 		t.Errorf("got %v, want [engines/mlx]", got)
 	}
 }
+
+// symlinked-hero-dir: a nested workspace whose .hero is a symlink to a
+// directory is reported; a .hero symlink to a file or a dangling one is not.
+func TestFindNestedHeroDirsFollowsSymlinkedHero(t *testing.T) {
+	root := t.TempDir()
+	shared := filepath.Join(t.TempDir(), "shared-hero")
+	if err := os.MkdirAll(shared, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(file, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for dir, target := range map[string]string{"apps/web": shared, "apps/file": file, "apps/gone": filepath.Join(root, "missing")} {
+		if err := os.MkdirAll(filepath.Join(root, dir), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(target, filepath.Join(root, dir, ".hero")); err != nil {
+			t.Skipf("symlinks unsupported: %v", err)
+		}
+	}
+	got := FindNestedHeroDirs(root)
+	if len(got) != 1 || got[0] != "apps/web" {
+		t.Errorf("got %v, want [apps/web]", got)
+	}
+}

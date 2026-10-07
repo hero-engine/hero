@@ -199,21 +199,26 @@ func FindNestedHeroDirs(rootDir string) []string {
 		if err != nil {
 			return nil
 		}
-		if !d.IsDir() {
-			return nil
-		}
 		if path == rootDir {
 			return nil
 		}
 		base := filepath.Base(path)
-		if base == workspace.HeroDir {
+		// A .hero that is a symlink to a directory is a workspace too
+		// (WalkDir reports the link itself, not its target).
+		if base == workspace.HeroDir && (d.IsDir() || isSymlinkToDir(path, d)) {
 			parent := filepath.Dir(path)
 			rel, _ := filepath.Rel(rootDir, parent)
 			rel = filepath.ToSlash(rel)
 			if rel != "" && rel != "." {
 				nested = append(nested, rel)
 			}
-			return filepath.SkipDir
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !d.IsDir() {
+			return nil
 		}
 		if base == "node_modules" || base == "vendor" || strings.HasPrefix(base, ".") {
 			return filepath.SkipDir
@@ -222,6 +227,14 @@ func FindNestedHeroDirs(rootDir string) []string {
 	})
 	sort.Strings(nested)
 	return nested
+}
+
+func isSymlinkToDir(path string, d os.DirEntry) bool {
+	if d.Type()&os.ModeSymlink == 0 {
+		return false
+	}
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
 
 // ReasonStrings renders a candidate's reasons as a comma-separated list.
