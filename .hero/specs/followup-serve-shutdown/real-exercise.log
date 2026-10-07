@@ -1,0 +1,2 @@
+origin/main build: idle raw TCP connection open, SIGINT -> exited after 5.03s, exit code 1, last stderr lines ['Use "hero serve [command] --help" for more information about a command.', 'context deadline exceeded']
+fix build: idle raw TCP connection open, SIGINT -> exited after 0.05s, exit code 0, last stderr lines ['hero serve: press Ctrl+C to stop', 'hero serve: shutting down...']

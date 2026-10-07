@@ -214,7 +214,7 @@ func IsWorkItem(s *spec.Spec, c *Corpus) bool {
 		return true
 	case "decision":
 		if p := ParentSlug(s); p != "" {
-			if ps := c.Lookup(p); ps != nil && ps.Type == spec.TypeInitiative {
+			if ps := c.Lookup(p); ps != nil && IsContainer(ps) {
 				return true
 			}
 		}
@@ -239,7 +239,7 @@ func buildItem(s *spec.Spec, c *Corpus, opts Options) Item {
 	if p := ParentSlug(s); p != "" {
 		it.Parent = &p
 	}
-	if s.Type == spec.TypeInitiative {
+	if IsContainer(s) {
 		it.Progress = initiativeProgress(s, c)
 	}
 	if !s.CompletedAt.IsZero() {
@@ -258,6 +258,12 @@ func buildItem(s *spec.Spec, c *Corpus, opts Options) Item {
 	}
 	it.Revision = Revision(s, c, derived)
 	return it
+}
+
+// IsContainer reports whether s groups other work (initiative or epic) and
+// is therefore modelled by its children.
+func IsContainer(s *spec.Spec) bool {
+	return s.Type == spec.TypeInitiative || string(s.Type) == "epic"
 }
 
 // ParentSlug returns the spec's declared parent, or "".
@@ -283,7 +289,7 @@ func Designed(s *spec.Spec, c *Corpus) bool {
 	switch string(s.Type) {
 	case "bug":
 		return has("root cause", "root cause analysis") && has("changes", "fix", "suggested fix approach")
-	case "initiative":
+	case string(spec.TypeInitiative), "epic": // IsContainer
 		return len(c.Children(s)) > 0
 	case "decision":
 		return has("decision")
@@ -339,7 +345,7 @@ func Lane(s *spec.Spec, c *Corpus, opts Options) string {
 	if inProgressStatuses[s.Status] {
 		return LaneInProgress
 	}
-	if s.Type == spec.TypeInitiative && initiativeStarted(s, c) {
+	if IsContainer(s) && initiativeStarted(s, c) {
 		return LaneInProgress
 	}
 	if s.Status == spec.StatusPlanning || s.Status == spec.StatusProposed {
@@ -378,7 +384,9 @@ func initiativeProgress(s *spec.Spec, c *Corpus) *Progress {
 // validated audit report, its Completion Ledger, and its status. It is nil
 // for types that do not verify (decision).
 func VerifyOf(s *spec.Spec, signers map[string]bool) *Verify {
-	if s.Type == spec.TypeDecision {
+	// Decisions are accepted, and initiatives/epics finish through their
+	// children; none of them are audited or verified themselves.
+	if s.Type == spec.TypeDecision || IsContainer(s) {
 		return nil
 	}
 	v := &Verify{State: VerifyNotRun}

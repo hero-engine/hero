@@ -2,7 +2,9 @@ package spec
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -56,13 +58,13 @@ func FindAuditReport(s *Spec) AuditResult {
 
 	if !ownsSpecDir(s.Path) && s.Slug != "" {
 		slugPath := filepath.Join(specDir, s.Slug+"-delivery-audit.md")
-		if result, exists := loadAuditReport(slugPath, s.Slug, s.ModifiedAt); exists {
+		if result, exists := loadAuditReport(slugPath, s.Slug, auditCutoff(s), s.Path); exists {
 			return result
 		}
 	}
 
 	auditPath := filepath.Join(specDir, "delivery-audit.md")
-	if result, exists := loadAuditReport(auditPath, s.Slug, s.ModifiedAt); exists {
+	if result, exists := loadAuditReport(auditPath, s.Slug, auditCutoff(s), s.Path); exists {
 		return result
 	}
 
@@ -84,7 +86,7 @@ func ownsSpecDir(path string) bool {
 // when no file exists at path — a stale or slug-mismatched report is
 // still returned (exists=true) so the caller can surface why the gate
 // isn't satisfied instead of silently trying another location.
-func loadAuditReport(path, expectedSlug string, specModTime time.Time) (AuditResult, bool) {
+func loadAuditReport(path, expectedSlug string, specModTime time.Time, specPath string) (AuditResult, bool) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return AuditResult{}, false
@@ -104,7 +106,7 @@ func loadAuditReport(path, expectedSlug string, specModTime time.Time) (AuditRes
 		return result, true
 	}
 
-	if !specModTime.IsZero() && info.ModTime().Before(specModTime) {
+	if !specModTime.IsZero() && info.ModTime().Before(specModTime) && !committedAuditIsCurrent(specPath, path) {
 		result.Stale = true
 		return result, true
 	}
@@ -222,4 +224,47 @@ func extractHeaderValue(line, key string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// auditCutoff is the time an audit report must not predate. An archived
+// spec (under .hero/specs/) has none: `hero spec verify` rewrites and moves
+// the spec after its audit, so an archived spec is always newer than its
+// report. A spec merely marked completed while still in planning/ keeps the
+// check — that is exactly the hand-flipped status this gate must catch.
+func auditCutoff(s *Spec) time.Time {
+	if s.IsFinished() && strings.Contains(filepath.ToSlash(s.Path), "/.hero/specs/") {
+		return time.Time{}
+	}
+	return s.ModifiedAt
+}
+
+// committedAuditIsCurrent settles an mtime-based "stale" verdict with git.
+// File mtimes are rewritten in arbitrary order by `git checkout` and fresh
+// clones, so when both files are committed and unmodified, their last
+// commit times decide: the audit is current unless the spec was committed
+// after it. A spec and audit last changed in the same commit are accepted
+// as one reviewed unit (deliveries commit them together, which is the
+// common clone case this exists for). Uncommitted or untracked files keep
+// the mtime verdict.
+func committedAuditIsCurrent(specPath, auditPath string) bool {
+	if specPath == "" {
+		return false
+	}
+	dir := filepath.Dir(specPath)
+	status, err := exec.Command("git", "-C", dir, "status", "--porcelain", "--", specPath, auditPath).Output()
+	if err != nil || strings.TrimSpace(string(status)) != "" {
+		return false
+	}
+	specAt, ok1 := lastCommitTime(dir, specPath)
+	auditAt, ok2 := lastCommitTime(dir, auditPath)
+	return ok1 && ok2 && auditAt >= specAt
+}
+
+func lastCommitTime(dir, path string) (int64, bool) {
+	out, err := exec.Command("git", "-C", dir, "log", "-1", "--format=%ct", "--", path).Output()
+	if err != nil {
+		return 0, false
+	}
+	t, err := strconv.ParseInt(strings.TrimSpace(string(out)), 10, 64)
+	return t, err == nil
 }

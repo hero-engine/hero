@@ -62,7 +62,7 @@ There is one source of truth: files on disk. It never comes from `events.log`, s
 - `failed`: audit `hold`, or status `regressed`.
 - `not_run`: not finished (an unfinished spec may still report `audit: "ship"` from an earlier round; the verify gate has not run).
 
-`verify` is `null` for types that don't verify (decision).
+`verify` is `null` for types that don't verify: decisions, and containers (initiatives and epics), which finish through their children.
 
 ### Next step: one primary action
 
@@ -156,3 +156,6 @@ Returns the handoff file `hero next` shows (team mode: `.hero/next/<user>.md`, e
   - Ledger sign-offs count toward `passed` only when the signer resolves against `hero spec verify` Gate 1's known signers (`spec.KnownSigners`: git authors plus `ledger.signers`). With no signer set, no sign-off counts.
   - Initiative children include work specs whose `parent` names the initiative.
   - `hero_handoff` excludes per-machine local notes.
+- **2026-10-07 (follow-up `followup-epic-parity`, additive within v1):**
+  - Epics are modelled exactly like initiatives (children, designed, progress, lane, next step, decision children).
+  - Containers (initiative/epic) carry `verify: null`, since they are never audited themselves. Previously they reported `not_run`/`partial`, which the golden schema already allows as `null`.

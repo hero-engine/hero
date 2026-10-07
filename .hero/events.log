@@ -624,3 +624,9 @@
 {"ts":"2026-10-07T00:01:05.29926Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"read-contract-conformance","message":"status -\u003e completed"}
 {"ts":"2026-10-07T00:01:09.913326Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"hero-read-contract","message":"Hero read contract — hero_work, hero_spec, hero_handoff for every Hero client"}
 {"ts":"2026-10-07T00:01:09.913517Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"hero-read-contract","message":"status -\u003e completed"}
+{"ts":"2026-10-07T02:08:59.537422Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"followup-audit-staleness-git","message":"Delivery-audit staleness misfires after checkout or clone because it compares file mtimes"}
+{"ts":"2026-10-07T02:08:59.537541Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"followup-audit-staleness-git","message":"status -\u003e completed"}
+{"ts":"2026-10-07T02:09:02.356725Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"followup-serve-shutdown","message":"hero serve takes 5s to stop and exits with an error when a client holds an idle connection"}
+{"ts":"2026-10-07T02:09:02.356835Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"followup-serve-shutdown","message":"status -\u003e completed"}
+{"ts":"2026-10-07T02:09:04.727393Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"followup-epic-parity","message":"Work model treats epics inconsistently and gives containers a misleading verify state"}
+{"ts":"2026-10-07T02:09:04.727497Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"followup-epic-parity","message":"status -\u003e completed"}

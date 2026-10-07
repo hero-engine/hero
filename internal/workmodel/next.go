@@ -55,7 +55,7 @@ func NextFor(it Item, s *spec.Spec, c *Corpus) *NextStep {
 	}
 
 	if s.IsFinished() {
-		if typ == "decision" || typ == "initiative" || typ == "epic" {
+		if typ == "decision" || IsContainer(s) {
 			return nil
 		}
 		if it.Verify != nil && it.Verify.State == VerifyPassed {
@@ -82,8 +82,7 @@ func NextFor(it Item, s *spec.Spec, c *Corpus) *NextStep {
 		return step(ActionDeliver, "Continue", "/deliver "+slug, "Delivering", state, nil, []Extra{review(slug)})
 	}
 
-	switch typ {
-	case "initiative", "epic":
+	if IsContainer(s) {
 		if len(c.Children(s)) == 0 {
 			return step(ActionDesign, "Compose", "/compose "+slug, "Planning", PhaseReady, nil, nil)
 		}
@@ -92,6 +91,9 @@ func NextFor(it Item, s *spec.Spec, c *Corpus) *NextStep {
 			label, state = "Driving", PhaseActive
 		}
 		return step(ActionDrive, "Drive", "/drive "+slug, label, state, nil, nil)
+	}
+
+	switch typ {
 	case "decision":
 		return step(ActionDesign, "Decide", "/decide "+slug, "Proposed", PhaseReady, nil, nil)
 	case "bug":
