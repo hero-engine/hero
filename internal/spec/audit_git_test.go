@@ -112,17 +112,18 @@ func TestArchivedSpecIsExemptFromStaleness(t *testing.T) {
 		return "---\ntitle: T\nslug: " + slug + "\ntype: feature\nstatus: completed\n---\n# T\n"
 	}
 	audit := func(slug string) string { return "# Delivery audit — " + slug + "\n\n**Verdict:** SHIP\n" }
-	// A custom hero folder (config "folder": "work"), as config.Load resolves it.
-	for _, slug := range []string{"y", "planning"} {
-		write("work/specs/"+slug+"/delivery-audit.md", audit(slug))
+	// A custom hero folder (config "folder": "work"), as config.Load resolves
+	// it. Every spec is edited after its audit; explicit mtimes keep the
+	// ordering independent of filesystem timestamp resolution.
+	auditTime := time.Now().Add(-time.Hour)
+	for _, dir := range []string{"specs/y", "specs/planning", "planning/features/z", "planning/features/specs"} {
+		slug := filepath.Base(dir)
+		write("work/"+dir+"/delivery-audit.md", audit(slug))
+		write("work/"+dir+"/spec.md", completed(slug))
+		if err := os.Chtimes(filepath.Join(root, "work", dir, "delivery-audit.md"), auditTime, auditTime); err != nil {
+			t.Fatal(err)
+		}
 	}
-	write("work/planning/features/z/delivery-audit.md", audit("z"))
-	write("work/planning/features/specs/delivery-audit.md", audit("specs"))
-	time.Sleep(10 * time.Millisecond)
-	write("work/specs/y/spec.md", completed("y"))
-	write("work/specs/planning/spec.md", completed("planning"))
-	write("work/planning/features/z/spec.md", completed("z"))
-	write("work/planning/features/specs/spec.md", completed("specs"))
 
 	specs, err := Discover(filepath.Join(root, "work"))
 	if err != nil {
