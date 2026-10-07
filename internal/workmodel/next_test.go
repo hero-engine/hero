@@ -247,3 +247,44 @@ func TestRound3AuditCases(t *testing.T) {
 		t.Errorf("reverse-parent children not counted: lane %s progress %+v next %+v", u.Lane, u.Progress, u.Next)
 	}
 }
+
+// followup-epic-parity: an epic is modelled exactly like an initiative, and
+// containers (initiative/epic) carry verify null, so a recently finished one
+// never yields an action-less weak_verify polish entry.
+func TestEpicParityAndContainerVerify(t *testing.T) {
+	c := newCorpus(t)
+	seed(c)
+	c.write("planning/epics/big", fm("big", "epic", "planning", "child:\n  - stub\n"))
+	c.write("planning/features/epickid", fm("epickid", "feature", "completed", "parent: big\ncompleted_at: 2026-06-01T00:00:00Z\n")+designedBody)
+	c.write("planning/epics/big/pick", fm("pick", "decision", "proposed", "parent: big\n")+"\n## Decision\n\nYes.\n")
+	c.write("planning/epics/empty", fm("empty-epic", "epic", "planning", ""))
+	c.write("specs/doneinit", fm("doneinit", "initiative", "completed", "completed_at: 2026-10-01T00:00:00Z\nchild:\n  - recent\n"))
+
+	specs, _ := c.build()
+	items := Build(specs, Options{Now: testNow, Root: c.root})
+	ApplyNext(items, specs)
+	by := map[string]Item{}
+	for _, it := range items {
+		by[it.Slug] = it
+	}
+	big := by["big"]
+	if big.Progress == nil || big.Progress.Total != 3 || big.Progress.Done != 1 || big.Lane != LaneInProgress || big.Next == nil || big.Next.Label != "Drive" {
+		t.Errorf("epic not modelled like an initiative: lane %s progress %+v next %+v", big.Lane, big.Progress, big.Next)
+	}
+	if _, ok := by["pick"]; !ok {
+		t.Error("decision under an epic must be a work item")
+	}
+	if n := by["empty-epic"].Next; n == nil || n.Label != "Compose" || by["empty-epic"].Lane != LaneNone {
+		t.Errorf("childless epic = lane %s next %+v", by["empty-epic"].Lane, n)
+	}
+	for _, slug := range []string{"big", "init", "doneinit"} {
+		if by[slug].Verify != nil {
+			t.Errorf("%s is a container: verify must be null, got %+v", slug, by[slug].Verify)
+		}
+	}
+	for _, p := range Polish(items, specs) {
+		if p.Next == nil {
+			t.Errorf("polish entry %s/%s has no action", p.Slug, p.Kind)
+		}
+	}
+}

@@ -1,0 +1,1 @@
+Real hero serve with an idle raw TCP connection open, then SIGINT: new build exits after 0.07s, code 0, no errors; old build (origin/main) exits after 5.04s, code 1, 'Error: context deadline exceeded'.

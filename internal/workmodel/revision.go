@@ -26,7 +26,7 @@ func Revision(s *spec.Spec, c *Corpus, derived string) string {
 	for _, r := range s.Relations {
 		related[r.Target] = true
 	}
-	if s.Type == spec.TypeInitiative {
+	if IsContainer(s) {
 		for _, slug := range c.Children(s) {
 			related[slug] = true
 		}

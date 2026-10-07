@@ -2,6 +2,7 @@ package serve
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hero-engine/hero/internal/attention/focus"
@@ -66,6 +68,11 @@ type Server struct {
 	api        *API
 	httpServer *http.Server
 	registry   *Registry
+
+	// inFlight counts requests being served; requestCancel cancels every
+	// request's context at shutdown (see drainHTTP).
+	inFlight      atomic.Int64
+	requestCancel context.CancelFunc
 
 	// Legacy single-project fields (used when no registry is configured)
 	heroDir     string
@@ -621,9 +628,12 @@ func (s *Server) Run(ctx context.Context) error {
 		handler = wrap
 	}
 
+	requestCtx, requestCancel := context.WithCancel(context.Background())
+	s.requestCancel = requestCancel
 	s.httpServer = &http.Server{
-		Addr:    addr,
-		Handler: handler,
+		Addr:        addr,
+		Handler:     s.countInFlight(handler),
+		BaseContext: func(net.Listener) context.Context { return requestCtx },
 	}
 
 	ln, err := net.Listen("tcp", addr)
@@ -742,7 +752,7 @@ func (s *Server) shutdown() error {
 
 	var httpErr error
 	if s.httpServer != nil {
-		httpErr = s.httpServer.Shutdown(ctx)
+		httpErr = s.drainHTTP(ctx)
 	}
 
 	// Reap in-flight ops subprocesses and wait for their pump goroutines
@@ -1716,4 +1726,57 @@ func detectGitBranch(projectRoot string) string {
 		return ""
 	}
 	return strings.TrimSpace(string(out))
+}
+
+// countInFlight tracks requests being served so shutdown knows when only
+// idle connections remain.
+func (s *Server) countInFlight(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.inFlight.Add(1)
+		defer s.inFlight.Add(-1)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// drainHTTP shuts the HTTP server down without the stdlib's 5s wait on
+// connections that never sent a request (a browser's speculative
+// preconnect keeps one open), which made Ctrl+C hang and then report a
+// deadline error. In-flight requests still finish: once none remain, the
+// leftover idle/new connections are closed at once. After a short grace,
+// request contexts are cancelled so streaming handlers (SSE) end instead of
+// holding shutdown open. Hitting the deadline closes everything and is not
+// an error.
+func (s *Server) drainHTTP(ctx context.Context) error {
+	s.httpServer.SetKeepAlivesEnabled(false)
+	done := make(chan error, 1)
+	go func() { done <- s.httpServer.Shutdown(ctx) }()
+	grace := time.NewTimer(time.Second)
+	defer grace.Stop()
+	tick := time.NewTicker(20 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case err := <-done:
+			if errors.Is(err, context.DeadlineExceeded) {
+				_ = s.httpServer.Close()
+				return nil
+			}
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
+			return err
+		case <-grace.C:
+			if s.requestCancel != nil {
+				s.requestCancel()
+			}
+		case <-tick.C:
+			if s.inFlight.Load() == 0 {
+				_ = s.httpServer.Close()
+				if err := <-done; err != nil && !errors.Is(err, http.ErrServerClosed) && !errors.Is(err, context.DeadlineExceeded) {
+					return err
+				}
+				return nil
+			}
+		}
+	}
 }
