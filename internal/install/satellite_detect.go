@@ -229,8 +229,10 @@ func FindNestedHeroDirs(rootDir string) []string {
 	return nested
 }
 
+// isSymlinkToDir reports a symlink, or a Windows directory junction
+// (ModeIrregular since Go 1.23), that resolves to a directory.
 func isSymlinkToDir(path string, d os.DirEntry) bool {
-	if d.Type()&os.ModeSymlink == 0 {
+	if d.IsDir() || d.Type()&(os.ModeSymlink|os.ModeIrregular) == 0 {
 		return false
 	}
 	info, err := os.Stat(path)

@@ -43,6 +43,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 
 ## Acceptance Criteria
 
+- **AC-7:** WHEN the hero folder (or a nested `.hero`) is a Windows directory junction THE SYSTEM SHALL treat it like a symlink. Go 1.23+ reports a junction as `ModeIrregular` without `ModeDir`, and `EvalSymlinks` does not follow it, so it is resolved with `Readlink`. A real directory carrying a non-link reparse tag (`ModeDir|ModeIrregular`, e.g. a OneDrive placeholder) SHALL stay a plain directory.
 - **AC-1:** WHEN the hero folder is a symlink to a directory THE SYSTEM SHALL discover its specs with paths under the hero folder, and stamp `Archived` correctly.
 - **AC-2:** WHEN the hero folder is a symlink THE SYSTEM SHALL include its files in the watch snapshot, spec-source validation and last-touched time.
 - **AC-3:** WHEN the walk root is not a symlink, or is a broken symlink, THE SYSTEM SHALL behave exactly like `filepath.Walk`/`WalkDir`.
@@ -58,6 +59,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 4. `internal/embeddings/chunker.go` (`validateSpecSources`) and `chunker_test.go`.
 5. `internal/serve/projectpage/data/identity.go` (`lastTouchedAt`) and `identity_test.go`.
 6. `internal/install/satellite_detect.go` (`FindNestedHeroDirs`, `isSymlinkToDir`) and `satellite_detect_test.go`.
+8. Junctions: `internal/fsutil/walk.go` (`resolveRoot` with swappable `lstat`/`stat`/`readlink`/`evalSymlinks`; `Readlink` for junctions); `internal/install/satellite_detect.go` (`isSymlinkToDir` accepts `ModeIrregular`); the migration guard refuses link types only when not `ModeDir`; tests.
 7. `internal/install/satellite_migrate.go` (`ErrLinkedNestedHero`, refused in `PlanMigration`, so `ApplyMigration` refuses too), `internal/cli/install_satellites.go` (apply skips and continues), `satellite_migrate_apply_test.go` and `install_satellites_linked_test.go`.
 
 ## Completion Ledger
@@ -71,6 +73,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 | 3 | AC-3: unchanged otherwise | DONE | `TestWalkPlainRootUnchanged` and `TestWalkBrokenSymlinkRootReportsLikeFilepathWalk`. The full suite passes |
 | 5 | AC-5: nested symlinked .hero in migration hint | DONE | `TestFindNestedHeroDirsFollowsSymlinkedHero`: a link to a dir is listed; a link to a file and a dangling link are not. With the old code it fails: "got [], want [apps/web]" |
 | 6 | AC-6: migration refuses a linked nested .hero | DONE | `TestMigrationRefusesLinkedNestedHero` checks that plan and apply both return `ErrLinkedNestedHero` and that the target and link are intact. `TestMigrateNestedApplySkipsLinkedHero` runs the real `install satellites --migrate-nested --apply --yes --force`: it prints "Skipped apps/web", leaves the target spec and the link in place, and migrates the real `engines/mlx`. Without the guard, apply moved the target's spec and deleted the link, which confirms the audit's blocker was real |
+| 7 | AC-7: Windows junctions | DONE | The user chose to verify by reading, since there is no Windows test runner. The junction logic is exercised on darwin by stubbing the fs calls to report exactly what Go's `os/types_windows.go` reports. `TestWalkDescendsJunctionRoot` fails with the previous `resolveRoot` ("not linked"). `TestResolveRootIgnoresNonLinkReparsePoints` covers the cloud placeholder dir and an irregular file. `TestIsSymlinkToDirRecognisesJunction` covers the nested hint. `GOOS=windows go vet` is clean. Not executed on Windows |
 | 4 | AC-4: hero list end-to-end | DONE | A freshly built binary in a temp repo whose `.hero` is a symlink: `hero list` shows `a`, and `hero status` counts 1 upcoming and 1 completed. Before the fix: "No specs match" |
 
 ### Changes
@@ -84,6 +87,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 | 5 | identity | DONE | — |
 | 6 | nested-workspace hint | DONE | — |
 | 7 | migration guard | DONE | — |
+| 8 | junctions | DONE | Verified by reading on Windows (the user's choice), plus stubbed tests |
 
 ### Exercise-the-feature check
 

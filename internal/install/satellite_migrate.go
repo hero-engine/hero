@@ -60,9 +60,10 @@ func PlanMigration(rootDir, nestedRel string) (*MigrationPlan, error) {
 	}
 	satAbs := filepath.Join(rootAbs, filepath.FromSlash(nestedRel))
 	nestedHero := filepath.Join(satAbs, ".hero")
-	// ModeIrregular covers Windows directory junctions, which Go (1.23+)
-	// no longer reports as symlinks.
-	if info, err := os.Lstat(nestedHero); err == nil && info.Mode()&(os.ModeSymlink|os.ModeIrregular) != 0 {
+	// ModeIrregular without ModeDir covers Windows directory junctions,
+	// which Go (1.23+) no longer reports as symlinks; a real directory with
+	// a non-link reparse tag (e.g. a OneDrive placeholder) keeps ModeDir.
+	if info, err := os.Lstat(nestedHero); err == nil && !info.IsDir() && info.Mode()&(os.ModeSymlink|os.ModeIrregular) != 0 {
 		target, _ := os.Readlink(nestedHero)
 		return nil, fmt.Errorf("%w (-> %s); its files live elsewhere, so Hero will not move them — migrate it manually", ErrLinkedNestedHero, target)
 	}

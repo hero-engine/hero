@@ -136,3 +136,37 @@ func TestFindNestedHeroDirsFollowsSymlinkedHero(t *testing.T) {
 		t.Errorf("got %v, want [apps/web]", got)
 	}
 }
+
+// fakeEntry is a DirEntry with a chosen type, for reproducing what Windows
+// reports for a directory junction.
+type fakeEntry struct{ typ os.FileMode }
+
+func (f fakeEntry) Name() string               { return ".hero" }
+func (f fakeEntry) IsDir() bool                { return f.typ.IsDir() }
+func (f fakeEntry) Type() os.FileMode          { return f.typ }
+func (f fakeEntry) Info() (os.FileInfo, error) { return nil, os.ErrInvalid }
+
+// symlinked-hero-dir: a junction (ModeIrregular, no ModeDir) to a directory
+// counts as a linked .hero; a plain directory or an irregular file does not.
+func TestIsSymlinkToDirRecognisesJunction(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "file")
+	if err := os.WriteFile(file, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for name, c := range map[string]struct {
+		path string
+		typ  os.FileMode
+		want bool
+	}{
+		"junction to dir":  {dir, os.ModeIrregular, true},
+		"symlink to dir":   {dir, os.ModeSymlink, true},
+		"plain dir":        {dir, os.ModeDir, false},
+		"irregular file":   {file, os.ModeIrregular, false},
+		"junction missing": {filepath.Join(dir, "gone"), os.ModeIrregular, false},
+	} {
+		if got := isSymlinkToDir(c.path, fakeEntry{c.typ}); got != c.want {
+			t.Errorf("%s: isSymlinkToDir = %v, want %v", name, got, c.want)
+		}
+	}
+}
