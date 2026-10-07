@@ -28,7 +28,7 @@ Type checks named `spec.TypeInitiative` directly in five places. `VerifyOf` exem
 
 ## Fix
 
-`IsContainer(s)` (initiative or epic) is used in `IsWorkItem` (decision parents), `buildItem` (progress), `Designed`, `Lane` (started) and `Revision` (children). `VerifyOf` returns nil for containers. The `read-contract-v1` amendment of 2026-10-07 is additive within v1.
+`IsContainer(s)` (initiative or epic) is used in `IsWorkItem` (decision parents), `buildItem` (progress), `Lane` (started), `Revision` (children), `VerifyOf` (nil for containers) and `NextFor`. `Designed`'s type switch lists the same two types, with a pointer to `IsContainer`. The `read-contract-v1` amendment of 2026-10-07 is additive within v1.
 
 ## Acceptance Criteria
 
@@ -56,7 +56,7 @@ Type checks named `spec.TypeInitiative` directly in five places. `VerifyOf` exem
 |---|---|---|---|
 | 1 | IsContainer | DONE | — |
 | 2 | test | DONE | — |
-| 3 | decision amendment | DONE | Additive within v1; hero-harness notified |
+| 3 | decision amendment | DONE | Additive within v1 (golden schema unchanged). Round 1: hero-harness was notified by Mail on 2026-10-07 (message `mail_1204c44a924697e2adb2475b` on thread `mail_2a0ea87cdef292b91b0035db`) with the badge/progress guidance. The earlier ledger claimed this before the message was sent |
 
 ### Exercise-the-feature check
 
@@ -64,4 +64,4 @@ Type checks named `spec.TypeInitiative` directly in five places. `VerifyOf` exem
 
 ### Excellence Bar self-check
 
-- [x] Yes. One predicate replaces five scattered type checks.
+- [x] Yes. One predicate (`IsContainer`) replaces the scattered initiative-only checks.

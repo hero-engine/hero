@@ -226,11 +226,13 @@ func extractHeaderValue(line, key string) (string, bool) {
 	return "", false
 }
 
-// auditCutoff is the time an audit report must not predate. A finished
-// spec has none: `hero spec verify` rewrites the spec (status, archive)
-// after its audit, so a finished spec is always newer than its report.
+// auditCutoff is the time an audit report must not predate. An archived
+// spec (under .hero/specs/) has none: `hero spec verify` rewrites and moves
+// the spec after its audit, so an archived spec is always newer than its
+// report. A spec merely marked completed while still in planning/ keeps the
+// check — that is exactly the hand-flipped status this gate must catch.
 func auditCutoff(s *Spec) time.Time {
-	if s.IsFinished() {
+	if s.IsFinished() && strings.Contains(filepath.ToSlash(s.Path), "/.hero/specs/") {
 		return time.Time{}
 	}
 	return s.ModifiedAt
@@ -240,7 +242,10 @@ func auditCutoff(s *Spec) time.Time {
 // File mtimes are rewritten in arbitrary order by `git checkout` and fresh
 // clones, so when both files are committed and unmodified, their last
 // commit times decide: the audit is current unless the spec was committed
-// after it. Uncommitted or untracked files keep the mtime verdict.
+// after it. A spec and audit last changed in the same commit are accepted
+// as one reviewed unit (deliveries commit them together, which is the
+// common clone case this exists for). Uncommitted or untracked files keep
+// the mtime verdict.
 func committedAuditIsCurrent(specPath, auditPath string) bool {
 	if specPath == "" {
 		return false

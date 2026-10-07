@@ -289,7 +289,7 @@ func Designed(s *spec.Spec, c *Corpus) bool {
 	switch string(s.Type) {
 	case "bug":
 		return has("root cause", "root cause analysis") && has("changes", "fix", "suggested fix approach")
-	case "initiative", "epic":
+	case string(spec.TypeInitiative), "epic": // IsContainer
 		return len(c.Children(s)) > 0
 	case "decision":
 		return has("decision")

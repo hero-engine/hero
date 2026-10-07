@@ -54,8 +54,8 @@ Test with `go test ./internal/serve -run 'TestDrain|RunAndShutdown'`.
 
 | # | Criterion (abbreviated) | Status | Note |
 |---|---|---|---|
-| 1 | AC-1: prompt exit with idle connection | DONE | `TestDrainClosesIdleNewConnectionsPromptly` (0.09s). Real `hero serve` with an idle TCP connection and SIGINT: new build 0.07s exit 0; old build 5.04s exit 1 with "context deadline exceeded" (`real-exercise.log`) |
-| 2 | AC-2: in-flight completes | DONE | `TestDrainLetsInFlightRequestsFinish`: a 300ms handler returns its body |
+| 1 | AC-1: prompt exit with idle connection | DONE | `TestDrainClosesIdleNewConnectionsPromptly` (0.09s). Round 1: `real-exercise.log` is now captured script output. A real `hero serve --no-ui` with an idle TCP connection then SIGINT: origin/main 5.03s, exit 1, `context deadline exceeded`; fix 0.05s, exit 0 |
+| 2 | AC-2: in-flight completes | DONE | `TestDrainLetsInFlightRequestsFinish`: a 300ms handler returns its body. Scope: requests honoring `r.Context()` get a 1s grace (previously up to 5s); the audit found no handler that depends on longer |
 | 3 | AC-3: streams end after grace | DONE | `TestDrainEndsStreamingHandlersAfterGrace`: 1.08s, nil error |
 
 ### Changes

@@ -72,10 +72,42 @@ func TestAuditStalenessUsesCommitOrderForCommittedFiles(t *testing.T) {
 		t.Fatalf("spec committed after its audit must be stale: %+v", r)
 	}
 
-	// A finished spec is never stale: verify rewrites it after the audit.
+	// Hand-flipping status to completed while still in planning/ keeps the
+	// check: an uncommitted edit after the audit is still stale.
 	os.WriteFile(specPath, []byte(body("completed")), 0o644)
 	os.Chtimes(specPath, future, future)
+	if r := FindAuditReport(parse()); r.Found || !r.Stale {
+		t.Fatalf("completed-but-unarchived spec edited after its audit must be stale: %+v", r)
+	}
+
+	// A spec and audit committed together are one reviewed unit.
+	os.WriteFile(auditPath, []byte("# Delivery audit — x\n\n**Verdict:** SHIP\n\nRe-audited.\n"), 0o644)
+	gitRun(t, root, "add", "-A")
+	t.Setenv("GIT_COMMITTER_DATE", "2026-10-04T00:00:00Z")
+	gitRun(t, root, "commit", "-q", "-m", "together")
+	t.Setenv("GIT_COMMITTER_DATE", "")
+	os.Chtimes(specPath, future, future)
 	if r := FindAuditReport(parse()); !r.Found || r.Stale {
-		t.Fatalf("finished spec must keep its audit: %+v", r)
+		t.Fatalf("spec and audit committed together must be accepted: %+v", r)
+	}
+}
+
+// followup-audit-staleness-git AC-3: only archived specs (.hero/specs/) are
+// exempt, since verify rewrites and moves them after their audit.
+func TestArchivedSpecIsExemptFromStaleness(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), ".hero", "specs", "y")
+	os.MkdirAll(dir, 0o755)
+	specPath := filepath.Join(dir, "spec.md")
+	os.WriteFile(filepath.Join(dir, "delivery-audit.md"), []byte("# Delivery audit — y\n\n**Verdict:** SHIP\n"), 0o644)
+	time.Sleep(10 * time.Millisecond)
+	os.WriteFile(specPath, []byte("---\ntitle: Y\nslug: y\ntype: feature\nstatus: completed\n---\n# Y\n"), 0o644)
+	data, _ := os.ReadFile(specPath)
+	info, _ := os.Stat(specPath)
+	s, err := Parse(string(data), specPath, info.ModTime())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r := FindAuditReport(s); !r.Found || r.Stale {
+		t.Fatalf("archived completed spec must keep its audit: %+v", r)
 	}
 }
