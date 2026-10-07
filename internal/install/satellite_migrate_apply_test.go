@@ -1,6 +1,7 @@
 package install
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -133,5 +134,39 @@ func TestCollisionSuffix(t *testing.T) {
 	want := "/r/.hero/planning/features/x-from-engines-mlx/spec.md"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+// symlinked-hero-dir: a nested .hero that is a symlink is refused by both
+// plan and apply, and nothing in its target or the link is touched.
+func TestMigrationRefusesLinkedNestedHero(t *testing.T) {
+	root := setupRoot(t)
+	target := filepath.Join(t.TempDir(), "other-checkout", ".hero")
+	targetSpec := filepath.Join(target, "planning", "features", "live", "spec.md")
+	if err := os.MkdirAll(filepath.Dir(targetSpec), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(targetSpec, []byte("---\ntitle: Live\ntype: feature\nstatus: planning\n---\n# live\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "apps", "web"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(root, "apps", "web", ".hero")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("symlinks unsupported: %v", err)
+	}
+
+	if _, err := PlanMigration(root, "apps/web"); !errors.Is(err, ErrLinkedNestedHero) {
+		t.Fatalf("PlanMigration err = %v, want ErrLinkedNestedHero", err)
+	}
+	if _, err := ApplyMigration(ApplyOptions{RootDir: root, Version: "test", Force: true}, "apps/web"); !errors.Is(err, ErrLinkedNestedHero) {
+		t.Fatalf("ApplyMigration err = %v, want ErrLinkedNestedHero", err)
+	}
+	if _, err := os.Stat(targetSpec); err != nil {
+		t.Errorf("the link target's spec was touched: %v", err)
+	}
+	if info, err := os.Lstat(link); err != nil || info.Mode()&os.ModeSymlink == 0 {
+		t.Errorf("the link was removed or replaced: %v", err)
 	}
 }

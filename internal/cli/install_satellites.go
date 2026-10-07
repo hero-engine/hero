@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -147,6 +148,10 @@ func runInstallSatellites(cmd *cobra.Command, args []string) error {
 				ForceResume: satellitesForceResume,
 				DryRun:      false,
 			}, n)
+			if errors.Is(err, install.ErrLinkedNestedHero) {
+				fmt.Printf("Skipped %s: %v\n", n, err)
+				continue
+			}
 			fmt.Println(install.FormatApplyResult(res, false))
 			if err != nil {
 				fmt.Printf("Migration of %s halted: %v\n", n, err)

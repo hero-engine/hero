@@ -650,3 +650,26 @@ func insertTestSymbol(t *testing.T, db *sql.DB, key, kind, signature, doc, body,
 		t.Fatalf("inserting test symbol: %v", err)
 	}
 }
+
+// symlinked-hero-dir: spec-source validation descends a hero dir that is
+// itself a symlink. An unreadable spec.md inside it must be reported, which
+// proves the walk reached it.
+func TestValidateSpecSourcesFollowsSymlinkedHeroDir(t *testing.T) {
+	base := t.TempDir()
+	real := filepath.Join(base, "real")
+	specDir := filepath.Join(real, "planning", "features", "x")
+	if err := os.MkdirAll(specDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(base, ".hero")
+	if err := os.Symlink(real, link); err != nil {
+		t.Skipf("symlinks unsupported: %v", err)
+	}
+	if err := os.Symlink(filepath.Join(base, "missing"), filepath.Join(specDir, "spec.md")); err != nil {
+		t.Fatal(err)
+	}
+	err := validateSpecSources(link)
+	if err == nil || !strings.Contains(err.Error(), filepath.Join(link, "planning", "features", "x", "spec.md")) {
+		t.Fatalf("validateSpecSources = %v, want the unreadable spec reported under the link", err)
+	}
+}

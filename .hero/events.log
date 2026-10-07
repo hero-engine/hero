@@ -634,3 +634,5 @@
 {"ts":"2026-10-07T03:16:27.712926Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"why-intake-slug-tie","message":"status -\u003e completed"}
 {"ts":"2026-10-07T15:13:05.207347Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"pre-release-sweep-v0-35-3","message":"Pre-release sweep for v0.35.3 — close every open audit note before tagging"}
 {"ts":"2026-10-07T15:13:05.207452Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pre-release-sweep-v0-35-3","message":"status -\u003e completed"}
+{"ts":"2026-10-07T17:09:22.06195Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"symlinked-hero-dir-walks-nothing","message":"A hero folder that is a symlink is walked as empty — Hero finds no specs"}
+{"ts":"2026-10-07T17:09:22.06205Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"symlinked-hero-dir-walks-nothing","message":"status -\u003e completed"}
