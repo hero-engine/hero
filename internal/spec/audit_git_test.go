@@ -116,16 +116,28 @@ func TestArchivedSpecIsExemptFromStaleness(t *testing.T) {
 // folder's name, and only the directory under the hero folder decides.
 func TestArchivedPathIgnoresFolderName(t *testing.T) {
 	root := t.TempDir()
+	writeConfig := func(dir string) {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "hero.json"), []byte("{}"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
 	workspace := func(rel string) string {
 		dir := filepath.Join(root, filepath.FromSlash(rel))
-		os.MkdirAll(dir, 0o755)
-		os.WriteFile(filepath.Join(dir, "hero.json"), []byte("{}"), 0o644)
+		writeConfig(dir)
 		return dir
 	}
 	custom := workspace("a/.workspace")
 	underPlanning := workspace("planning/repo/.hero")
 	underSpecs := workspace("specs/repo/.hero")
 	noConfig := filepath.Join(root, "bare", ".hero")
+	// A .hero without hero.json beneath a directory that holds one.
+	writeConfig(filepath.Join(root, "outer"))
+	nested := filepath.Join(root, "outer", "repo", ".hero")
+	// A stray hero.json inside an archived spec folder.
+	writeConfig(filepath.Join(custom, "specs", "stray"))
 	for path, want := range map[string]bool{
 		filepath.Join(custom, "specs", "x", "spec.md"):                true,
 		filepath.Join(custom, "specs", "init", "child", "spec.md"):    true,
@@ -136,6 +148,9 @@ func TestArchivedPathIgnoresFolderName(t *testing.T) {
 		filepath.Join(underSpecs, "planning", "x", "spec.md"):         false,
 		filepath.Join(noConfig, "specs", "x", "spec.md"):              true,
 		filepath.Join(noConfig, "planning", "x", "spec.md"):           false,
+		filepath.Join(nested, "specs", "x", "spec.md"):                true,
+		filepath.Join(nested, "planning", "x", "spec.md"):             false,
+		filepath.Join(custom, "specs", "stray", "spec.md"):            true,
 		filepath.Join(root, "elsewhere", "specs", "x", "spec.md"):     false,
 	} {
 		if got := isArchivedPath(path); got != want {

@@ -36,18 +36,18 @@ Process. Audit highlights were treated as out-of-scope follow-ups and released a
 
 1. **`hero why --edges`** used an unordered `LIMIT 1`, so a promoted intake could beat its spec. It now resolves through the exported `traversal.ResolveTarget`, the same query `hero why` uses, so the two always agree.
 2. **`open_followups`** compared against `completed_at` only. An item that is recently done through the mtime fallback never collected follow-ups. It now uses the same completion time the lane uses (`completionTime`).
-3. **The archive exemption** matched the literal `/.hero/specs/`. It is now folder-agnostic. `isArchivedPath` finds the hero folder (the nearest ancestor holding `hero.json`, or else one named `.hero`) and checks only the directory directly under it. A repo checked out beneath a `planning`/`specs` directory, or a spec folder with either name, is therefore classified correctly. (The first audit caught a substring version that regressed those paths.)
-5. **Audit follow-ups:**
-   - `Lane` calls `completionTime` instead of inlining a copy.
-   - `hero why --edges` returns `ResolveTarget`'s error unchanged, so real DB errors are no longer reported as "no node".
-   - `--edges` now has the same global-node fallback as `hero why`. That is intended, since the two must agree.
-   - The no-write test seeds every watched glob, catches modification and deletion, and compares content. The sweep test checks every tool result.
+3. **The archive exemption** matched the literal `/.hero/specs/`. It is now folder-agnostic. `isArchivedPath` takes as the hero folder the nearest ancestor that is a workspace (it holds `hero.json` or is named `.hero`) and whose child on the path is `planning/` or `specs/`. It is archived when that child is `specs/`. A repo beneath a `planning`/`specs` directory, a spec folder with either name, a `hero.json` further up, or a stray `hero.json` inside a spec folder cannot misplace it. (Two audits caught weaker versions: substring matching, then a farther `hero.json` beating a nearer `.hero`.)
 4. **Test gaps:**
    - `hero_spec` CRLF frontmatter;
    - a knowledge note pointing at an initiative is not a child;
    - recorded `pass`/`fail` AC states;
    - initiative `verify: null` at the tool level;
    - `hero_work` no-write check across all six watch globs.
+5. **Audit follow-ups:**
+   - `Lane` calls `completionTime` instead of inlining a copy.
+   - `hero why --edges` returns `ResolveTarget`'s error unchanged, so real DB errors are no longer reported as "no node".
+   - `--edges` now has the same global-node fallback as `hero why`. That is intended, since the two must agree.
+   - The no-write test seeds every watched glob, catches modification and deletion, and compares content. The sweep test checks every tool result.
 
 ## By design (not defects; documented, no change)
 
@@ -82,9 +82,9 @@ Process. Audit highlights were treated as out-of-scope follow-ups and released a
 |---|---|---|---|
 | 1 | AC-1: --edges uses why's resolution | DONE | `TestWhyEdgesPromotedSpecWinsSlugTie` (the intake is inserted first and ingested later). It fails on the old code with "started from the intake" |
 | 2 | AC-2: open_followups mtime fallback | DONE | `TestOpenFollowupsUseLaneCompletionFallback` fails on the old code |
-| 3 | AC-3: folder-agnostic archive | DONE | `TestArchivedPathIgnoresFolderName` (real directories with `hero.json`) covers: a custom folder; a repo under a `planning` ancestor and one under a `specs` ancestor; an archived spec folder named `planning`; a planning spec folder named `specs`; a `.hero` with no `hero.json`; a path with no workspace. 3 cases fail on the substring version |
-| 5 | AC-5: first-audit notes closed | DONE | `Lane` → `completionTime`; `--edges` returns `ResolveTarget`'s error. The no-write test seeds `NEXT.md`/`hero.json`/`next/`/`specs/` and checks deletion and content. The sweep test checks `IsError` and unmarshal, and asserts `crlf` is a child |
+| 3 | AC-3: folder-agnostic archive | DONE | `TestArchivedPathIgnoresFolderName` (real directories with `hero.json`) covers: a custom folder; a repo under a `planning` ancestor and one under a `specs` ancestor; an archived spec folder named `planning`; a planning spec folder named `specs`; a `.hero` with no `hero.json`; a path with no workspace. Cases also cover a `.hero` with no `hero.json` under a directory that holds one, and a stray `hero.json` inside an archived spec folder. The literal check, the substring version and the first anchor each fail cases |
 | 4 | AC-4: audit test gaps | DONE | `TestReadContractSweepGaps` covers CRLF, the note-not-child case, pass/fail ACs and initiative verify null. `TestToolWorkWritesNothing` covers all six globs |
+| 5 | AC-5: first-audit notes closed | DONE | `Lane` → `completionTime`; `--edges` returns `ResolveTarget`'s error. The no-write test seeds `NEXT.md`/`hero.json`/`next/`/`specs/` and checks deletion and content. The sweep test checks `IsError` and unmarshal, and asserts `crlf` is a child |
 
 ### Changes
 

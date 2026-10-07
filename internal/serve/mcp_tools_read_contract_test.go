@@ -248,7 +248,9 @@ func TestToolWorkWritesNothing(t *testing.T) {
 		"specs/done/spec.md": "---\ntitle: Done\nslug: done\ntype: feature\nstatus: completed\n---\n# Done\n",
 	} {
 		path := filepath.Join(heroDir, filepath.FromSlash(rel))
-		os.MkdirAll(filepath.Dir(path), 0o755)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			t.Fatal(err)
 		}
