@@ -33,7 +33,7 @@ Found by the v0.35.3 pre-release audit. The user chose to hold the release until
 | `validateSpecSources` (`internal/embeddings/chunker.go`) | Spec validation before embedding checks nothing |
 | `lastTouchedAt` (`internal/serve/projectpage/data/identity.go`) | Reports the symlink's own mtime, not the newest spec's |
 
-One adjacent site, found by the audit, has the same cause one level down. `install.FindNestedHeroDirs` (the "leftover standalone workspaces" migration hint) used `d.IsDir()` from `WalkDir`, so a nested workspace whose `.hero` is a symlink was not listed.
+One adjacent site, found by the audit, has the same cause one level down. `install.FindNestedHeroDirs` (the "leftover standalone workspaces" migration hint) used `d.IsDir()` from `WalkDir`, so a nested workspace whose `.hero` is a symlink was not listed. That listing also feeds `hero install satellites --migrate-nested --apply`, which moves files out of a nested `.hero` and deletes it. For a linked `.hero` that would gut the link target (often another checkout's live workspace) and remove only the link. So once the hint lists it, the migration must refuse it.
 
 Hero never creates a symlinked hero folder itself (satellites deliberately get none), so only hand-made layouts are affected.
 
@@ -47,6 +47,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 - **AC-2:** WHEN the hero folder is a symlink THE SYSTEM SHALL include its files in the watch snapshot, spec-source validation and last-touched time.
 - **AC-3:** WHEN the walk root is not a symlink, or is a broken symlink, THE SYSTEM SHALL behave exactly like `filepath.Walk`/`WalkDir`.
 - **AC-5:** WHEN a nested workspace's `.hero` is a symlink to a directory THE SYSTEM SHALL list it in the nested-workspace migration hint. A `.hero` that links to a file or dangles SHALL NOT be listed.
+- **AC-6:** WHEN a nested `.hero` is a symlink THE SYSTEM SHALL refuse to plan or apply its migration (`ErrLinkedNestedHero`, naming the link target), leave the target and the link untouched, and still migrate the other nested workspaces.
 - **AC-4:** WHEN a user runs `hero list` in a project whose `.hero` is a symlink THE SYSTEM SHALL list its specs.
 
 ## Changes
@@ -57,6 +58,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 4. `internal/embeddings/chunker.go` (`validateSpecSources`) and `chunker_test.go`.
 5. `internal/serve/projectpage/data/identity.go` (`lastTouchedAt`) and `identity_test.go`.
 6. `internal/install/satellite_detect.go` (`FindNestedHeroDirs`, `isSymlinkToDir`) and `satellite_detect_test.go`.
+7. `internal/install/satellite_migrate.go` (`ErrLinkedNestedHero`, refused in `PlanMigration`, so `ApplyMigration` refuses too), `internal/cli/install_satellites.go` (apply skips and continues), `satellite_migrate_apply_test.go` and `install_satellites_linked_test.go`.
 
 ## Completion Ledger
 
@@ -68,6 +70,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 | 2 | AC-2: watch / validate / last-touched | DONE | `TestScan_followsSymlinkedHeroDir`, `TestValidateSpecSourcesFollowsSymlinkedHeroDir` (an unreadable spec.md must be reported, which proves the walk descended) and `TestLastTouchedAtFollowsSymlinkedHeroDir` (a distinctive future mtime, so the link's own mtime cannot pass). All three fail with the old walkers |
 | 3 | AC-3: unchanged otherwise | DONE | `TestWalkPlainRootUnchanged` and `TestWalkBrokenSymlinkRootReportsLikeFilepathWalk`. The full suite passes |
 | 5 | AC-5: nested symlinked .hero in migration hint | DONE | `TestFindNestedHeroDirsFollowsSymlinkedHero`: a link to a dir is listed; a link to a file and a dangling link are not. With the old code it fails: "got [], want [apps/web]" |
+| 6 | AC-6: migration refuses a linked nested .hero | DONE | `TestMigrationRefusesLinkedNestedHero` checks that plan and apply both return `ErrLinkedNestedHero` and that the target and link are intact. `TestMigrateNestedApplySkipsLinkedHero` runs the real `install satellites --migrate-nested --apply --yes --force`: it prints "Skipped apps/web", leaves the target spec and the link in place, and migrates the real `engines/mlx`. Without the guard, apply moved the target's spec and deleted the link, which confirms the audit's blocker was real |
 | 4 | AC-4: hero list end-to-end | DONE | A freshly built binary in a temp repo whose `.hero` is a symlink: `hero list` shows `a`, and `hero status` counts 1 upcoming and 1 completed. Before the fix: "No specs match" |
 
 ### Changes
@@ -80,6 +83,7 @@ New `internal/fsutil` with `Walk` and `WalkDir`. When the root is a symlink that
 | 4 | embeddings | DONE | — |
 | 5 | identity | DONE | — |
 | 6 | nested-workspace hint | DONE | — |
+| 7 | migration guard | DONE | — |
 
 ### Exercise-the-feature check
 

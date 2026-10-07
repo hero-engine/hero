@@ -1,6 +1,7 @@
 package install
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -41,6 +42,12 @@ type MigrationPlan struct {
 	FilesIgnored []string
 }
 
+// ErrLinkedNestedHero refuses migrating a nested .hero that is a symlink:
+// its files live in another directory (often another checkout's live
+// workspace), and migration would move them out of it and delete only the
+// link.
+var ErrLinkedNestedHero = errors.New("nested .hero is a symlink")
+
 // PlanMigration inspects a nested .hero/ folder and produces a migration
 // plan. It does NOT modify anything. The caller decides what to do with
 // the plan (display it, confirm, then execute via ApplyMigration once
@@ -52,6 +59,10 @@ func PlanMigration(rootDir, nestedRel string) (*MigrationPlan, error) {
 	}
 	satAbs := filepath.Join(rootAbs, filepath.FromSlash(nestedRel))
 	nestedHero := filepath.Join(satAbs, ".hero")
+	if info, err := os.Lstat(nestedHero); err == nil && info.Mode()&os.ModeSymlink != 0 {
+		target, _ := os.Readlink(nestedHero)
+		return nil, fmt.Errorf("%w (-> %s); its files live elsewhere, so Hero will not move them — migrate it manually", ErrLinkedNestedHero, target)
+	}
 	if info, err := os.Stat(nestedHero); err != nil || !info.IsDir() {
 		return nil, fmt.Errorf("no nested .hero/ at %s", satAbs)
 	}
