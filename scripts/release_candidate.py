@@ -528,13 +528,14 @@ def build_candidate(root: Path, output: Path, version: str, base: str, smoke: bo
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", default="v0.34.1")
-    parser.add_argument("--base", default="v0.34.0")
-    parser.add_argument("--output", default=".build/release-candidate/v0.34.1")
+    parser.add_argument("--version", required=True, help="release tag to build, e.g. v0.35.3")
+    parser.add_argument("--base", required=True, help="previous release tag")
+    parser.add_argument("--output", help="defaults to .build/release-candidate/<version>")
     parser.add_argument("--no-smoke", action="store_true", help="skip the native clean-install smoke")
     args = parser.parse_args()
     try:
         root = repository_root(Path.cwd())
+        args.output = args.output or f".build/release-candidate/{args.version}"
         requested = root / args.output if not Path(args.output).is_absolute() else Path(args.output)
         output = validate_output_path(root, requested)
         result = build_candidate(root, output, args.version, args.base, not args.no_smoke)
