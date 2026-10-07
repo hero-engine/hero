@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hero-engine/hero/internal/graph"
-	"time"
 )
 
 func writeContractSpec(t *testing.T, heroDir, rel, content string) {
@@ -156,7 +156,8 @@ func snapshotTree(t *testing.T, root string) map[string]string {
 			return nil
 		}
 		rel, _ := filepath.Rel(root, path)
-		out[rel] = info.ModTime().String() + ":" + string(rune(info.Size()))
+		data, _ := os.ReadFile(path)
+		out[rel] = info.ModTime().String() + ":" + string(data)
 		return nil
 	})
 	return out
@@ -241,16 +242,39 @@ func TestToolWorkRecentDays(t *testing.T) {
 // hero-work-tool AC-4: read-only, writes nothing.
 func TestToolWorkWritesNothing(t *testing.T) {
 	srv, heroDir := readContractWorkspace(t)
+	// Seed every watched glob so a modification (not only a creation) shows.
+	for rel, content := range map[string]string{
+		"NEXT.md": "# Next\n", "hero.json": "{}\n", "next/chet.md": "# Chet\n",
+		"specs/done/spec.md": "---\ntitle: Done\nslug: done\ntype: feature\nstatus: completed\n---\n# Done\n",
+	} {
+		path := filepath.Join(heroDir, filepath.FromSlash(rel))
+		os.MkdirAll(filepath.Dir(path), 0o755)
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	watched := func(path string) bool {
+		if path == "NEXT.md" || path == "hero.json" {
+			return true
+		}
+		for _, dir := range []string{"planning", "specs", "knowledge", "next"} {
+			if strings.HasPrefix(path, dir+string(filepath.Separator)) {
+				return true
+			}
+		}
+		return false
+	}
 	before := snapshotTree(t, heroDir)
 	callWork(t, srv, map[string]interface{}{})
 	after := snapshotTree(t, heroDir)
 	for path, mod := range after {
-		watched := path == "NEXT.md" || path == "hero.json"
-		for _, dir := range []string{"planning", "specs", "knowledge", "next"} {
-			watched = watched || strings.HasPrefix(path, dir+string(filepath.Separator))
-		}
-		if watched && before[path] != mod {
+		if watched(path) && before[path] != mod {
 			t.Errorf("hero_work wrote %s (under watch_globs)", path)
+		}
+	}
+	for path := range before {
+		if _, ok := after[path]; !ok && watched(path) {
+			t.Errorf("hero_work deleted %s (under watch_globs)", path)
 		}
 	}
 	ann := annotationsForSafety(toolSafetyClasses()["hero_work"])
@@ -285,7 +309,9 @@ func TestReadContractSweepGaps(t *testing.T) {
 	if result.IsError {
 		t.Fatal(result.Content[0].Text)
 	}
-	json.Unmarshal([]byte(result.Content[0].Text), &got)
+	if err := json.Unmarshal([]byte(result.Content[0].Text), &got); err != nil {
+		t.Fatal(err)
+	}
 	if strings.Contains(got.Body, "---") || strings.Contains(got.Body, "slug: crlf") || !strings.Contains(got.Body, "Body here.") {
 		t.Errorf("CRLF frontmatter not stripped: %q", got.Body)
 	}
@@ -298,11 +324,22 @@ func TestReadContractSweepGaps(t *testing.T) {
 	}
 
 	var init HeroSpec
-	json.Unmarshal([]byte(callTool(t, srv, "hero_spec", map[string]interface{}{"slug": "init"}).Content[0].Text), &init)
+	result = callTool(t, srv, "hero_spec", map[string]interface{}{"slug": "init"})
+	if result.IsError {
+		t.Fatal(result.Content[0].Text)
+	}
+	if err := json.Unmarshal([]byte(result.Content[0].Text), &init); err != nil {
+		t.Fatal(err)
+	}
+	foundChild := false
 	for _, ch := range init.Relations.Children {
 		if ch.Slug == "aside" {
 			t.Error("a knowledge note pointing at an initiative must not be a child")
 		}
+		foundChild = foundChild || ch.Slug == "crlf"
+	}
+	if !foundChild {
+		t.Errorf("crlf (parent: init) missing from init's children: %+v", init.Relations.Children)
 	}
 	if init.Item.Verify != nil {
 		t.Errorf("initiative verify must be null at the tool level, got %+v", init.Item.Verify)

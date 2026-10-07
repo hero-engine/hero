@@ -239,10 +239,34 @@ func auditCutoff(s *Spec) time.Time {
 }
 
 // isArchivedPath reports whether a spec file lives in the workspace's
-// archive (<hero folder>/specs/...), whatever the hero folder is named.
+// archive (<hero folder>/specs/...), whatever the hero folder is named. The
+// hero folder is the nearest ancestor holding hero.json (else one named
+// .hero); only the directory directly under it decides, so a repo checked
+// out beneath a "planning" or "specs" directory, or a spec folder with
+// either name, is classified correctly.
 func isArchivedPath(path string) bool {
-	slash := filepath.ToSlash(path)
-	return strings.Contains(slash, "/specs/") && !strings.Contains(slash, "/planning/")
+	heroDir := ""
+	for dir := filepath.Dir(path); ; dir = filepath.Dir(dir) {
+		if _, err := os.Stat(filepath.Join(dir, "hero.json")); err == nil {
+			heroDir = dir
+			break
+		}
+		if heroDir == "" && filepath.Base(dir) == ".hero" {
+			heroDir = dir
+		}
+		if parent := filepath.Dir(dir); parent == dir {
+			break
+		}
+	}
+	if heroDir == "" {
+		return false
+	}
+	rel, err := filepath.Rel(heroDir, path)
+	if err != nil {
+		return false
+	}
+	first, _, _ := strings.Cut(filepath.ToSlash(rel), "/")
+	return first == "specs"
 }
 
 // committedAuditIsCurrent settles an mtime-based "stale" verdict with git.

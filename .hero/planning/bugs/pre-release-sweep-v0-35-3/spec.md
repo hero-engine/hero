@@ -36,7 +36,12 @@ Process. Audit highlights were treated as out-of-scope follow-ups and released a
 
 1. **`hero why --edges`** used an unordered `LIMIT 1`, so a promoted intake could beat its spec. It now resolves through the exported `traversal.ResolveTarget`, the same query `hero why` uses, so the two always agree.
 2. **`open_followups`** compared against `completed_at` only. An item that is recently done through the mtime fallback never collected follow-ups. It now uses the same completion time the lane uses (`completionTime`).
-3. **The archive exemption** matched the literal `/.hero/specs/`. It is now folder-agnostic (`isArchivedPath`: under `specs/`, not under `planning/`).
+3. **The archive exemption** matched the literal `/.hero/specs/`. It is now folder-agnostic. `isArchivedPath` finds the hero folder (the nearest ancestor holding `hero.json`, or else one named `.hero`) and checks only the directory directly under it. A repo checked out beneath a `planning`/`specs` directory, or a spec folder with either name, is therefore classified correctly. (The first audit caught a substring version that regressed those paths.)
+5. **Audit follow-ups:**
+   - `Lane` calls `completionTime` instead of inlining a copy.
+   - `hero why --edges` returns `ResolveTarget`'s error unchanged, so real DB errors are no longer reported as "no node".
+   - `--edges` now has the same global-node fallback as `hero why`. That is intended, since the two must agree.
+   - The no-write test seeds every watched glob, catches modification and deletion, and compares content. The sweep test checks every tool result.
 4. **Test gaps:**
    - `hero_spec` CRLF frontmatter;
    - a knowledge note pointing at an initiative is not a child;
@@ -59,6 +64,7 @@ Process. Audit highlights were treated as out-of-scope follow-ups and released a
 - **AC-2:** WHEN a recently done item has no `completed_at` THE SYSTEM SHALL still report its open follow-ups, using the lane's completion time.
 - **AC-3:** THE SYSTEM SHALL treat a spec as archived for audit staleness regardless of the hero folder's name.
 - **AC-4:** THE SYSTEM SHALL have tests for each audit test gap listed in Fixes item 4.
+- **AC-5:** THE SYSTEM SHALL close every first-audit note: one completion-time function, real errors from `--edges`, and no-write and sweep tests that cannot pass vacuously.
 
 ## Changes
 
@@ -66,6 +72,7 @@ Process. Audit highlights were treated as out-of-scope follow-ups and released a
 2. `internal/workmodel/polish.go` (`completionTime`), `polish_test.go`.
 3. `internal/spec/audit.go` (`isArchivedPath`), `audit_git_test.go`.
 4. `internal/serve/mcp_tools_read_contract_test.go` (`TestReadContractSweepGaps`; `TestToolWorkWritesNothing` now covers all six globs).
+5. `internal/workmodel/model.go` (`Lane` uses `completionTime`); `internal/cli/brief.go` (error pass-through); stronger serve tests.
 
 ## Completion Ledger
 
@@ -75,7 +82,8 @@ Process. Audit highlights were treated as out-of-scope follow-ups and released a
 |---|---|---|---|
 | 1 | AC-1: --edges uses why's resolution | DONE | `TestWhyEdgesPromotedSpecWinsSlugTie` (the intake is inserted first and ingested later). It fails on the old code with "started from the intake" |
 | 2 | AC-2: open_followups mtime fallback | DONE | `TestOpenFollowupsUseLaneCompletionFallback` fails on the old code |
-| 3 | AC-3: folder-agnostic archive | DONE | `TestArchivedPathIgnoresFolderName` (`.hero`, a custom folder, nested archive, planning, a parent dir named specs) |
+| 3 | AC-3: folder-agnostic archive | DONE | `TestArchivedPathIgnoresFolderName` (real directories with `hero.json`) covers: a custom folder; a repo under a `planning` ancestor and one under a `specs` ancestor; an archived spec folder named `planning`; a planning spec folder named `specs`; a `.hero` with no `hero.json`; a path with no workspace. 3 cases fail on the substring version |
+| 5 | AC-5: first-audit notes closed | DONE | `Lane` → `completionTime`; `--edges` returns `ResolveTarget`'s error. The no-write test seeds `NEXT.md`/`hero.json`/`next/`/`specs/` and checks deletion and content. The sweep test checks `IsError` and unmarshal, and asserts `crlf` is a child |
 | 4 | AC-4: audit test gaps | DONE | `TestReadContractSweepGaps` covers CRLF, the note-not-child case, pass/fail ACs and initiative verify null. `TestToolWorkWritesNothing` covers all six globs |
 
 ### Changes
@@ -86,6 +94,7 @@ Process. Audit highlights were treated as out-of-scope follow-ups and released a
 | 2 | polish | DONE | — |
 | 3 | audit archive path | DONE | — |
 | 4 | serve tests | DONE | — |
+| 5 | audit follow-ups | DONE | — |
 
 ### Exercise-the-feature check
 

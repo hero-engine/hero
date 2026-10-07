@@ -491,7 +491,7 @@ func runWhyEdges(store *graph.Store, repoKey, target string) error {
 	// same-slug intake, and ties are broken deterministically.
 	root, nodeID, err := traversal.ResolveTarget(store, repoKey, target)
 	if err != nil {
-		return fmt.Errorf("no node with key %q in repo %s", target, repoKey)
+		return err
 	}
 	nodeType, title := root.NodeType, root.NodeTitle
 

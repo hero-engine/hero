@@ -113,14 +113,30 @@ func TestArchivedSpecIsExemptFromStaleness(t *testing.T) {
 }
 
 // Pre-release sweep: the archive exemption does not depend on the hero
-// folder being named ".hero".
+// folder's name, and only the directory under the hero folder decides.
 func TestArchivedPathIgnoresFolderName(t *testing.T) {
+	root := t.TempDir()
+	workspace := func(rel string) string {
+		dir := filepath.Join(root, filepath.FromSlash(rel))
+		os.MkdirAll(dir, 0o755)
+		os.WriteFile(filepath.Join(dir, "hero.json"), []byte("{}"), 0o644)
+		return dir
+	}
+	custom := workspace("a/.workspace")
+	underPlanning := workspace("planning/repo/.hero")
+	underSpecs := workspace("specs/repo/.hero")
+	noConfig := filepath.Join(root, "bare", ".hero")
 	for path, want := range map[string]bool{
-		"/repo/.hero/specs/x/spec.md":               true,
-		"/repo/.workspace/specs/x/spec.md":          true,
-		"/repo/.hero/specs/init/child/spec.md":      true,
-		"/repo/.hero/planning/features/x/spec.md":   false,
-		"/work/specs/repo/.hero/planning/x/spec.md": false,
+		filepath.Join(custom, "specs", "x", "spec.md"):                true,
+		filepath.Join(custom, "specs", "init", "child", "spec.md"):    true,
+		filepath.Join(custom, "specs", "planning", "spec.md"):         true,
+		filepath.Join(custom, "planning", "features", "x", "spec.md"): false,
+		filepath.Join(custom, "planning", "x", "specs", "spec.md"):    false,
+		filepath.Join(underPlanning, "specs", "x", "spec.md"):         true,
+		filepath.Join(underSpecs, "planning", "x", "spec.md"):         false,
+		filepath.Join(noConfig, "specs", "x", "spec.md"):              true,
+		filepath.Join(noConfig, "planning", "x", "spec.md"):           false,
+		filepath.Join(root, "elsewhere", "specs", "x", "spec.md"):     false,
 	} {
 		if got := isArchivedPath(path); got != want {
 			t.Errorf("isArchivedPath(%q) = %v, want %v", path, got, want)
