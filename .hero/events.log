@@ -632,3 +632,5 @@
 {"ts":"2026-10-07T02:09:04.727497Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"followup-epic-parity","message":"status -\u003e completed"}
 {"ts":"2026-10-07T03:16:27.712751Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"why-intake-slug-tie","message":"hero why starts from a promoted intake instead of its spec when both share a slug"}
 {"ts":"2026-10-07T03:16:27.712926Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"why-intake-slug-tie","message":"status -\u003e completed"}
+{"ts":"2026-10-07T15:13:05.207347Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"pre-release-sweep-v0-35-3","message":"Pre-release sweep for v0.35.3 — close every open audit note before tagging"}
+{"ts":"2026-10-07T15:13:05.207452Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pre-release-sweep-v0-35-3","message":"status -\u003e completed"}

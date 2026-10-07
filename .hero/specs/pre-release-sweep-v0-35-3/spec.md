@@ -2,7 +2,7 @@
 title: "Pre-release sweep for v0.35.3 — close every open audit note before tagging"
 slug: pre-release-sweep-v0-35-3
 type: bug
-status: delivering
+status: completed
 priority: P1
 severity: moderate
 root_cause_class: process
@@ -10,6 +10,7 @@ domain: engineering
 size: small
 created: 2026-10-07
 tags: [release, why, read-contract, audit-sweep]
+completed_at: 2026-10-07T15:13:02Z
 ---
 
 # Pre-release sweep for v0.35.3
