@@ -3,6 +3,7 @@ package spec
 import (
 	"bufio"
 	"fmt"
+	"github.com/hero-engine/hero/internal/fsutil"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
@@ -1250,7 +1251,7 @@ func Discover(heroDir string) ([]*Spec, error) {
 	// loading the same spec directory twice.
 	loadedDirs := make(map[string]bool)
 
-	err := filepath.Walk(heroDir, func(path string, info os.FileInfo, err error) error {
+	err := fsutil.Walk(heroDir, func(path string, info os.FileInfo, err error) error {
 		if path != heroDir && hiddenHeroPath(heroDir, path) {
 			if err != nil {
 				return nil

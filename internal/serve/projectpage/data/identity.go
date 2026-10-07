@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hero-engine/hero/internal/fsutil"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -133,7 +134,7 @@ func lastTouchedAt(heroDir string) time.Time {
 		return time.Time{}
 	}
 	var latest time.Time
-	_ = filepath.WalkDir(heroDir, func(path string, d os.DirEntry, err error) error {
+	_ = fsutil.WalkDir(heroDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -151,4 +152,3 @@ func lastTouchedAt(heroDir string) time.Time {
 	})
 	return latest
 }
-

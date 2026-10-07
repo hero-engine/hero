@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hero-engine/hero/internal/fsutil"
 	"github.com/hero-engine/hero/internal/spec"
 )
 
@@ -86,7 +87,7 @@ func ExtractCorpus(ctx context.Context, heroDir string, graphDB *sql.DB, corpus 
 }
 
 func validateSpecSources(heroDir string) error {
-	return filepath.Walk(heroDir, func(path string, info os.FileInfo, walkErr error) error {
+	return fsutil.Walk(heroDir, func(path string, info os.FileInfo, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}

@@ -440,3 +440,27 @@ func TestScan_deeplyNested(t *testing.T) {
 		t.Errorf("expected 1 entry, got %d", len(snap))
 	}
 }
+
+// symlinked-hero-dir: Scan follows a hero dir that is itself a symlink,
+// keying entries under the link path.
+func TestScan_followsSymlinkedHeroDir(t *testing.T) {
+	base := t.TempDir()
+	real := filepath.Join(base, "real")
+	if err := os.MkdirAll(filepath.Join(real, "specs", "x"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(real, "specs", "x", "spec.md"), []byte("# X"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(base, ".hero")
+	if err := os.Symlink(real, link); err != nil {
+		t.Skipf("symlinks unsupported: %v", err)
+	}
+	snap, err := Scan(link)
+	if err != nil {
+		t.Fatalf("Scan: %v", err)
+	}
+	if _, ok := snap[filepath.Join(link, "specs", "x", "spec.md")]; len(snap) != 1 || !ok {
+		t.Errorf("snapshot = %v, want the spec keyed under the link", snap)
+	}
+}

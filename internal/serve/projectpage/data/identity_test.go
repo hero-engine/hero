@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestLoadIdentity_HappyPath(t *testing.T) {
@@ -56,5 +57,29 @@ func TestLoadIdentity_MissingProjectRoot(t *testing.T) {
 	if id.SpecCount != 0 || id.ConventionCount != 0 {
 		t.Errorf("counts should all be zero, got SpecCount=%d ConventionCount=%d",
 			id.SpecCount, id.ConventionCount)
+	}
+}
+
+// symlinked-hero-dir: last-touched time is read through a symlinked hero dir.
+func TestLastTouchedAtFollowsSymlinkedHeroDir(t *testing.T) {
+	base := t.TempDir()
+	real := filepath.Join(base, "real")
+	if err := os.MkdirAll(filepath.Join(real, "specs", "x"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(real, "specs", "x", "spec.md"), []byte("# X"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// A distinctive future mtime, so the symlink's own mtime cannot match.
+	touched := time.Now().Add(48 * time.Hour).Truncate(time.Second)
+	if err := os.Chtimes(filepath.Join(real, "specs", "x", "spec.md"), touched, touched); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(base, ".hero")
+	if err := os.Symlink(real, link); err != nil {
+		t.Skipf("symlinks unsupported: %v", err)
+	}
+	if got := lastTouchedAt(link); !got.Equal(touched) {
+		t.Errorf("lastTouchedAt = %v, want the spec's mtime %v", got, touched)
 	}
 }

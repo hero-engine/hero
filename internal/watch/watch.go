@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/hero-engine/hero/internal/fsutil"
 )
 
 // EventKind describes what happened to a file.
@@ -64,7 +66,7 @@ func New(heroDir string, interval time.Duration, handler Handler) *Watcher {
 func Scan(heroDir string) (map[string]time.Time, error) {
 	result := make(map[string]time.Time)
 
-	err := filepath.Walk(heroDir, func(path string, info os.FileInfo, err error) error {
+	err := fsutil.Walk(heroDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil // skip files we can't read
 		}
