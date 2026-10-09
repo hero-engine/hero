@@ -6,20 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-10-09T18:33:18Z · 83 ready specs_
-
-## next-projection-reads-stale-spec-graph — NEXT.md and hero_handoff show stale Next / Blocked on — the projection reads a spec graph nothing keeps current
-_bug · delivering · horizon: now_
-
-Reported by hero-harness (Mail `mail_64ea08bb994ea32d1adfacbd`, spec-out, related `mvp-3d-project-home`) on bundled v0.35.3. Their `NEXT.md` was regenerated on 2026-10-09 but still showed problems:
-- an archived, completed spec as Next;
-- 16 "blocked" rows whose blockers were all completed;
-- a placeholder "Just finished";
-- a managed block and frontmatter ahead of the briefing.
-
-The user's direction: "we work hard to get that accurate and fresh and something got broken along the way — find it and fix it." Verify with `go test ./...` and by checkpointing a copy of hero-harness's `.hero`.
-
----
+_Generated: 2026-10-09T18:38:36Z · 82 ready specs_
 
 ## mail-thread-foreground-read-action — Mail Thread Foreground Read Action
 _feature · delivering · horizon: now_

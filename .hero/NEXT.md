@@ -5,17 +5,17 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-10-09T18:33:17Z
+updated: 2026-10-09T18:38:36Z
 repo: hero-engine/hero
 ---
 
 ## Just finished
 
+- **NEXT.md and hero_handoff show stale Next / Blocked on — the projection reads a spec graph nothing keeps current** (`next-projection-reads-stale-spec-graph`, completed 2026-10-09)
 - **A hero folder that is a symlink is walked as empty — Hero finds no specs** (`symlinked-hero-dir-walks-nothing`, completed 2026-10-07)
 - **Pre-release sweep for v0.35.3 — close every open audit note before tagging** (`pre-release-sweep-v0-35-3`, completed 2026-10-07)
 - **hero why starts from a promoted intake instead of its spec when both share a slug** (`why-intake-slug-tie`, completed 2026-10-07)
 - **Work model treats epics inconsistently and gives containers a misleading verify state** (`followup-epic-parity`, completed 2026-10-07)
-- **hero serve takes 5s to stop and exits with an error when a client holds an idle connection** (`followup-serve-shutdown`, completed 2026-10-07)
 
 Run `git log --oneline -10` for recent commits.
 

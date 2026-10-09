@@ -2,7 +2,7 @@
 title: "NEXT.md and hero_handoff show stale Next / Blocked on — the projection reads a spec graph nothing keeps current"
 slug: next-projection-reads-stale-spec-graph
 type: bug
-status: delivering
+status: completed
 priority: P1
 severity: high
 root_cause_class: logic
@@ -10,6 +10,7 @@ domain: engineering
 size: medium
 created: 2026-10-09
 tags: [next, handoff, projection, graph, read-contract, hero-harness]
+completed_at: 2026-10-09T18:38:28Z
 ---
 
 # NEXT.md shows stale Next / Blocked on

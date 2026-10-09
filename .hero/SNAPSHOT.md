@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-10-09T18:33:18Z · projected from 700 source nodes_
+_Last refreshed: 2026-10-09T18:38:36Z · projected from 700 source nodes_
 
 ## Surfaces
 
@@ -17,7 +17,7 @@ _Last refreshed: 2026-10-09T18:33:18Z · projected from 700 source nodes_
 | domains/sales | maturing | domains/sales/ | 49d ago | — |
 | landing | building | web/landing/ | 47d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 1m ago | next-projection-reads-stale-spec-graph |
+| serve | building | internal/serve/ | <1m ago | agent-outposts |
 | (unassigned) | — | — | — | 259 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -52,16 +52,16 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 ## Recently completed (last 14 days)
 
 - **(unassigned)** — hero-read-contract
-- **core** — why-intake-slug-tie, followup-epic-parity, followup-audit-staleness-git, work-item-model
-- **serve** — symlinked-hero-dir-walks-nothing, pre-release-sweep-v0-35-3, followup-serve-shutdown, read-contract-conformance, polish-and-suggested, hero-work-tool, hero-spec-handoff-tools
+- **core** — why-intake-slug-tie, followup-epic-parity, followup-audit-staleness-git
+- **serve** — next-projection-reads-stale-spec-graph, symlinked-hero-dir-walks-nothing, pre-release-sweep-v0-35-3, followup-serve-shutdown, read-contract-conformance, polish-and-suggested, hero-work-tool, hero-spec-handoff-tools
 
 ## Next up across surfaces
 
 1. **landing** — `hero-landing-page` (P0, delivering)
 2. **hero-core** — `mail-b7ca19966ac5041e6ff604dd` (critical, delivering)
 3. **hero-core** — `mail-thread-foreground-read-action` (high, delivering)
-4. **serve** — `next-projection-reads-stale-spec-graph` (P1, delivering)
-5. **serve** — `agent-outposts` (medium, delivering)
+4. **serve** — `agent-outposts` (medium, delivering)
+5. **serve** — `retrieval-contradiction-detection` (—, delivering)
 
 ## Open risks & blockers
 
@@ -74,5 +74,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 10 (inferred: 10 · overrides applied: 0)
 - Specs covered: 239/498 (47%)
-- Projection generation: 2ms · Source nodes: 700
+- Projection generation: 1ms · Source nodes: 700
 

@@ -636,3 +636,5 @@
 {"ts":"2026-10-07T15:13:05.207452Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"pre-release-sweep-v0-35-3","message":"status -\u003e completed"}
 {"ts":"2026-10-07T17:09:22.06195Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"symlinked-hero-dir-walks-nothing","message":"A hero folder that is a symlink is walked as empty — Hero finds no specs"}
 {"ts":"2026-10-07T17:09:22.06205Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"symlinked-hero-dir-walks-nothing","message":"status -\u003e completed"}
+{"ts":"2026-10-09T18:38:30.464352Z","type":"delivery_complete","agent":"human/chet-bellows","slug":"next-projection-reads-stale-spec-graph","message":"NEXT.md and hero_handoff show stale Next / Blocked on — the projection reads a spec graph nothing keeps current"}
+{"ts":"2026-10-09T18:38:30.464441Z","type":"spec.status_changed","agent":"human/chet-bellows","slug":"next-projection-reads-stale-spec-graph","message":"status -\u003e completed"}
