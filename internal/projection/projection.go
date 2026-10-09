@@ -100,10 +100,21 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 	// ignores it via -I'^updated: '.) See next-drift-gate-branch-line-drift.
 	b.WriteString("---\n\n")
 
-	// Just finished — pointer to git log rather than a frozen copy.
-	// Commit lists embedded in NEXT.md are always stale (pre-commit
-	// can't see its own SHA) and duplicate what git log already provides.
+	// Just finished — the most recently completed specs, by their recorded
+	// completed_at (committed frontmatter, so the byte-gated file is
+	// deterministic), then a pointer to git log. Commit lists are not
+	// embedded: pre-commit can't see its own SHA, so they are always stale.
 	b.WriteString("## Just finished\n\n")
+	done, err := recentlyCompleted(store, opts.RepoKey, justFinishedN)
+	if err != nil {
+		return "", fmt.Errorf("just finished: %w", err)
+	}
+	for _, d := range done {
+		fmt.Fprintf(&b, "- **%s** (`%s`, completed %s)\n", d.title, d.slug, d.completedOn)
+	}
+	if len(done) > 0 {
+		b.WriteString("\n")
+	}
 	b.WriteString("Run `git log --oneline -10` for recent commits.\n")
 	b.WriteString("\n")
 
@@ -128,7 +139,7 @@ func NextMD(store *graph.Store, opts NextMDOptions) (string, error) {
 		if slot1.nodeType == "Feature" || slot1.nodeType == "Enhancement" {
 			for i := range allReady[1:] {
 				w := &allReady[i+1]
-				if w.nodeType == "Bug" && (w.priority == "P0" || w.priority == "P1") {
+				if w.nodeType == "Bug" && priorityRank(w.priority) <= 1 {
 					slot2 = w
 					break
 				}
@@ -214,7 +225,8 @@ type workRow struct {
 }
 
 // readyWorkByPriority returns up to `limit` ready (unblocked) work items
-// of the given types, ranked by priority (P0 > P1 > P2 ...) then recency.
+// of the given types, ranked by priority (P0/critical > P1/high > ...) then
+// creation date.
 // "Ready" means no outgoing depends_on/blocks edge to a non-completed target.
 func readyWorkByPriority(store *graph.Store, repoKey string, types []string, limit int) ([]workRow, error) {
 	if len(types) == 0 {
@@ -246,7 +258,7 @@ func readyWorkByPriority(store *graph.Store, repoKey string, types []string, lim
 		          AND COALESCE(json_extract(b.props, '$.status'), '')
 		              NOT IN ('completed', 'accepted')
 		    )
-		  ORDER BY COALESCE(json_extract(n.props, '$.priority'), 'P9') ASC,
+		  ORDER BY `+priorityRankSQL("n")+` ASC,
 		           COALESCE(json_extract(n.props, '$.created'), '') DESC,
 		           n.key ASC
 		  LIMIT ?`,
@@ -269,6 +281,79 @@ func readyWorkByPriority(store *graph.Store, repoKey string, types []string, lim
 		w.title, w.status, w.priority = title.String, status.String, priority.String
 		w.nodeType = nodeType.String
 		out = append(out, w)
+	}
+	return out, rows.Err()
+}
+
+// justFinishedN is how many recently completed specs "## Just finished"
+// lists.
+const justFinishedN = 5
+
+// priorityRank orders the two priority conventions specs use together:
+// P0/critical first, then P1/high, P2/medium, P3/low, then anything else.
+func priorityRank(p string) int {
+	switch strings.ToLower(strings.TrimSpace(p)) {
+	case "p0", "critical":
+		return 0
+	case "p1", "high":
+		return 1
+	case "p2", "medium":
+		return 2
+	case "p3", "low":
+		return 3
+	}
+	return 9
+}
+
+// priorityRankSQL is priorityRank as a SQL expression over a node's props
+// (alias is the table alias, or "" for an unaliased nodes table).
+func priorityRankSQL(alias string) string {
+	col := "props"
+	if alias != "" {
+		col = alias + ".props"
+	}
+	return `CASE LOWER(TRIM(COALESCE(json_extract(` + col + `, '$.priority'), '')))
+		     WHEN 'p0' THEN 0 WHEN 'critical' THEN 0
+		     WHEN 'p1' THEN 1 WHEN 'high' THEN 1
+		     WHEN 'p2' THEN 2 WHEN 'medium' THEN 2
+		     WHEN 'p3' THEN 3 WHEN 'low' THEN 3
+		     ELSE 9 END`
+}
+
+type doneRow struct {
+	slug, title, completedOn string
+}
+
+// recentlyCompleted returns the most recently completed work items and
+// initiatives that record a completed_at, newest first.
+func recentlyCompleted(store *graph.Store, repoKey string, limit int) ([]doneRow, error) {
+	rows, err := store.DB().Query(
+		`SELECT key,
+		        COALESCE(json_extract(props, '$.title'), key),
+		        json_extract(props, '$.completed_at')
+		   FROM nodes
+		  WHERE type IN ('Feature', 'Bug', 'Enhancement', 'Initiative')
+		    AND repo = ? AND valid_to IS NULL
+		    AND json_extract(props, '$.status') = 'completed'
+		    AND COALESCE(json_extract(props, '$.completed_at'), '') != ''
+		  ORDER BY json_extract(props, '$.completed_at') DESC, key ASC
+		  LIMIT ?`,
+		repoKey, limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []doneRow
+	for rows.Next() {
+		var d doneRow
+		if err := rows.Scan(&d.slug, &d.title, &d.completedOn); err != nil {
+			return nil, err
+		}
+		if len(d.completedOn) >= 10 {
+			d.completedOn = d.completedOn[:10]
+		}
+		out = append(out, d)
 	}
 	return out, rows.Err()
 }
@@ -356,7 +441,7 @@ func contextToCarry(store *graph.Store, repoKey string) ([]string, error) {
 		  WHERE type IN ('Decision', 'Initiative')
 		    AND repo = ? AND valid_to IS NULL
 		    AND COALESCE(json_extract(props, '$.status'), '') NOT IN ('completed', 'superseded')
-		  ORDER BY COALESCE(json_extract(props, '$.priority'), 'P9') ASC,
+		  ORDER BY `+priorityRankSQL("")+` ASC,
 		           COALESCE(json_extract(props, '$.created'), '') DESC,
 		           key ASC,
 		           type ASC

@@ -83,7 +83,7 @@ func TestReadContractV1SchemaIsAdditiveOnly(t *testing.T) {
 	got := map[string]bool{}
 	for i, c := range calls {
 		if i == 1 {
-			os.WriteFile(filepath.Join(heroDir, "NEXT.md"), []byte("---\nupdated: 2026-10-06T00:00:00Z\n---\n# Next\n"), 0o644)
+			os.WriteFile(filepath.Join(heroDir, "NEXT.md"), []byte("---\nupdated: 2026-10-06T00:00:00Z\nrepo: r\n---\n# Next\n"), 0o644)
 			callAndRecord(t, srv, "hero_handoff", map[string]interface{}{}, got)
 		}
 		callAndRecord(t, srv, c.tool, c.args, got)

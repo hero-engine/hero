@@ -278,3 +278,43 @@ func TestGraphEdgeForRelation_RelatesToMapsToEdge(t *testing.T) {
 		}
 	}
 }
+
+// next-projection-stale-graph: spec nodes carry the committed `created:`
+// date (only when authored, never the mtime fallback, so ordering on it is
+// deterministic across clones) and completed_at for Just finished.
+func TestSpecPropsCreatedAndCompleted(t *testing.T) {
+	authored, err := Parse("---\ntitle: A\nslug: a\ntype: feature\nstatus: completed\ncreated: 2026-09-30\ncompleted_at: 2026-10-08T12:00:00Z\n---\n# A\n", "/x/.hero/specs/a/spec.md", time.Date(2026, 10, 9, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	props := specProps(authored)
+	if props["created"] != "2026-09-30" || props["completed_at"] != "2026-10-08T12:00:00Z" {
+		t.Errorf("authored props: created=%v completed_at=%v", props["created"], props["completed_at"])
+	}
+	undated, err := Parse("---\ntitle: B\nslug: b\ntype: feature\nstatus: planning\n---\n# B\n", "/x/.hero/planning/b/spec.md", time.Date(2026, 10, 9, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	props = specProps(undated)
+	if _, ok := props["created"]; ok {
+		t.Errorf("created emitted from the mtime fallback: %v", props["created"])
+	}
+	if _, ok := props["completed_at"]; ok {
+		t.Errorf("completed_at emitted for an unfinished spec")
+	}
+}
+
+// next-projection-stale-graph: a spec node ingested before a prop existed
+// is re-written once specProps emits it, even though the file is
+// unchanged — otherwise only new or edited specs get the prop.
+func TestSpecHashCoversProps(t *testing.T) {
+	s, err := Parse("---\ntitle: A\nslug: a\ntype: feature\nstatus: completed\ncompleted_at: 2026-10-08T12:00:00Z\n---\n# A\n", "/x/.hero/specs/a/spec.md", time.Date(2026, 10, 9, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := hashSpec(s)
+	s.CompletedAt = s.CompletedAt.Add(time.Hour)
+	if hashSpec(s) == before {
+		t.Error("hashSpec ignores a change that only affects the node's props")
+	}
+}

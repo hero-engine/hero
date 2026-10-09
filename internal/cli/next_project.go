@@ -68,6 +68,7 @@ func runNextProject(cmd *cobra.Command, args []string) error {
 	if opts.SessionID == "" {
 		opts.SessionID = readSessionFromExistingNext(heroDir)
 	}
+	reconcileSpecGraph(store, projectRoot, opts.RepoKey, &cfg)
 
 	rendered, err := projection.NextMD(store, opts)
 	if err != nil {

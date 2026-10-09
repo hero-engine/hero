@@ -659,3 +659,105 @@ func TestNextMD_EmitsSessionButNotBranch(t *testing.T) {
 		t.Errorf("branch: must never be emitted even when Branch is set; got:\n%s", out[:200])
 	}
 }
+
+// next-projection-stale-graph: the two priority conventions rank together
+// (critical/P0 > high/P1 > medium/P2 > low/P3). A plain string sort put
+// "low" before "medium" and every P-level before "critical".
+func TestNextMD_PriorityConventionsRankTogether(t *testing.T) {
+	for name, c := range map[string]struct {
+		prios map[string]string
+		want  string
+	}{
+		"critical beats P1": {map[string]string{"a-p1": "P1", "b-critical": "critical"}, "b-critical"},
+		"medium beats low":  {map[string]string{"a-low": "low", "b-medium": "medium"}, "b-medium"},
+		"P0 beats high":     {map[string]string{"a-high": "high", "b-p0": "P0"}, "b-p0"},
+	} {
+		store := openTestStore(t)
+		for slug, prio := range c.prios {
+			if _, err := store.UpsertNode(&graph.Node{
+				Type: "Feature", Key: slug, Repo: "test-repo", Domain: "engineering",
+				Props:       map[string]any{"title": slug, "status": "planning", "priority": prio},
+				ContentHash: "h-" + slug,
+			}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(section(out, "## Next"), "→ `/deliver "+c.want+"`") {
+			t.Errorf("%s: Next = %s", name, section(out, "## Next"))
+		}
+	}
+}
+
+// next-projection-stale-graph: a "critical" bug earns the second Next slot
+// like a P0 one.
+func TestNextMD_CriticalBugInSlot2(t *testing.T) {
+	store := openTestStore(t)
+	// The P0 feature (newer) takes slot 1; the critical bug must still earn
+	// slot 2, which used to accept only literal P0/P1.
+	for _, n := range []struct{ typ, slug, prio, created string }{
+		{"Feature", "feat", "P0", "2026-10-02"},
+		{"Bug", "crash", "critical", "2026-10-01"},
+	} {
+		if _, err := store.UpsertNode(&graph.Node{
+			Type: n.typ, Key: n.slug, Repo: "test-repo", Domain: "engineering",
+			Props:       map[string]any{"title": n.slug, "status": "planning", "priority": n.prio, "created": n.created},
+			ContentHash: "h-" + n.slug,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next := section(out, "## Next"); !strings.Contains(next, "→ `/deliver feat`") || !strings.Contains(next, "`crash`") {
+		t.Errorf("critical bug missing from slot 2:\n%s", section(out, "## Next"))
+	}
+}
+
+// next-projection-stale-graph: Just finished lists the most recently
+// completed specs by recorded completed_at (newest first, at most 5),
+// skipping ones without it, then the git log pointer.
+func TestNextMD_JustFinishedListsRecentlyCompleted(t *testing.T) {
+	store := openTestStore(t)
+	for i := 1; i <= 7; i++ {
+		slug := fmt.Sprintf("done-%d", i)
+		if _, err := store.UpsertNode(&graph.Node{
+			Type: "Feature", Key: slug, Repo: "test-repo", Domain: "engineering",
+			Props: map[string]any{"title": "Done " + slug, "status": "completed",
+				"completed_at": fmt.Sprintf("2026-10-0%dT12:00:00Z", i)},
+			ContentHash: "h-" + slug,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, n := range []struct{ slug, status string }{{"undated", "completed"}, {"open", "planning"}} {
+		if _, err := store.UpsertNode(&graph.Node{
+			Type: "Feature", Key: n.slug, Repo: "test-repo", Domain: "engineering",
+			Props: map[string]any{"title": n.slug, "status": n.status}, ContentHash: "h-" + n.slug,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, err := NextMD(store, NextMDOptions{RepoKey: "test-repo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := section(out, "## Just finished")
+	want := "- **Done done-7** (`done-7`, completed 2026-10-07)\n" +
+		"- **Done done-6** (`done-6`, completed 2026-10-06)\n" +
+		"- **Done done-5** (`done-5`, completed 2026-10-05)\n" +
+		"- **Done done-4** (`done-4`, completed 2026-10-04)\n" +
+		"- **Done done-3** (`done-3`, completed 2026-10-03)\n\n" +
+		"Run `git log --oneline -10` for recent commits."
+	if !strings.Contains(got, want) {
+		t.Errorf("Just finished =\n%s\nwant it to contain\n%s", got, want)
+	}
+	if strings.Contains(got, "undated") || strings.Contains(got, "`open`") {
+		t.Errorf("Just finished lists an undated or open spec:\n%s", got)
+	}
+}

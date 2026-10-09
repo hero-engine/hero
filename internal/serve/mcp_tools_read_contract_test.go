@@ -91,34 +91,43 @@ func TestToolSpecRejectsNonWorkAndUnknown(t *testing.T) {
 	}
 }
 
-// hero-spec-handoff-tools AC-4: hero_handoff returns the briefing hero next shows.
+// hero-spec-handoff-tools AC-4: hero_handoff returns the briefing hero next
+// shows. handoff-shape: markdown is the briefing body only; updated and repo
+// come back as fields.
 func TestToolHandoff(t *testing.T) {
 	srv, heroDir := readContractWorkspace(t)
 	empty := callTool(t, srv, "hero_handoff", map[string]interface{}{})
-	if empty.IsError || empty.Content[0].Text != `{"markdown":"","updated_at":null}` {
+	if empty.IsError || empty.Content[0].Text != `{"markdown":"","updated_at":null,"repo":null}` {
 		t.Fatalf("no briefing = %s", empty.Content[0].Text)
 	}
-	brief := "---\nupdated: \"2026-10-06T22:00:00Z\"\n---\n# Next\n\nDo the thing.\n"
-	if err := os.WriteFile(filepath.Join(heroDir, "NEXT.md"), []byte(brief), 0o644); err != nil {
-		t.Fatal(err)
+	call := func(content string) HeroHandoff {
+		t.Helper()
+		if err := os.WriteFile(filepath.Join(heroDir, "NEXT.md"), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		result := callTool(t, srv, "hero_handoff", map[string]interface{}{})
+		if result.IsError {
+			t.Fatal(result.Content[0].Text)
+		}
+		var got HeroHandoff
+		if err := json.Unmarshal([]byte(result.Content[0].Text), &got); err != nil {
+			t.Fatal(err)
+		}
+		return got
 	}
-	result := callTool(t, srv, "hero_handoff", map[string]interface{}{})
-	var got HeroHandoff
-	if err := json.Unmarshal([]byte(result.Content[0].Text), &got); err != nil {
-		t.Fatal(err)
-	}
-	if got.Markdown != brief || got.UpdatedAt == nil || *got.UpdatedAt != "2026-10-06T22:00:00Z" {
+
+	got := call("---\nupdated: \"2026-10-06T22:00:00Z\"\n---\n# Next\n\nDo the thing.\n")
+	if got.Markdown != "# Next\n\nDo the thing.\n" || got.UpdatedAt == nil || *got.UpdatedAt != "2026-10-06T22:00:00Z" || got.Repo != nil {
 		t.Errorf("handoff = %+v", got)
 	}
 	// Real NEXT.md files open with a managed snapshot block before their
-	// frontmatter.
-	managed := "<!-- hero:managed-start v=dev -->\n## Project snapshot\n<!-- hero:managed-end -->\n\n---\nupdated: 2026-10-06T23:00:00Z\n---\n# Next\n"
-	os.WriteFile(filepath.Join(heroDir, "NEXT.md"), []byte(managed), 0o644)
-	result = callTool(t, srv, "hero_handoff", map[string]interface{}{})
-	got = HeroHandoff{}
-	_ = json.Unmarshal([]byte(result.Content[0].Text), &got)
-	if got.UpdatedAt == nil || *got.UpdatedAt != "2026-10-06T23:00:00Z" {
-		t.Errorf("managed-block NEXT.md updated_at = %v", got.UpdatedAt)
+	// frontmatter; neither belongs in the briefing.
+	got = call("<!-- hero:managed-start v=dev -->\n## Project snapshot\n\nProject shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).\n<!-- hero:managed-end -->\n\n---\nupdated: 2026-10-06T23:00:00Z\nrepo: hero-engine/hero-harness\n---\n\n## Just finished\n\nX\n")
+	if got.Markdown != "## Just finished\n\nX\n" {
+		t.Errorf("markdown = %q, want the briefing body only", got.Markdown)
+	}
+	if got.UpdatedAt == nil || *got.UpdatedAt != "2026-10-06T23:00:00Z" || got.Repo == nil || *got.Repo != "hero-engine/hero-harness" {
+		t.Errorf("fields = updated %v repo %v", got.UpdatedAt, got.Repo)
 	}
 }
 
