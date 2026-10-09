@@ -184,16 +184,44 @@ func resolveSessionID(stdin io.Reader, override string) string {
 // TranscriptPath is populated only when stdin carries the SessionStart
 // payload; the registry-lookback path can't recover it and leaves it
 // empty (the kickoff fallback then just doesn't fire).
+// hookPayloadWait bounds how long a hook waits for its stdin payload.
+// Harnesses write the payload as they spawn the hook; a stdin that stays
+// open with nothing to send (a git hook run from an IDE or agent tool)
+// must not block it.
+const hookPayloadWait = time.Second
+
+// readHookPayload reads one hook payload from r, bounded in size (64 KiB is
+// far more than any hook payload) and in time (hookPayloadWait). It returns
+// nil when nothing arrives in time; the read goroutine is left to the
+// short-lived hook process.
+func readHookPayload(r io.Reader) []byte {
+	ch := make(chan []byte, 1)
+	go func() {
+		// The read runs outside the caller's recover, so a panicking reader
+		// is contained here and treated as no payload.
+		defer func() {
+			if recover() != nil {
+				ch <- nil
+			}
+		}()
+		buf := make([]byte, 64*1024)
+		n, _ := r.Read(buf)
+		ch <- buf[:n]
+	}()
+	select {
+	case data := <-ch:
+		return data
+	case <-time.After(hookPayloadWait):
+		return nil
+	}
+}
+
 func resolveSessionContext(stdin io.Reader, override string) payloadContext {
 	ctx := payloadContext{}
 	if stdin != nil {
-		// Bounded read so a malformed/blocking stdin can't hang the
-		// hook. 64 KiB is far more than any SessionStart payload.
-		buf := make([]byte, 64*1024)
-		n, _ := stdin.Read(buf)
-		if n > 0 {
+		if data := readHookPayload(stdin); len(data) > 0 {
 			var payload sessionStartPayload
-			if err := json.Unmarshal(buf[:n], &payload); err == nil {
+			if err := json.Unmarshal(data, &payload); err == nil {
 				ctx.TranscriptPath = payload.TranscriptPath
 				if payload.SessionID != "" {
 					ctx.SessionID = payload.SessionID

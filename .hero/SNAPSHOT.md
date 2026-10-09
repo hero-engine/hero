@@ -2,7 +2,7 @@
 
 > Hero is the sidekick brain for AI-augmented knowledge work.
 
-_Last refreshed: 2026-10-09T18:22:14Z · projected from 700 source nodes_
+_Last refreshed: 2026-10-09T18:30:35Z · projected from 700 source nodes_
 
 ## Surfaces
 
@@ -17,7 +17,7 @@ _Last refreshed: 2026-10-09T18:22:14Z · projected from 700 source nodes_
 | domains/sales | maturing | domains/sales/ | 49d ago | — |
 | landing | building | web/landing/ | 47d ago | hero-landing-page |
 | mcp | concept | internal/serve/mcp*.go | — | — |
-| serve | building | internal/serve/ | 12m ago | next-projection-reads-stale-spec-graph |
+| serve | building | internal/serve/ | 2m ago | next-projection-reads-stale-spec-graph |
 | (unassigned) | — | — | — | 259 specs without surface |
 
 _Run `hero snapshot assign` to bucket unassigned specs._
@@ -26,27 +26,27 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 ## Active initiatives
 
-- **"Always-On Runtime"** (surface: serve) — 0/1 specs done
-- **"Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use"** (surface: core) — 2/2 specs done
-- **"Concurrent-Session Branching & Worktree Isolation"** (surface: —) — 0/0 specs done
-- **"Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation"** (surface: —) — 4/8 specs done
+- **Always-On Runtime** (surface: serve) — 0/1 specs done
+- **Cold-Start Trust Hardening — Fail Loud, Never Mislead, at First Use** (surface: core) — 2/2 specs done
+- **Concurrent-Session Branching & Worktree Isolation** (surface: —) — 0/0 specs done
+- **Context Engine v2 — Fix and Optimize hero-code Desktop Context Curation** (surface: —) — 4/8 specs done
 - **Environment Awareness — CI/Deployment/Runtime Visibility** (surface: —) — 0/0 specs done
 - **Get Back on Track — Mission-First V2 Recovery** (surface: core) — 7/11 specs done
 - **Hero Domains — Platform Architecture for Non-Engineering Verticals** (surface: core, domains/engineering, domains/pm, domains/sales) — 16/20 specs done
-- **"Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App"** (surface: —) — 0/9 specs done
+- **Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App** (surface: —) — 0/9 specs done
 - **Hero Killer Features — Agent Effectiveness, Team Power, Living Specs** (surface: core, serve) — 10/11 specs done
 - **Hero Platform — Headless Execution, Team Automation, and Shared Visibility** (surface: core, serve) — 3/8 specs done
-- **"Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract"** (surface: core) — 1/5 specs done
+- **Hero Doesn't Lie — Self-Consistency Between Generated Guidance, Hero's Own Writes, and Hero's Actual Contract** (surface: core) — 1/5 specs done
 - **Hero Surface Architecture — One Surface, Every Layer, Every Role** (surface: serve) — 8/9 specs done
 - **Hero Team Experience — Complete Multi-Developer Workflow** (surface: —) — 0/1 specs done
 - **Launch Readiness — Telemetry, Deploy, and Public-Use Polish** (surface: —) — 0/0 specs done
 - **Pre-Launch Hardening — Federation Polish, Security, Observability** (surface: —) — 0/0 specs done
-- **"Retrieval Quality — Reranking, Expansion & Feedback Loop"** (surface: —) — 0/0 specs done
+- **Retrieval Quality — Reranking, Expansion & Feedback Loop** (surface: —) — 0/0 specs done
 
 ### Recently completed initiatives
 
-- **"Hero read contract — hero_work, hero_spec, hero_handoff for every Hero client"** (surface: core, domains/engineering, serve) — 6/7 specs done · COMPLETED 2026-10-07
-- **"Hero v0.34 Public Release Readiness"** (surface: serve) — 12/12 specs done · COMPLETED 2026-08-24
+- **Hero read contract — hero_work, hero_spec, hero_handoff for every Hero client** (surface: core, domains/engineering, serve) — 6/7 specs done · COMPLETED 2026-10-07
+- **Hero v0.34 Public Release Readiness** (surface: serve) — 12/12 specs done · COMPLETED 2026-08-24
 - **Install + Upgrade Contract Coverage — Prove Every Target Works Every Time** (surface: domains/engineering) — 1/1 specs done · COMPLETED 2026-08-18
 
 ## Recently completed (last 14 days)
@@ -74,5 +74,5 @@ _Run `hero snapshot assign` to bucket unassigned specs._
 
 - Surfaces detected: 10 (inferred: 10 · overrides applied: 0)
 - Specs covered: 239/498 (47%)
-- Projection generation: 2ms · Source nodes: 700
+- Projection generation: 1ms · Source nodes: 700
 

@@ -5,19 +5,26 @@ Project shape: see [SNAPSHOT.md](.hero/SNAPSHOT.md).
 <!-- hero:managed-end -->
 
 ---
-updated: 2026-10-09T18:22:14Z
+updated: 2026-10-09T18:30:35Z
 repo: hero-engine/hero
 ---
 
 ## Just finished
 
+- **A hero folder that is a symlink is walked as empty — Hero finds no specs** (`symlinked-hero-dir-walks-nothing`, completed 2026-10-07)
+- **Pre-release sweep for v0.35.3 — close every open audit note before tagging** (`pre-release-sweep-v0-35-3`, completed 2026-10-07)
+- **hero why starts from a promoted intake instead of its spec when both share a slug** (`why-intake-slug-tie`, completed 2026-10-07)
+- **Work model treats epics inconsistently and gives containers a misleading verify state** (`followup-epic-parity`, completed 2026-10-07)
+- **hero serve takes 5s to stop and exits with an error when a client holds an idle connection** (`followup-serve-shutdown`, completed 2026-10-07)
+
 Run `git log --oneline -10` for recent commits.
 
 ## Next
 
-- **Job and Run Contract v1** (`job-run-contract-v1`, P0, planning)
+- **Mail thread lifecycle contract and state** (`mail-b7ca19966ac5041e6ff604dd`, critical, delivering)
+- **Hero Code blocks the existing tracker-backed diagnosis publication commands** (`tracker-backed-diagnosis-publication-contract-broken`, critical, planning)
 
-→ `/deliver job-run-contract-v1`
+→ `/deliver mail-b7ca19966ac5041e6ff604dd`
 
 ## Blocked on
 
@@ -43,9 +50,9 @@ Nothing this session.
 
 ## Context to carry forward
 
+- Read contract v1 — Hero-side semantics for hero_work / hero_spec / hero_handoff — `read-contract-v1`
 - Always-On Runtime — `always-on-runtime`
+- Hero-in-Hero-Code Parity — Fix Hero Workflow Integration in the Desktop App — `hero-in-hero-code-parity`
 - Get Back on Track — Mission-First V2 Recovery — `get-back-on-track`
 - Pre-Launch Hardening — Federation Polish, Security, Observability — `pre-launch-hardening`
-- Basic Chat Sheds Research — Extract the Research Apparatus to a Dormant Hero Research Seed — `chat-sheds-research-to-seed`
-- Launch Readiness — Telemetry, Deploy, and Public-Use Polish — `launch-readiness`
 

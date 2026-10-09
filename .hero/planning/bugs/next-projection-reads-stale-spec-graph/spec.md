@@ -56,6 +56,9 @@ The user's direction: "we work hard to get that accurate and fresh and something
    - `hashSpec` now covers the node's full props. Without that, unchanged specs kept their old nodes and never gained the new props, so a warm local graph and CI's fresh scan would project different files.
    - `hero_work`'s `priorityRank` also maps `P0`–`P3`.
 3. **Real "Just finished".** It lists the 5 most recently completed work items and initiatives by recorded `completed_at` (newest first, committed data, so the CI drift gate stays deterministic), then the git-log pointer.
+5. **Checkpoint hang (found while delivering).**
+   - `hero next checkpoint` reads a hook payload from stdin (`resolveSessionContext` via `autoEmitUserAsk`). The read was bounded in size but not in time, so it blocked forever on an open stdin that never sends anything. That happens with a git pre-commit hook run from an IDE or agent tool, and it hung this delivery's checkpoint twice; a goroutine dump showed it waiting in `syscall.read`.
+   - `readHookPayload` now waits at most `hookPayloadWait` (1 s) and recovers a panicking reader inside its goroutine, keeping the existing never-fail contract.
 4. **Clean `hero_handoff`.** `markdown` is the briefing body only. `updated_at` and a new `repo` field carry the metadata. This is additive within `schema_version: 1`, and the golden schema gained `hero_handoff.repo` (null/string).
 
 ## Acceptance Criteria
@@ -63,17 +66,15 @@ The user's direction: "we work hard to get that accurate and fresh and something
 - **AC-1:** WHEN a spec's status changes after the graph last ingested it THE SYSTEM SHALL project Next, Blocked on and Just finished from its current frontmatter status at the next checkpoint (and `hero next project`).
 - **AC-2:** THE SYSTEM SHALL rank `P0`/critical > `P1`/high > `P2`/medium > `P3`/low in Next (both slots) and in `hero_work`'s Suggested list. Ties are broken by the authored `created:` date.
 - **AC-3:** THE SYSTEM SHALL list the most recently completed specs (by `completed_at`, at most 5) under Just finished, deterministically from committed data.
+- **AC-5:** WHEN a hook's stdin is open but sends nothing THE SYSTEM SHALL finish `hero next checkpoint` without waiting on it. A payload written promptly is still read.
 - **AC-4:** THE SYSTEM SHALL return from `hero_handoff` only the briefing body in `markdown`, with `updated_at` and `repo` as fields (additive to schema v1).
 
 ## Changes
 
 1. `internal/cli/checkpoint.go` (`reconcileCheckpointSpecGraph`, called in `writeCheckpoint`), `internal/cli/next_project.go`, `internal/cli/checkpoint_reconcile_test.go`.
 2. `internal/projection/projection.go` (`priorityRank`, `priorityRankSQL`, slot 2, `recentlyCompleted`, Just finished) and `projection_test.go`; `internal/spec/graph_ingest.go` (`created`, `completed_at` props) and `graph_ingest_test.go`; `internal/workmodel/polish.go` and `polish_test.go`.
+4. `internal/cli/next_compact_handoff.go` (`readHookPayload`, `hookPayloadWait`) and `internal/cli/hook_payload_test.go`.
 3. `internal/serve/mcp_tools_read_contract.go` (`HeroHandoff.Repo`, `handoffBody`), its tests, `read_contract_schema_test.go` and `testdata/read_contract_v1.golden`.
-
-## Observed during delivery
-
-- The first `hero next checkpoint` with the new binary on this repo sat idle (0% CPU) for about 10 minutes before I stopped it. Six reruns, foreground and background, each took 3 s or less, and graph.Open sets no lock or busy wait. The cause is unknown and could not be reproduced; the audit was asked to look for any blocking added to the checkpoint path.
 
 ## Not changed (noted)
 
@@ -88,6 +89,7 @@ The user's direction: "we work hard to get that accurate and fresh and something
 | 1 | AC-1: checkpoint projects current status | DONE | `TestCheckpointProjectsCurrentSpecStatus`: the graph ingests `engine` while it is delivering, then `engine` is verified and archived with no graph write. `writeCheckpoint` now shows Next `/deliver ui`, no `waiting on engine`, and Engine under Just finished. Without the reconcile call, all three assertions fail. End to end, the new binary's plain `hero next checkpoint` on a copy of hero-harness's `.hero` shows the 5 latest completions, a real ready Next and only genuine blockers |
 | 2 | AC-2: priority ranking | DONE | `TestNextMD_PriorityConventionsRankTogether` and `TestNextMD_CriticalBugInSlot2` both fail with the old `projection.go`. `TestSuggestedRanksPLevels` fails with the old `polish.go`. `TestSpecPropsCreatedAndCompleted` (authored `created` only, plus `completed_at`) fails with the old `graph_ingest.go`. `TestSpecHashCoversProps` fails without `Props` in the hash. The existing tie-break and carry-forward fixtures were corrected from a hand-seeded prop to the one the writer emits |
 | 3 | AC-3: Just finished | DONE | `TestNextMD_JustFinishedListsRecentlyCompleted`: newest 5 by `completed_at`, undated and open specs excluded, git-log pointer kept. It fails with the old code |
+| 5 | AC-5: no hang on silent stdin | DONE | `TestResolveSessionContextDoesNotBlockOnSilentStdin` (open `io.Pipe`, nothing written) fails after its 5 s guard with the old code. `TestResolveSessionContextReadsPromptPayload` passes, and so does the existing panicking-reader test. The real checkpoint, run from this tool shell (open stdin), now takes 2 s instead of hanging |
 | 4 | AC-4: handoff shape | DONE | `TestToolHandoff`: the managed block and frontmatter are stripped, and `updated_at` and `repo` are returned; the empty reply is `{"markdown":"","updated_at":null,"repo":null}`. The golden schema gained `hero_handoff.repo:null` and `:string` (additive-only test passes) |
 
 ### Changes
@@ -97,10 +99,11 @@ The user's direction: "we work hard to get that accurate and fresh and something
 | 1 | checkpoint reconcile | DONE | — |
 | 2 | projection, props, ranking | DONE | — |
 | 3 | hero_handoff shape | DONE | — |
+| 4 | hook payload wait | DONE | — |
 
 ### Exercise-the-feature check
 
-- [x] Ran the new binary's `hero next checkpoint` on a copy of hero-harness's real `.hero` (stale since Oct 4): Next, Blocked on and Just finished are now current. Each fix's test was falsified against the old code.
+- [x] Ran the CI drift gate's steps (`hero scan` + `hero next checkpoint`) on a fresh clone: its `NEXT.md` matches the locally projected one byte for byte, apart from `updated:`. Ran the new binary's `hero next checkpoint` on a copy of hero-harness's real `.hero` (stale since Oct 4): Next, Blocked on and Just finished are now current. Each fix's test was falsified against the old code.
 
 ### Excellence Bar self-check
 

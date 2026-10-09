@@ -1,6 +1,6 @@
 ---
 user: chet-bellows
-updated: 2026-10-09T18:22:14Z
+updated: 2026-10-09T18:30:35Z
 repo: hero-engine/hero
 ---
 
@@ -10,19 +10,19 @@ repo: hero-engine/hero
 
 > Ship a verified Hero release containing the completed MCP tool metadata contract for hero-code while keeping the superseded interactive CLI donor branch evidence-only.
 
-_possibly stale — 200 commit(s) since, last set 56d 2h ago_
+_possibly stale — 201 commit(s) since, last set 56d 2h ago_
 
 ## Last user ask
 
 > can you inspect all the work that has gone on over the last 2 weeks or so - see if its good - good quality - correctly done etc - nothing missed etc.
 
-_possibly stale — 12 commit(s) since, last set 2d 3h ago_
+_possibly stale — 13 commit(s) since, last set 2d 3h ago_
 
 ## Suggested next prompt
 
-> let's tackle Job and Run Contract v1
+> let's tackle Mail thread lifecycle contract and state
 
-_Rationale: highest-priority ready work: Job and Run Contract v1 (`job-run-contract-v1`)_
+_Rationale: highest-priority ready work: Mail thread lifecycle contract and state (`mail-b7ca19966ac5041e6ff604dd`)_
 
 _Source: auto-derived from open feature — `hero next suggest "..."` to override._
 
