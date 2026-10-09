@@ -172,18 +172,6 @@ func resolveSessionID(stdin io.Reader, override string) string {
 	return resolveSessionContext(stdin, override).SessionID
 }
 
-// resolveSessionContext picks the session id and transcript path to use.
-// Priority for session id:
-//
-//  1. --session flag (debugging override).
-//  2. session_id from stdin JSON payload (Claude Code's normal path).
-//  3. Most-recently-started session in the active registry within
-//     compactHandoffSessionStartLookbackHours.
-//  4. Empty string — caller renders the "no active session" fallback.
-//
-// TranscriptPath is populated only when stdin carries the SessionStart
-// payload; the registry-lookback path can't recover it and leaves it
-// empty (the kickoff fallback then just doesn't fire).
 // hookPayloadWait bounds how long a hook waits for its stdin payload.
 // Harnesses write the payload as they spawn the hook; a stdin that stays
 // open with nothing to send (a git hook run from an IDE or agent tool)
@@ -216,6 +204,18 @@ func readHookPayload(r io.Reader) []byte {
 	}
 }
 
+// resolveSessionContext picks the session id and transcript path to use.
+// Priority for session id:
+//
+//  1. --session flag (debugging override).
+//  2. session_id from stdin JSON payload (Claude Code's normal path).
+//  3. Most-recently-started session in the active registry within
+//     compactHandoffSessionStartLookbackHours.
+//  4. Empty string — caller renders the "no active session" fallback.
+//
+// TranscriptPath is populated only when stdin carries the SessionStart
+// payload; the registry-lookback path can't recover it and leaves it
+// empty (the kickoff fallback then just doesn't fire).
 func resolveSessionContext(stdin io.Reader, override string) payloadContext {
 	ctx := payloadContext{}
 	if stdin != nil {
