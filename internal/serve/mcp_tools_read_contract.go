@@ -54,8 +54,12 @@ type HeroSpec struct {
 
 // HeroHandoff is hero_handoff's reply.
 type HeroHandoff struct {
+	// Markdown is the briefing body only: NEXT.md's managed snapshot
+	// pointer block and frontmatter are removed, their fields surfaced
+	// as UpdatedAt and Repo.
 	Markdown  string  `json:"markdown"`
 	UpdatedAt *string `json:"updated_at"`
+	Repo      *string `json:"repo"`
 }
 
 func (s *MCPServer) toolSpec(args map[string]interface{}) (string, error) {
@@ -100,10 +104,14 @@ func (s *MCPServer) toolHandoff(map[string]interface{}) (string, error) {
 	reply := HeroHandoff{}
 	data, err := os.ReadFile(nextdoc.HandoffPath(s.heroDir, cfg))
 	if err == nil {
-		reply.Markdown = string(data)
-		if updated := frontmatterValue(reply.Markdown, "updated"); updated != "" {
+		raw := string(data)
+		if updated := frontmatterValue(raw, "updated"); updated != "" {
 			reply.UpdatedAt = &updated
 		}
+		if repo := frontmatterValue(raw, "repo"); repo != "" {
+			reply.Repo = &repo
+		}
+		reply.Markdown = handoffBody(raw)
 	} else if !os.IsNotExist(err) {
 		return "", fmt.Errorf("reading handoff: %w", err)
 	}
@@ -112,6 +120,18 @@ func (s *MCPServer) toolHandoff(map[string]interface{}) (string, error) {
 		return "", err
 	}
 	return string(out), nil
+}
+
+// handoffBody returns the briefing in a NEXT.md: everything after the
+// leading managed snapshot block (if any) and the frontmatter.
+func handoffBody(raw string) string {
+	norm := strings.TrimLeft(strings.ReplaceAll(raw, "\r\n", "\n"), "\n")
+	if strings.HasPrefix(norm, "<!-- hero:managed-start") {
+		if end := strings.Index(norm, "<!-- hero:managed-end -->"); end >= 0 {
+			norm = strings.TrimLeft(norm[end+len("<!-- hero:managed-end -->"):], "\n")
+		}
+	}
+	return specBody(norm)
 }
 
 // specBody returns the Markdown with its YAML frontmatter removed.

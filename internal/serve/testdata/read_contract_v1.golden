@@ -1,5 +1,7 @@
 # Read contract v1 schema (path:type). Additive-only: never delete a line.
 hero_handoff.markdown:string
+hero_handoff.repo:null
+hero_handoff.repo:string
 hero_handoff.updated_at:null
 hero_handoff.updated_at:string
 hero_handoff:object

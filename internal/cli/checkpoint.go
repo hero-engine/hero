@@ -283,6 +283,14 @@ func writeCheckpoint() (string, error) {
 		}
 	}
 
+	// NEXT.md, the per-user handoff and the snapshot are projected from
+	// the graph, which no write path keeps in step with spec frontmatter
+	// (verify, status edits and archiving touch only the files). Reconcile
+	// the spec subgraph first — the same read-side heal `hero why` and
+	// `hero blocked` use — so Next, Blocked on and Just finished reflect
+	// current status instead of whenever specs were last ingested.
+	reconcileCheckpointSpecGraph(projectRoot, heroDir, cfg)
+
 	// Prior checkpoint timestamp drives the activity-since delta.
 	// Prefer the local state file; fall back to NEXT.md for the
 	// one-time migration from the old layout.
@@ -371,6 +379,19 @@ local:
 	ingestRecentCommits(projectRoot, heroDir)
 
 	return nextPath, nil
+}
+
+// reconcileCheckpointSpecGraph opens the graph and reconciles its spec
+// subgraph from frontmatter. Best-effort: the checkpoint must never fail
+// because the graph could not be opened.
+func reconcileCheckpointSpecGraph(projectRoot, heroDir string, cfg config.Config) {
+	store, err := graph.Open(heroDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: spec graph reconcile: open graph: %v\n", err)
+		return
+	}
+	defer store.Close()
+	reconcileSpecGraph(store, projectRoot, graphRepoKey(projectRoot), &cfg)
 }
 
 // ingestRecentCommits upserts the most recent commits into the graph as

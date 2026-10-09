@@ -357,6 +357,14 @@ func specProps(s *Spec) map[string]any {
 	if !s.CreatedAt.IsZero() {
 		props["created_at"] = s.CreatedAt.UTC().Format("2006-01-02T15:04:05Z")
 	}
+	if s.CreatedFromFrontmatter {
+		// The committed `created:` date (never the mtime fallback), so
+		// projections that order on it stay deterministic across clones.
+		props["created"] = s.CreatedAt.UTC().Format("2006-01-02")
+	}
+	if !s.CompletedAt.IsZero() {
+		props["completed_at"] = s.CompletedAt.UTC().Format("2006-01-02T15:04:05Z")
+	}
 	if len(s.Triggers) > 0 {
 		props["triggers"] = s.Triggers
 	}
@@ -405,6 +413,9 @@ func hashSpec(s *Spec) string {
 		Relations                 []Relation
 		ModTime                   string
 		RawLen                    int
+		// Props covers every value written to the node, so a prop added
+		// to specProps re-writes existing nodes instead of only new ones.
+		Props map[string]any
 	}
 	sig := sigSpec{
 		Slug: s.Slug, Title: s.Title,
@@ -414,6 +425,7 @@ func hashSpec(s *Spec) string {
 		Relations: s.Relations,
 		ModTime:   s.ModifiedAt.UTC().Format("2006-01-02T15:04:05Z"),
 		RawLen:    len(s.RawContent),
+		Props:     specProps(s),
 	}
 	b, _ := json.Marshal(sig)
 	sum := sha256.Sum256(b)
