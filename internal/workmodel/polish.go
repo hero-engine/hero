@@ -130,12 +130,7 @@ func slugList(items []Item) string {
 	return strings.Join(slugs, ", ")
 }
 
-// priorityRank covers both conventions specs use: critical/high/medium/low
-// and P0-P3.
-var priorityRank = map[string]int{
-	"critical": 0, "high": 1, "medium": 2, "low": 3,
-	"P0": 0, "P1": 1, "P2": 2, "P3": 3,
-}
+var priorityRank = map[string]int{"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 func rank(p *string) int {
 	if p == nil {

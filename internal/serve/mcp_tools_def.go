@@ -475,7 +475,7 @@ func (s *MCPServer) toolDefinitions() []ToolDefinition {
 			Name:        "hero_handoff",
 			Category:    CategorySearchAndKnowledge,
 			Tier:        TierDeferrable,
-			Description: "Read contract v1 (read-only JSON): the handoff briefing `hero next` shows, as {markdown, updated_at}. Empty markdown and null updated_at when no briefing exists yet.",
+			Description: "Read contract v1 (read-only JSON): the handoff briefing `hero next` shows, as {markdown, updated_at, repo}. markdown is the briefing body only (no managed block or frontmatter); updated_at and repo come from the frontmatter. Empty markdown and null fields when no briefing exists yet.",
 			InputSchema: InputSchema{Type: "object", Properties: map[string]PropSchema{}},
 		},
 		{

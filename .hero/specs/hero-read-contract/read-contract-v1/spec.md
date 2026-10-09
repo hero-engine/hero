@@ -125,7 +125,7 @@ Polish covers `recently_done` items only.
 
 ### `hero_handoff`
 
-Returns the handoff file `hero next` shows (team mode: `.hero/next/<user>.md`, else `.hero/NEXT.md`) as `markdown`, with `updated_at` from its frontmatter block. Per-machine local notes, which `hero next` appends, are excluded: they are not shared state.
+Returns the handoff file `hero next` shows (team mode: `.hero/next/<user>.md`, else `.hero/NEXT.md`). Amended 2026-10-09 by `next-projection-reads-stale-spec-graph` (additive): `markdown` is the briefing body only, without the managed snapshot block or frontmatter, and `updated_at` and `repo` come from the frontmatter. Per-machine local notes, which `hero next` appends, are excluded: they are not shared state.
 
 ### Versioning
 

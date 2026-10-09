@@ -55,7 +55,7 @@ stable JSON, so clients never parse `.hero` files. Each one is
 |---|---|
 | `hero_work {recent_days?}` | `{schema_version, revision, generated_at, hero_version, watch_globs, items, polish, suggested}` |
 | `hero_spec {slug}` | `{item, body, relations, acs}` for one work spec |
-| `hero_handoff {}` | `{markdown, updated_at}`: the briefing `hero next` shows |
+| `hero_handoff {}` | `{markdown, updated_at, repo}`: the briefing `hero next` shows, body only; `updated_at` and `repo` come from its frontmatter |
 
 - **Work items.** Every work item carries a lane: `designed`, `ready`,
   `in_progress`, `recently_done` or `none`. It also carries a verify state:

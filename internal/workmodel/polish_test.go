@@ -112,17 +112,3 @@ func TestOpenFollowupsUseLaneCompletionFallback(t *testing.T) {
 	}
 	t.Fatal("follow-up on an mtime-fallback recently_done item was not reported")
 }
-
-// next-projection-stale-graph: P-level priorities rank like their named
-// equivalents, so a P0 ready item is picked before a "low" one.
-func TestSuggestedRanksPLevels(t *testing.T) {
-	p0, low := "P0", "low"
-	next := &NextStep{Label: "Deliver", Command: "/deliver"}
-	sugg := Suggested([]Item{
-		{Slug: "a-low", Lane: LaneReady, Priority: &low, Path: "a", Next: next},
-		{Slug: "b-p0", Lane: LaneReady, Priority: &p0, Path: "b", Next: next},
-	})
-	if len(sugg) == 0 || sugg[0].Slug == nil || *sugg[0].Slug != "b-p0" {
-		t.Fatalf("first pick = %+v, want b-p0", sugg)
-	}
-}

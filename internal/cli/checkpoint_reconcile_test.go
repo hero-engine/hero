@@ -17,6 +17,32 @@ import (
 // Next or as a blocker. The checkpoint reconciles the spec subgraph from
 // frontmatter before projecting.
 func TestCheckpointProjectsCurrentSpecStatus(t *testing.T) {
+	env := staleEngineWorkspace(t)
+	if _, err := writeCheckpoint(); err != nil {
+		t.Fatalf("writeCheckpoint: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(env.heroDir, "NEXT.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertCurrentEngineStatus(t, string(data))
+}
+
+// `hero next project` renders from the same reconciled graph.
+func TestNextProjectProjectsCurrentSpecStatus(t *testing.T) {
+	staleEngineWorkspace(t)
+	out, err := runCmd("next", "project")
+	if err != nil {
+		t.Fatalf("hero next project: %v\n%s", err, out)
+	}
+	assertCurrentEngineStatus(t, out)
+}
+
+// staleEngineWorkspace builds a projected workspace whose graph ingested
+// `engine` while delivering; engine has since been verified and archived
+// without any graph write. ui depends on engine.
+func staleEngineWorkspace(t *testing.T) *testEnv {
+	t.Helper()
 	env := newTestEnv(t)
 	cfg := config.DefaultConfig()
 	cfg.Next = &config.NextConfig{Projected: true}
@@ -54,15 +80,11 @@ func TestCheckpointProjectsCurrentSpecStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	write("specs/engine/spec.md", "---\ntitle: Engine\nslug: engine\ntype: feature\nstatus: completed\npriority: critical\ncompleted_at: 2026-10-08T12:00:00Z\n---\n# Engine\n")
+	return env
+}
 
-	if _, err := writeCheckpoint(); err != nil {
-		t.Fatalf("writeCheckpoint: %v", err)
-	}
-	data, err := os.ReadFile(filepath.Join(env.heroDir, "NEXT.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	next := string(data)
+func assertCurrentEngineStatus(t *testing.T, next string) {
+	t.Helper()
 	if !strings.Contains(next, "→ `/deliver ui`") {
 		t.Errorf("Next should be ui now that engine is completed:\n%s", next)
 	}

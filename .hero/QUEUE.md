@@ -6,7 +6,7 @@
 
 # Hero Ready Queue
 
-_Generated: 2026-10-09T18:30:35Z · 83 ready specs_
+_Generated: 2026-10-09T18:33:18Z · 83 ready specs_
 
 ## next-projection-reads-stale-spec-graph — NEXT.md and hero_handoff show stale Next / Blocked on — the projection reads a spec graph nothing keeps current
 _bug · delivering · horizon: now_
